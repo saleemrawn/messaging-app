@@ -1,0 +1,7 @@
+{
+  "name": "messaging-app",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ]
+}
