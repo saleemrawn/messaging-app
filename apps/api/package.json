@@ -14,6 +14,7 @@
   "type": "module",
   "main": "app.ts",
   "scripts": {
+    "dev": "node --watch ./src/app.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
