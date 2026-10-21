@@ -39,8 +39,8 @@ model UserAccount {
 model Message {
   id              Int              @id @default(autoincrement())
   content         String
-  sender          UserAccount      @relation(fields: [senderId], references: [id])
-  senderId        Int
+  userAccount     UserAccount      @relation(fields: [userAccountId], references: [id])
+  userAccountId   Int
   conversation    Conversation     @relation(fields: [conversationId], references: [id])
   conversationId  Int
   messageReceipts MessageReceipt[]
