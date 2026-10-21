@@ -26,9 +26,22 @@ model UserAccount {
   password  String
   user      User      @relation(fields: [userId], references: [id])
   userId    Int       @unique
+  messages  Message[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   @@map("user_accounts")
+}
+
+model Message {
+  id        Int         @id @default(autoincrement())
+  content   String
+  sender    UserAccount @relation(fields: [senderId], references: [id])
+  senderId  Int         @unique
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  deletedAt DateTime?
+
+  @@map("messages")
 }
