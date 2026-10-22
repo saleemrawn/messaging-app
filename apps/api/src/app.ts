@@ -3,6 +3,9 @@ import express, { type Express } from "express";
 
 const app: Express = express();
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 app.listen(process.env.PORT, (err) => {
   if (err) {
     throw err;
