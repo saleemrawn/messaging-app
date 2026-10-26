@@ -28,3 +28,6 @@ dist-ssr
 
 # Prisma ORM
 apps/api/generated
+
+# Vitest reports and artifacts
+.vitest/
