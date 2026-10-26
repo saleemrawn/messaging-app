@@ -1,6 +1,7 @@
 interface ApiResponse<Data> {
   success: boolean;
-  data: Data;
+  message?: string;
+  data?: Data;
 }
 
 export type { ApiResponse };

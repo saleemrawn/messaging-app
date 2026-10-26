@@ -5,4 +5,9 @@ const getUsers = async () => {
   return users;
 };
 
-export { getUsers };
+const getUser = async (id: number) => {
+  const user = await prisma.user.findUnique({ where: { id } });
+  return user;
+};
+
+export { getUsers, getUser };

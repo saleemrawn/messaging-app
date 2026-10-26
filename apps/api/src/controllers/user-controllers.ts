@@ -25,4 +25,24 @@ const getUsers = async (
   }
 };
 
-export { getUsers };
+const getUser = async (
+  req: Request,
+  res: Response<ApiResponse<User>>,
+  next: NextFunction,
+) => {
+  try {
+    const id = Number(req.params.id);
+    const user = await repository.getUser(id);
+
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { getUsers, getUser };
