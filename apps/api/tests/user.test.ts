@@ -2,10 +2,12 @@ import user from "../src/routes/user-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
 import { populateDb, resetDbTables } from "./helpers/database.ts";
+import { anyString } from "./helpers/types.ts";
 import { beforeEach, describe, expect, test } from "vitest";
 
 const app: Express = express();
 
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use("/", user);
 
@@ -92,5 +94,32 @@ describe("user route", () => {
     expect(res.status).toBe(404);
     expect(res.type).toBe("application/json");
     expect(res.body).toEqual({ success: false, message: "User not found" });
+  });
+
+  test("create a user", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+      email: "antoine.doe01@email.com",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(201);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toMatchObject({
+      data: {
+        id: 5,
+        firstName: "Antoine",
+        lastName: "Doe",
+        email: "antoine.doe01@email.com",
+        createdAt: anyString(),
+        updatedAt: anyString(),
+        deletedAt: null,
+      },
+    });
   });
 });

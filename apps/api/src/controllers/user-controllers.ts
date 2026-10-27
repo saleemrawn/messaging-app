@@ -1,6 +1,35 @@
 import type { NextFunction, Request, Response } from "express";
-import * as repository from "../repositories/user-repository.ts";
 import type { ApiResponse } from "../../types/api-types.ts";
+import {
+  body,
+  validationResult,
+  matchedData,
+  type ValidationError,
+} from "express-validator";
+import * as repository from "../repositories/user-repository.ts";
+
+const createUserValidators = [
+  body("firstName")
+    .trim()
+    .notEmpty()
+    .withMessage("First name required")
+    .isAlpha()
+    .withMessage("First name should only contain letters"),
+
+  body("lastName")
+    .trim()
+    .notEmpty()
+    .withMessage("Last name required")
+    .isAlpha()
+    .withMessage("Last name should only contain letters"),
+
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be a valid format"),
+];
 
 interface User {
   id: number;
@@ -45,4 +74,34 @@ const getUser = async (
   }
 };
 
-export { getUsers, getUser };
+const createUser = async (
+  req: Request<
+    object,
+    object,
+    Pick<User, "firstName" | "lastName" | "email">,
+    object
+  >,
+  res: Response<ApiResponse<User, ValidationError[]>>,
+  next: NextFunction,
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
+    const {
+      firstName,
+      lastName,
+      email,
+    }: Pick<User, "firstName" | "lastName" | "email"> = matchedData(req);
+
+    const user = await repository.createUser({ firstName, lastName, email });
+    res.status(201).json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { getUsers, getUser, createUser, createUserValidators };
