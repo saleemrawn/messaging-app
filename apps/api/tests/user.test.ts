@@ -281,4 +281,32 @@ describe("user route", () => {
       ],
     });
   });
+
+  test("returns invalid email format error", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+      email: "antoine.doe01email.com",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "antoine.doe01email.com",
+          msg: "Email must be a valid format",
+          path: "email",
+          location: "body",
+        },
+      ],
+    });
+  });
 });
