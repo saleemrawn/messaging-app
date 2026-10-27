@@ -9,7 +9,7 @@ const app: Express = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use("/", user);
+app.use("/api/users", user);
 
 const users = {
   data: [
@@ -73,7 +73,7 @@ beforeEach(async () => {
 
 describe("user route", () => {
   test("returns all users", async () => {
-    const res = await request(app).get("/");
+    const res = await request(app).get("/api/users");
 
     expect(res.status).toBe(200);
     expect(res.type).toBe("application/json");
@@ -81,7 +81,7 @@ describe("user route", () => {
   });
 
   test("returns a user", async () => {
-    const res = await request(app).get("/4");
+    const res = await request(app).get("/api/users/4");
 
     expect(res.status).toBe(200);
     expect(res.type).toBe("application/json");
@@ -89,7 +89,7 @@ describe("user route", () => {
   });
 
   test("returns user not found", async () => {
-    const res = await request(app).get("/9999");
+    const res = await request(app).get("/api/users/9999");
 
     expect(res.status).toBe(404);
     expect(res.type).toBe("application/json");
