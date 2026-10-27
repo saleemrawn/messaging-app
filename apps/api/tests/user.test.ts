@@ -110,7 +110,8 @@ describe("user route", () => {
 
     expect(res.status).toBe(201);
     expect(res.type).toBe("application/json");
-    expect(res.body).toMatchObject({
+    expect(res.body).toEqual({
+      success: true,
       data: {
         id: 5,
         firstName: "Antoine",
