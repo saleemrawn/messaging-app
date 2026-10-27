@@ -247,4 +247,38 @@ describe("user route", () => {
       ],
     });
   });
+
+  test("returns missing email errors", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "Email is required",
+          path: "email",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Email must be a valid format",
+          path: "email",
+          location: "body",
+        },
+      ],
+    });
+  });
 });
