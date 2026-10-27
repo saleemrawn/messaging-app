@@ -1,10 +1,12 @@
 import "dotenv/config";
 import express, { type Express } from "express";
+import * as routes from "./routes/routes.ts";
 
 const app: Express = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/users", routes.user);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
