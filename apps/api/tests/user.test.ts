@@ -157,4 +157,32 @@ describe("user route", () => {
       ],
     });
   });
+
+  test("returns letters only in first name error", async () => {
+    const user = {
+      firstName: "Antoine123",
+      lastName: "Doe",
+      email: "antoine.doe01@email.com",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "Antoine123",
+          msg: "First name should only contain letters",
+          path: "firstName",
+          location: "body",
+        },
+      ],
+    });
+  });
 });
