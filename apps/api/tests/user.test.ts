@@ -53,19 +53,6 @@ const users = {
   success: true,
 };
 
-const userJane = {
-  success: true,
-  data: {
-    id: 4,
-    firstName: "Jane",
-    lastName: "Doe",
-    email: "jane.doe01@email.com",
-    createdAt: "2026-01-01T20:00:00.000Z",
-    updatedAt: "2026-01-01T20:00:00.000Z",
-    deletedAt: null,
-  },
-};
-
 beforeEach(async () => {
   await resetDbTables();
   await populateDb();
@@ -85,7 +72,18 @@ describe("user route", () => {
 
     expect(res.status).toBe(200);
     expect(res.type).toBe("application/json");
-    expect(res.body).toEqual(userJane);
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        id: 4,
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane.doe01@email.com",
+        createdAt: "2026-01-01T20:00:00.000Z",
+        updatedAt: "2026-01-01T20:00:00.000Z",
+        deletedAt: null,
+      },
+    });
   });
 
   test("returns user not found", async () => {
