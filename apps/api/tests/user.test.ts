@@ -185,4 +185,38 @@ describe("user route", () => {
       ],
     });
   });
+
+  test("returns missing last name errors", async () => {
+    const user = {
+      firstName: "Antoine",
+      email: "antoine.doe01@email.com",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "Last name required",
+          path: "lastName",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Last name should only contain letters",
+          path: "lastName",
+          location: "body",
+        },
+      ],
+    });
+  });
 });
