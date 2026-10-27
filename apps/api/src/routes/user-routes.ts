@@ -5,6 +5,6 @@ const router = Router();
 
 router.get("/", controller.getUsers);
 router.get("/:id", controller.getUser);
-router.post("/", controller.createUserValidators, controller.createUser);
+router.post("/", controller.userValidators, controller.createUser);
 
 export default router;

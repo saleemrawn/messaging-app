@@ -8,7 +8,7 @@ import {
 } from "express-validator";
 import * as repository from "../repositories/user-repository.ts";
 
-const createUserValidators = [
+const userValidators = [
   body("firstName")
     .trim()
     .notEmpty()
@@ -104,4 +104,4 @@ const createUser = async (
   }
 };
 
-export { getUsers, getUser, createUser, createUserValidators };
+export { getUsers, getUser, createUser, userValidators };
