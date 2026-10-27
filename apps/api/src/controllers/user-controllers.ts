@@ -4,11 +4,14 @@ import {
   body,
   validationResult,
   matchedData,
+  param,
   type ValidationError,
 } from "express-validator";
 import * as repository from "../repositories/user-repository.ts";
 
 const userValidators = [
+  param("id").trim().optional().isInt().withMessage("Invalid user ID").toInt(),
+
   body("firstName")
     .trim()
     .notEmpty()
@@ -104,4 +107,40 @@ const createUser = async (
   }
 };
 
-export { getUsers, getUser, createUser, userValidators };
+const updateUser = async (
+  req: Request<
+    Pick<User, "id">,
+    object,
+    Pick<User, "firstName" | "lastName" | "email">,
+    object
+  >,
+  res: Response<ApiResponse<User, ValidationError[]>>,
+  next: NextFunction,
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
+    const {
+      id,
+      firstName,
+      lastName,
+      email,
+    }: Pick<User, "id" | "firstName" | "lastName" | "email"> = matchedData(req);
+
+    const user = await repository.updateUser({
+      id,
+      firstName,
+      lastName,
+      email,
+    });
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export { getUsers, getUser, createUser, updateUser, userValidators };

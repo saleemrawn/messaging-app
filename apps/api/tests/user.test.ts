@@ -307,4 +307,274 @@ describe("user route", () => {
       ],
     });
   });
+
+  test("update user first name", async () => {
+    const user = {
+      firstName: "Janet",
+      lastName: "Doe",
+      email: "jane.doe01@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(200);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        id: 4,
+        firstName: "Janet",
+        lastName: "Doe",
+        email: "jane.doe01@email.com",
+        createdAt: anyString(),
+        updatedAt: anyString(),
+        deletedAt: null,
+      },
+    });
+  });
+
+  test("update user last name", async () => {
+    const user = {
+      firstName: "Jane",
+      lastName: "Doey",
+      email: "jane.doe01@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(200);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        id: 4,
+        firstName: "Jane",
+        lastName: "Doey",
+        email: "jane.doe01@email.com",
+        createdAt: anyString(),
+        updatedAt: anyString(),
+        deletedAt: null,
+      },
+    });
+  });
+
+  test("update user email", async () => {
+    const user = {
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "janedoe@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(200);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        id: 4,
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "janedoe@email.com",
+        createdAt: anyString(),
+        updatedAt: anyString(),
+        deletedAt: null,
+      },
+    });
+  });
+
+  test("returns missing first name errors for update user", async () => {
+    const user = {
+      lastName: "Doe",
+      email: "janedoe@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "First name required",
+          path: "firstName",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "First name should only contain letters",
+          path: "firstName",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns letters only in first name error for update user", async () => {
+    const user = {
+      firstName: "Jane123",
+      lastName: "Doe",
+      email: "janedoe@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "Jane123",
+          msg: "First name should only contain letters",
+          path: "firstName",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns missing last name errors for update user", async () => {
+    const user = {
+      firstName: "Jane",
+      email: "janedoe@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "Last name required",
+          path: "lastName",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Last name should only contain letters",
+          path: "lastName",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns letters only in last name error for update user", async () => {
+    const user = {
+      firstName: "Jane",
+      lastName: "Doe123",
+      email: "janedoe@email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "Doe123",
+          msg: "Last name should only contain letters",
+          path: "lastName",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns missing email errors for update user", async () => {
+    const user = {
+      firstName: "Jane",
+      lastName: "Doe",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "Email is required",
+          path: "email",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Email must be a valid format",
+          path: "email",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns invalid email format error for update user", async () => {
+    const user = {
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane.doe01email.com",
+    };
+
+    const res = await request(app)
+      .put("/api/users/4")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "jane.doe01email.com",
+          msg: "Email must be a valid format",
+          path: "email",
+          location: "body",
+        },
+      ],
+    });
+  });
 });
