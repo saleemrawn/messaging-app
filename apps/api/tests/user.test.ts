@@ -114,6 +114,14 @@ describe("user route", () => {
         createdAt: "2026-01-01T20:00:00.000Z",
         updatedAt: "2026-01-01T20:00:00.000Z",
         deletedAt: null,
+        userAccount: {
+          id: 4,
+          userId: 4,
+          username: "janedoe01",
+          createdAt: "2026-01-01T20:00:00.000Z",
+          updatedAt: "2026-01-01T20:00:00.000Z",
+          deletedAt: null,
+        },
       },
     });
   });
