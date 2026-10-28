@@ -48,6 +48,39 @@ async function populateDb() {
       },
     ],
   });
+
+  await prisma.userAccount.createMany({
+    data: [
+      {
+        userId: 1,
+        username: "johndoe01",
+        password: "Monkey123!",
+        createdAt: new Date("2026-01-01T20:00:00"),
+        updatedAt: new Date("2026-01-01T20:00:00"),
+      },
+      {
+        userId: 2,
+        username: "aishadoe01",
+        password: "Monkey123!",
+        createdAt: new Date("2026-01-01T20:00:00"),
+        updatedAt: new Date("2026-01-01T20:00:00"),
+      },
+      {
+        userId: 3,
+        username: "phillipedoe01",
+        password: "Monkey123!",
+        createdAt: new Date("2026-01-01T20:00:00"),
+        updatedAt: new Date("2026-01-01T20:00:00"),
+      },
+      {
+        userId: 4,
+        username: "janedoe01",
+        password: "Monkey123!",
+        createdAt: new Date("2026-01-01T20:00:00"),
+        updatedAt: new Date("2026-01-01T20:00:00"),
+      },
+    ],
+  });
 }
 
 export { populateDb, resetDbTables };

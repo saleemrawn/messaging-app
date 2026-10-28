@@ -2,7 +2,9 @@ import { prisma } from "../lib/prisma.ts";
 import type { User } from "../../types/user-types.ts";
 
 const getUsers = async () => {
-  const users = await prisma.user.findMany();
+  const users = await prisma.user.findMany({
+    include: { userAccount: { omit: { password: true } } },
+  });
   return users;
 };
 
