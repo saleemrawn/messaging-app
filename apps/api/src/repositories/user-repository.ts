@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.ts";
+import type { User } from "../../types/user-types.ts";
 
 const getUsers = async () => {
   const users = await prisma.user.findMany();
@@ -14,11 +15,7 @@ const createUser = async ({
   firstName,
   lastName,
   email,
-}: {
-  firstName: string;
-  lastName: string;
-  email: string;
-}) => {
+}: Pick<User, "firstName" | "lastName" | "email">) => {
   const user = await prisma.user.create({
     data: { firstName, lastName, email },
   });
@@ -30,12 +27,7 @@ const updateUser = async ({
   firstName,
   lastName,
   email,
-}: {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-}) => {
+}: Pick<User, "id" | "firstName" | "lastName" | "email">) => {
   const user = await prisma.user.update({
     where: { id },
     data: { firstName, lastName, email },

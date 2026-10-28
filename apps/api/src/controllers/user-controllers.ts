@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import type { ApiResponse } from "../../types/api-types.ts";
+import type { User } from "../../types/user-types.ts";
 import {
   body,
   validationResult,
@@ -42,16 +43,6 @@ const userValidators = [
     .isEmail()
     .withMessage("Email must be a valid format"),
 ];
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date | null;
-}
 
 const getUsers = async (
   req: Request,
