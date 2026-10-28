@@ -139,6 +139,8 @@ describe("user route", () => {
       firstName: "Antoine",
       lastName: "Doe",
       email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -158,6 +160,14 @@ describe("user route", () => {
         createdAt: anyString(),
         updatedAt: anyString(),
         deletedAt: null,
+        userAccount: {
+          id: 5,
+          userId: 5,
+          username: "antoinedoe01",
+          createdAt: anyString(),
+          updatedAt: anyString(),
+          deletedAt: null,
+        },
       },
     });
   });
@@ -166,6 +176,8 @@ describe("user route", () => {
     const user = {
       lastName: "Doe",
       email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -201,6 +213,8 @@ describe("user route", () => {
       firstName: "Antoine123",
       lastName: "Doe",
       email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -228,6 +242,8 @@ describe("user route", () => {
     const user = {
       firstName: "Antoine",
       email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -263,6 +279,8 @@ describe("user route", () => {
       firstName: "Antoine",
       lastName: "Doe123",
       email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -290,6 +308,8 @@ describe("user route", () => {
     const user = {
       firstName: "Antoine",
       lastName: "Doe",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -325,6 +345,8 @@ describe("user route", () => {
       firstName: "Antoine",
       lastName: "Doe",
       email: "antoine.doe01email.com",
+      username: "antoinedoe01",
+      password: "Money0987!",
     };
 
     const res = await request(app)
@@ -342,6 +364,147 @@ describe("user route", () => {
           value: "antoine.doe01email.com",
           msg: "Email must be a valid format",
           path: "email",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns missing username error", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+      email: "antoine.doe01@email.com",
+      username: "",
+      password: "Money0987!",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "Username is required",
+          path: "username",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Username must be between 3 and 30 characters long",
+          path: "username",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Username must contain only letters, numbers, hyphen (-), underscore (_) or period (.)",
+          path: "username",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns username format error", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+      email: "antoine.doe01@email.com",
+      username: "antoinedoe01@!",
+      password: "Money0987!",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "antoinedoe01@!",
+          msg: "Username must contain only letters, numbers, hyphen (-), underscore (_) or period (.)",
+          path: "username",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns missing password error", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+      email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "",
+          msg: "Password is required",
+          path: "password",
+          location: "body",
+        },
+        {
+          type: "field",
+          value: "",
+          msg: "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
+          path: "password",
+          location: "body",
+        },
+      ],
+    });
+  });
+
+  test("returns password format error", async () => {
+    const user = {
+      firstName: "Antoine",
+      lastName: "Doe",
+      email: "antoine.doe01@email.com",
+      username: "antoinedoe01",
+      password: "money",
+    };
+
+    const res = await request(app)
+      .post("/api/users")
+      .send(user)
+      .set("Accept", "application/json");
+
+    expect(res.status).toBe(400);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: false,
+      errors: [
+        {
+          type: "field",
+          value: "money",
+          msg: "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
+          path: "password",
           location: "body",
         },
       ],

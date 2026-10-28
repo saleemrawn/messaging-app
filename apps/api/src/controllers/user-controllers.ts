@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import type { ApiResponse } from "../../types/api-types.ts";
-import type { User } from "../../types/user-types.ts";
+import type { User, UserAccount } from "../../types/user-types.ts";
 import {
   body,
   validationResult,
@@ -9,6 +9,7 @@ import {
   type ValidationError,
 } from "express-validator";
 import * as repository from "../repositories/user-repository.ts";
+import bcrypt from "bcrypt";
 
 const idValidator = param("id")
   .trim()
@@ -38,10 +39,31 @@ const emailValidator = body("email")
   .isEmail()
   .withMessage("Email must be a valid format");
 
+const usernameValidator = body("username")
+  .trim()
+  .notEmpty()
+  .withMessage("Username is required")
+  .isLength({ min: 3, max: 30 })
+  .withMessage("Username must be between 3 and 30 characters long")
+  .isAlphanumeric(undefined, { ignore: "_-." })
+  .withMessage(
+    "Username must contain only letters, numbers, hyphen (-), underscore (_) or period (.)",
+  );
+
+const passwordValidator = body("password")
+  .notEmpty()
+  .withMessage("Password is required")
+  .isStrongPassword()
+  .withMessage(
+    "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
+  );
+
 const createUserValidators = [
   firstNameValidator,
   lastNameValidator,
   emailValidator,
+  usernameValidator,
+  passwordValidator,
 ];
 
 const updateUserValidators = [
@@ -90,7 +112,10 @@ const createUser = async (
   req: Request<
     object,
     object,
-    Pick<User, "firstName" | "lastName" | "email">,
+    Pick<
+      UserAccount,
+      "firstName" | "lastName" | "email" | "username" | "password"
+    >,
     object
   >,
   res: Response<ApiResponse<User, ValidationError[]>>,
@@ -107,9 +132,22 @@ const createUser = async (
       firstName,
       lastName,
       email,
-    }: Pick<User, "firstName" | "lastName" | "email"> = matchedData(req);
+      username,
+      password,
+    }: Pick<
+      UserAccount,
+      "firstName" | "lastName" | "email" | "username" | "password"
+    > = matchedData(req);
 
-    const user = await repository.createUser({ firstName, lastName, email });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await repository.createUser({
+      firstName,
+      lastName,
+      email,
+      username,
+      password: hashedPassword,
+    });
     res.status(201).json({ success: true, data: user });
   } catch (err) {
     next(err);

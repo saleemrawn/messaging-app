@@ -8,4 +8,9 @@ interface User {
   deletedAt: Date | null;
 }
 
-export type { User };
+interface UserAccount extends User {
+  username: string;
+  password: string;
+}
+
+export type { User, UserAccount };

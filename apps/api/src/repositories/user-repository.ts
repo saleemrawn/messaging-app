@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.ts";
-import type { User } from "../../types/user-types.ts";
+import type { User, UserAccount } from "../../types/user-types.ts";
 
 const getUsers = async () => {
   const users = await prisma.user.findMany({
@@ -20,9 +20,20 @@ const createUser = async ({
   firstName,
   lastName,
   email,
-}: Pick<User, "firstName" | "lastName" | "email">) => {
+  username,
+  password,
+}: Pick<
+  UserAccount,
+  "firstName" | "lastName" | "email" | "username" | "password"
+>) => {
   const user = await prisma.user.create({
-    data: { firstName, lastName, email },
+    data: {
+      firstName,
+      lastName,
+      email,
+      userAccount: { create: { username, password } },
+    },
+    include: { userAccount: { omit: { password: true } } },
   });
   return user;
 };
