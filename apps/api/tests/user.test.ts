@@ -577,4 +577,23 @@ describe("user route", () => {
       ],
     });
   });
+
+  test("soft delete user", async () => {
+    const res = await request(app).delete("/api/users/4");
+
+    expect(res.status).toBe(200);
+    expect(res.type).toBe("application/json");
+    expect(res.body).toEqual({
+      success: true,
+      data: {
+        id: 4,
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane.doe01@email.com",
+        createdAt: anyString(),
+        updatedAt: anyString(),
+        deletedAt: anyString(),
+      },
+    });
+  });
 });

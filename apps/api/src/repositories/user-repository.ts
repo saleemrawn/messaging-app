@@ -43,4 +43,13 @@ const updateUser = async ({
   return user;
 };
 
-export { getUsers, getUser, createUser, updateUser };
+const deleteUser = async (id: number) => {
+  const user = await prisma.user.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
+
+  return user;
+};
+
+export { getUsers, getUser, createUser, updateUser, deleteUser };

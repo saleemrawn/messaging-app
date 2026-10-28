@@ -9,6 +9,15 @@ import {
 } from "express-validator";
 import * as repository from "../repositories/user-repository.ts";
 
+const userIdValidator = [
+  param("id")
+    .trim()
+    .optional()
+    .isInt()
+    .withMessage("Invalid user ID, expected number")
+    .toInt(),
+];
+
 const userValidators = [
   param("id").trim().optional().isInt().withMessage("Invalid user ID").toInt(),
 
@@ -143,4 +152,26 @@ const updateUser = async (
   }
 };
 
-export { getUsers, getUser, createUser, updateUser, userValidators };
+const deleteUser = async (
+  req: Request<Pick<User, "id">, object, object, object>,
+  res: Response<ApiResponse<User>>,
+  next: NextFunction,
+) => {
+  try {
+    const id = req.params.id;
+    const user = await repository.deleteUser(id);
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export {
+  getUsers,
+  getUser,
+  createUser,
+  updateUser,
+  deleteUser,
+  userValidators,
+  userIdValidator,
+};
