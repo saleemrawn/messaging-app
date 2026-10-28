@@ -10,39 +10,48 @@ import {
 } from "express-validator";
 import * as repository from "../repositories/user-repository.ts";
 
-const userIdValidator = [
-  param("id")
-    .trim()
-    .optional()
-    .isInt()
-    .withMessage("Invalid user ID, expected number")
-    .toInt(),
+const idValidator = param("id")
+  .trim()
+  .optional()
+  .isInt()
+  .withMessage("Invalid user ID, expected number")
+  .toInt();
+
+const firstNameValidator = body("firstName")
+  .trim()
+  .notEmpty()
+  .withMessage("First name required")
+  .isAlpha()
+  .withMessage("First name should only contain letters");
+
+const lastNameValidator = body("lastName")
+  .trim()
+  .notEmpty()
+  .withMessage("Last name required")
+  .isAlpha()
+  .withMessage("Last name should only contain letters");
+
+const emailValidator = body("email")
+  .trim()
+  .notEmpty()
+  .withMessage("Email is required")
+  .isEmail()
+  .withMessage("Email must be a valid format");
+
+const createUserValidators = [
+  firstNameValidator,
+  lastNameValidator,
+  emailValidator,
 ];
 
-const userValidators = [
-  param("id").trim().optional().isInt().withMessage("Invalid user ID").toInt(),
-
-  body("firstName")
-    .trim()
-    .notEmpty()
-    .withMessage("First name required")
-    .isAlpha()
-    .withMessage("First name should only contain letters"),
-
-  body("lastName")
-    .trim()
-    .notEmpty()
-    .withMessage("Last name required")
-    .isAlpha()
-    .withMessage("Last name should only contain letters"),
-
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email is required")
-    .isEmail()
-    .withMessage("Email must be a valid format"),
+const updateUserValidators = [
+  idValidator,
+  firstNameValidator,
+  lastNameValidator,
+  emailValidator,
 ];
+
+const deleteUserValidators = [idValidator];
 
 const getUsers = async (
   req: Request,
@@ -163,6 +172,7 @@ export {
   createUser,
   updateUser,
   deleteUser,
-  userValidators,
-  userIdValidator,
+  createUserValidators,
+  updateUserValidators,
+  deleteUserValidators,
 };
