@@ -485,8 +485,6 @@ describe("user route", () => {
         .send(user)
         .set("Accept", "application/json");
 
-      console.log(res);
-
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
       expect(res.body).toEqual({
@@ -768,6 +766,15 @@ describe("user route", () => {
           },
         },
       });
+    });
+
+    test("returns 404 for a soft-deleted user", async () => {
+      await request(app).delete("/api/users/4").expect(200);
+
+      const res = await request(app).get("/api/users/4");
+      expect(res.status).toBe(404);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({ success: false, message: "User not found" });
     });
   });
 });
