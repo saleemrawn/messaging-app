@@ -47,6 +47,7 @@ const updateUser = async ({
   const user = await prisma.user.update({
     where: { id },
     data: { firstName, lastName, email },
+    include: { userAccount: { omit: { password: true } } },
   });
   return user;
 };
