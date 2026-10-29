@@ -18,7 +18,7 @@ const getUsers = async () => {
 
 const getUser = async (id: number) => {
   const user = await prisma.user.findUnique({
-    where: { id },
+    where: { id, userAccount: { deletedAt: null } },
     select: {
       id: true,
       firstName: true,
