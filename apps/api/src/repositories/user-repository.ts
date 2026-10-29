@@ -3,7 +3,15 @@ import type { User, UserAccount } from "../../types/user-types.ts";
 
 const getUsers = async () => {
   const users = await prisma.user.findMany({
-    include: { userAccount: { omit: { password: true } } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      userAccount: {
+        select: { id: true, username: true },
+      },
+    },
   });
   return users;
 };
@@ -11,7 +19,15 @@ const getUsers = async () => {
 const getUser = async (id: number) => {
   const user = await prisma.user.findUnique({
     where: { id },
-    include: { userAccount: { omit: { password: true } } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      userAccount: {
+        select: { id: true, username: true },
+      },
+    },
   });
   return user;
 };
@@ -33,7 +49,15 @@ const createUser = async ({
       email,
       userAccount: { create: { username, password } },
     },
-    include: { userAccount: { omit: { password: true } } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      userAccount: {
+        select: { id: true, username: true },
+      },
+    },
   });
   return user;
 };
@@ -47,7 +71,15 @@ const updateUser = async ({
   const user = await prisma.user.update({
     where: { id },
     data: { firstName, lastName, email },
-    include: { userAccount: { omit: { password: true } } },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      userAccount: {
+        select: { id: true, username: true },
+      },
+    },
   });
   return user;
 };
@@ -56,6 +88,15 @@ const deleteUser = async (id: number) => {
   const user = await prisma.user.update({
     where: { id },
     data: { deletedAt: new Date() },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      userAccount: {
+        select: { id: true, username: true },
+      },
+    },
   });
 
   return user;

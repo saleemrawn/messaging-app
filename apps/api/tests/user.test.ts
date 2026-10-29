@@ -2,7 +2,6 @@ import user from "../src/routes/user-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
 import { populateDb, resetDbTables } from "./helpers/database.ts";
-import { anyString } from "./helpers/types.ts";
 import { beforeEach, describe, expect, test } from "vitest";
 
 const app: Express = express();
@@ -18,16 +17,9 @@ const users = {
       firstName: "John",
       lastName: "Doe",
       email: "john.doe01@email.com",
-      createdAt: "2026-01-01T20:00:00.000Z",
-      updatedAt: "2026-01-01T20:00:00.000Z",
-      deletedAt: null,
       userAccount: {
         id: 1,
-        userId: 1,
         username: "johndoe01",
-        createdAt: "2026-01-01T20:00:00.000Z",
-        updatedAt: "2026-01-01T20:00:00.000Z",
-        deletedAt: null,
       },
     },
     {
@@ -35,16 +27,9 @@ const users = {
       firstName: "Aisha",
       lastName: "Doe",
       email: "aisha.doe01@email.com",
-      createdAt: "2026-01-01T20:00:00.000Z",
-      updatedAt: "2026-01-01T20:00:00.000Z",
-      deletedAt: null,
       userAccount: {
         id: 2,
-        userId: 2,
         username: "aishadoe01",
-        createdAt: "2026-01-01T20:00:00.000Z",
-        updatedAt: "2026-01-01T20:00:00.000Z",
-        deletedAt: null,
       },
     },
     {
@@ -52,16 +37,9 @@ const users = {
       firstName: "Phillipe",
       lastName: "Doe",
       email: "phillipe.doe01@email.com",
-      createdAt: "2026-01-01T20:00:00.000Z",
-      updatedAt: "2026-01-01T20:00:00.000Z",
-      deletedAt: null,
       userAccount: {
         id: 3,
-        userId: 3,
         username: "phillipedoe01",
-        createdAt: "2026-01-01T20:00:00.000Z",
-        updatedAt: "2026-01-01T20:00:00.000Z",
-        deletedAt: null,
       },
     },
     {
@@ -69,16 +47,9 @@ const users = {
       firstName: "Jane",
       lastName: "Doe",
       email: "jane.doe01@email.com",
-      createdAt: "2026-01-01T20:00:00.000Z",
-      updatedAt: "2026-01-01T20:00:00.000Z",
-      deletedAt: null,
       userAccount: {
         id: 4,
-        userId: 4,
         username: "janedoe01",
-        createdAt: "2026-01-01T20:00:00.000Z",
-        updatedAt: "2026-01-01T20:00:00.000Z",
-        deletedAt: null,
       },
     },
   ],
@@ -112,16 +83,9 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doe",
           email: "jane.doe01@email.com",
-          createdAt: "2026-01-01T20:00:00.000Z",
-          updatedAt: "2026-01-01T20:00:00.000Z",
-          deletedAt: null,
           userAccount: {
             id: 4,
-            userId: 4,
             username: "janedoe01",
-            createdAt: "2026-01-01T20:00:00.000Z",
-            updatedAt: "2026-01-01T20:00:00.000Z",
-            deletedAt: null,
           },
         },
       });
@@ -160,16 +124,9 @@ describe("user route", () => {
           firstName: "Antoine",
           lastName: "Doe",
           email: "antoine.doe01@email.com",
-          createdAt: anyString(),
-          updatedAt: anyString(),
-          deletedAt: null,
           userAccount: {
             id: 5,
-            userId: 5,
             username: "antoinedoe01",
-            createdAt: anyString(),
-            updatedAt: anyString(),
-            deletedAt: null,
           },
         },
       });
@@ -539,16 +496,9 @@ describe("user route", () => {
           firstName: "Janet",
           lastName: "Doe",
           email: "jane.doe01@email.com",
-          createdAt: "2026-01-01T20:00:00.000Z",
-          updatedAt: anyString(),
-          deletedAt: null,
           userAccount: {
             id: 4,
-            userId: 4,
             username: "janedoe01",
-            createdAt: "2026-01-01T20:00:00.000Z",
-            updatedAt: "2026-01-01T20:00:00.000Z",
-            deletedAt: null,
           },
         },
       });
@@ -575,16 +525,9 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doey",
           email: "jane.doe01@email.com",
-          createdAt: "2026-01-01T20:00:00.000Z",
-          updatedAt: anyString(),
-          deletedAt: null,
           userAccount: {
             id: 4,
-            userId: 4,
             username: "janedoe01",
-            createdAt: "2026-01-01T20:00:00.000Z",
-            updatedAt: "2026-01-01T20:00:00.000Z",
-            deletedAt: null,
           },
         },
       });
@@ -611,16 +554,9 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doe",
           email: "janedoe@email.com",
-          createdAt: "2026-01-01T20:00:00.000Z",
-          updatedAt: anyString(),
-          deletedAt: null,
           userAccount: {
             id: 4,
-            userId: 4,
             username: "janedoe01",
-            createdAt: "2026-01-01T20:00:00.000Z",
-            updatedAt: "2026-01-01T20:00:00.000Z",
-            deletedAt: null,
           },
         },
       });
@@ -826,9 +762,10 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doe",
           email: "jane.doe01@email.com",
-          createdAt: "2026-01-01T20:00:00.000Z",
-          updatedAt: anyString(),
-          deletedAt: anyString(),
+          userAccount: {
+            id: 4,
+            username: "janedoe01",
+          },
         },
       });
     });
