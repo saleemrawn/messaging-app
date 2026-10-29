@@ -3,9 +3,6 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
-  createdAt: Date;
-  updatedAt: Date;
-  deletedAt: Date | null;
 }
 
 interface UserAccount extends User {
