@@ -7,6 +7,7 @@ const app: Express = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/users", routes.user);
+app.use("/api/conversations", routes.conversation);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
