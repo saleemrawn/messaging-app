@@ -88,7 +88,7 @@ const getUsers = async (
   }
 };
 
-const getUser = async (
+const getUserById = async (
   req: Request,
   res: Response<ApiResponse<User>>,
   next: NextFunction,
@@ -206,7 +206,7 @@ const deleteUser = async (
 
 export {
   getUsers,
-  getUser,
+  getUserById,
   createUser,
   updateUser,
   deleteUser,
