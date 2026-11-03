@@ -27,6 +27,7 @@ const createConversation = async ({
           id: true,
           unreadCount: true,
         },
+        orderBy: { createdAt: "asc" },
       },
       messages: {
         select: {
@@ -34,6 +35,7 @@ const createConversation = async ({
           content: true,
           createdAt: true,
         },
+        orderBy: { createdAt: "asc" },
       },
     },
   });
