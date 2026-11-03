@@ -37,9 +37,12 @@ const createConversationValidators = [
   recipientIdValidator,
 ];
 
+type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
+type CreateConversationResBody = Pick<Conversation, "id">;
+
 const createConversation = async (
-  req: Request<object, object, MessageInput, object>,
-  res: Response<ApiResponse<Pick<Conversation, "id">, ValidationError[]>>,
+  req: Request<object, object, CreateConversationReqBody, object>,
+  res: Response<ApiResponse<CreateConversationResBody, ValidationError[]>>,
   next: NextFunction,
 ) => {
   try {
@@ -49,7 +52,8 @@ const createConversation = async (
       return;
     }
 
-    const { content, senderId, recipientId }: MessageInput = matchedData(req);
+    const { content, senderId, recipientId }: CreateConversationReqBody =
+      matchedData(req);
 
     const conversation = await repository.createConversation({
       content,
