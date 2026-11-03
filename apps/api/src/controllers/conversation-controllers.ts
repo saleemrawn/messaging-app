@@ -55,6 +55,10 @@ const addMessageToConversationValidators = [
 type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
 type CreateConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
+type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
+interface AddMessageToConversationReqParams {
+  id: string;
+}
 
 const createConversation = async (
   req: Request<object, object, CreateConversationReqBody, object>,
@@ -85,9 +89,9 @@ const createConversation = async (
 
 const addMessageToConversation = async (
   req: Request<
-    { id: string },
+    AddMessageToConversationReqParams,
     object,
-    { content: string; senderId: number; recipientId: number },
+    AddMessageToConversationReqBody,
     object
   >,
   res: Response<
