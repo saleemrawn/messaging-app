@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../../types/message-types.ts";
 
-type CreateConversationParams = MessageInput;
+type CreateConversationParams = Omit<MessageInput, "conversationId">;
 
 const createConversation = async ({
   content,
