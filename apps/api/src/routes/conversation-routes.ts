@@ -9,4 +9,10 @@ router.post(
   controller.createConversation,
 );
 
+router.post(
+  "/:id/messages",
+  controller.addMessageToConversationValidators,
+  controller.addMessageToConversation,
+);
+
 export default router;

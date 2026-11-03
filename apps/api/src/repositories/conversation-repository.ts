@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../../types/message-types.ts";
 
 type CreateConversationParams = Omit<MessageInput, "conversationId">;
+type AddMessageToConversationParams = MessageInput;
 
 const createConversation = async ({
   content,
@@ -42,4 +43,62 @@ const createConversation = async ({
   return conversation;
 };
 
-export { createConversation };
+const addMessageToConversation = async ({
+  conversationId,
+  content,
+  senderId,
+  recipientId,
+}: AddMessageToConversationParams) => {
+  if (!conversationId) {
+    throw new Error(
+      `Error: expected conversationId of type number, received ${typeof conversationId}`,
+    );
+  }
+
+  const conversation = await prisma.conversation.update({
+    where: { id: conversationId },
+    data: {
+      messages: {
+        create: { content, userAccountId: senderId },
+      },
+      userConversations: {
+        updateMany: [
+          {
+            where: { userAccountId: senderId },
+            data: {
+              unreadCount: 0,
+            },
+          },
+          {
+            where: { userAccountId: recipientId },
+            data: {
+              unreadCount: { increment: 1 },
+            },
+          },
+        ],
+      },
+    },
+    select: {
+      id: true,
+      userConversations: {
+        select: {
+          id: true,
+          unreadCount: true,
+        },
+        orderBy: { id: "asc" },
+      },
+      messages: {
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+
+  return conversation;
+};
+
+export { createConversation, addMessageToConversation };
