@@ -1,7 +1,11 @@
 import user from "../src/routes/user-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
-import { populateDb, resetDbTables } from "./helpers/database.ts";
+import {
+  populateUser,
+  populateUserAccount,
+  resetDbTables,
+} from "./helpers/database.ts";
 import { beforeEach, describe, expect, test } from "vitest";
 
 const app: Express = express();
@@ -58,7 +62,8 @@ const users = {
 
 beforeEach(async () => {
   await resetDbTables();
-  await populateDb();
+  await populateUser();
+  await populateUserAccount();
 });
 
 describe("user route", () => {

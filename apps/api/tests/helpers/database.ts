@@ -11,7 +11,7 @@ async function resetDbTables() {
       `;
 }
 
-async function populateDb() {
+async function populateUser() {
   if (process.env.NODE_ENV === "production") {
     throw new Error("Refusing to seed in production");
   }
@@ -48,6 +48,12 @@ async function populateDb() {
       },
     ],
   });
+}
+
+async function populateUserAccount() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed in production");
+  }
 
   await prisma.userAccount.createMany({
     data: [
@@ -83,4 +89,74 @@ async function populateDb() {
   });
 }
 
-export { populateDb, resetDbTables };
+async function populateUserConversation() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed in production");
+  }
+
+  await prisma.userConversation.createMany({
+    data: [
+      { userAccountId: 1, conversationId: 1 },
+      { userAccountId: 2, conversationId: 1 },
+      { userAccountId: 1, conversationId: 2 },
+      { userAccountId: 3, conversationId: 2 },
+    ],
+  });
+}
+
+async function populateConversation() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed in production");
+  }
+
+  await prisma.conversation.createMany({
+    data: [
+      { updatedAt: new Date("2026-01-01T20:10:00") },
+      { updatedAt: new Date("2026-01-01T21:10:00") },
+    ],
+  });
+}
+
+async function populateMessage() {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("Refusing to seed in production");
+  }
+
+  await prisma.message.createMany({
+    data: [
+      {
+        content: "Lorem ipsum dolor sit amet",
+        userAccountId: 1,
+        conversationId: 1,
+        createdAt: new Date("2026-01-01T20:00:00"),
+      },
+      {
+        content: "Consectetur adipiscing elit",
+        userAccountId: 2,
+        conversationId: 1,
+        createdAt: new Date("2026-01-01T20:10:00"),
+      },
+      {
+        content: "Sed do eiusmod tempor incididunt",
+        userAccountId: 1,
+        conversationId: 2,
+        createdAt: new Date("2026-01-01T21:00:00"),
+      },
+      {
+        content: "Labore et dolore magna aliqua",
+        userAccountId: 3,
+        conversationId: 2,
+        createdAt: new Date("2026-01-01T21:10:00"),
+      },
+    ],
+  });
+}
+
+export {
+  populateUser,
+  populateUserAccount,
+  populateConversation,
+  populateMessage,
+  populateUserConversation,
+  resetDbTables,
+};
