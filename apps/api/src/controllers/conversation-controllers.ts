@@ -1,6 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import type { ApiResponse } from "../../types/api-types.ts";
-import type { Conversation } from "../../generated/prisma/client.ts";
+import type {
+  Conversation,
+  Message,
+  UserAccount,
+} from "../../generated/prisma/client.ts";
 import type { MessageInput } from "../../types/message-types.ts";
 import {
   body,
@@ -10,6 +14,15 @@ import {
   type ValidationError,
 } from "express-validator";
 import * as repository from "../repositories/conversation-repository.ts";
+import type { User } from "../../types/user-types.ts";
+
+const userAccountIdValidator = body("id")
+  .trim()
+  .notEmpty()
+  .withMessage("User account ID is required")
+  .isInt()
+  .withMessage("Invalid user account ID, expected number")
+  .toInt();
 
 const conversationIdValidator = param("id")
   .trim()
@@ -39,6 +52,8 @@ const recipientIdValidator = body("recipientId")
   .withMessage("Invalid recipient ID, expected number")
   .toInt();
 
+const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
+
 const createConversationValidators = [
   contentValidator,
   senderIdValidator,
@@ -59,6 +74,52 @@ type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
 interface AddMessageToConversationReqParams {
   id: string;
 }
+interface GetConversationsByUserAccountIdReqBody {
+  id: number;
+}
+interface GetConversationsByUserAccountIdResBody {
+  id: Conversation["id"];
+  updatedAt: Conversation["updatedAt"];
+  messages: {
+    id: Message["id"];
+    content: Message["content"];
+    createdAt: Message["createdAt"];
+  }[];
+  userConversations: {
+    userAccount: {
+      id: UserAccount["id"];
+      deletedAt: UserAccount["deletedAt"];
+      user: {
+        firstName: User["firstName"];
+        lastName: User["lastName"];
+      };
+    };
+  }[];
+}
+
+const getConversationsByUserAccountId = async (
+  req: Request<object, object, GetConversationsByUserAccountIdReqBody, object>,
+  res: Response<
+    ApiResponse<GetConversationsByUserAccountIdResBody[], ValidationError[]>
+  >,
+  next: NextFunction,
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
+    const { id }: GetConversationsByUserAccountIdReqBody = matchedData(req);
+
+    const conversations = await repository.getConversationsByUserAccountId(id);
+
+    res.status(200).json({ success: true, data: conversations });
+  } catch (err) {
+    next(err);
+  }
+};
 
 const createConversation = async (
   req: Request<object, object, CreateConversationReqBody, object>,
@@ -132,8 +193,10 @@ const addMessageToConversation = async (
 };
 
 export {
+  getConversationsByUserAccountId,
   createConversation,
   addMessageToConversation,
+  getConversationsByUserAccountIdValidators,
   createConversationValidators,
   addMessageToConversationValidators,
 };

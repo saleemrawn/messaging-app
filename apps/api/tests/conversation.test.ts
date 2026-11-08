@@ -1,7 +1,14 @@
 import conversation from "../src/routes/conversation-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
-import { populateDb, resetDbTables } from "./helpers/database.ts";
+import {
+  populateConversation,
+  populateMessage,
+  populateUser,
+  populateUserAccount,
+  populateUserConversation,
+  resetDbTables,
+} from "./helpers/database.ts";
 import { beforeEach, describe, expect, test } from "vitest";
 import { anyString } from "./helpers/types.ts";
 
@@ -13,10 +20,113 @@ app.use("/api/conversations", conversation);
 
 beforeEach(async () => {
   await resetDbTables();
-  await populateDb();
+  await populateUser();
+  await populateUserAccount();
 });
 
 describe("conversation route", () => {
+  describe("get conversations by user account ID route", () => {
+    test("returns conversations from user account ID", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app).get("/api/conversations").send({ id: 1 });
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: true,
+        data: [
+          {
+            id: 2,
+            updatedAt: "2026-01-01T21:10:00.000Z",
+            userConversations: [
+              {
+                userAccount: {
+                  id: 3,
+                  deletedAt: null,
+                  user: { firstName: "Phillipe", lastName: "Doe" },
+                },
+              },
+            ],
+            messages: [
+              {
+                id: 3,
+                content: "Sed do eiusmod tempor incididunt",
+                createdAt: "2026-01-01T21:00:00.000Z",
+              },
+              {
+                id: 4,
+                content: "Labore et dolore magna aliqua",
+                createdAt: "2026-01-01T21:10:00.000Z",
+              },
+            ],
+          },
+          {
+            id: 1,
+            updatedAt: "2026-01-01T20:10:00.000Z",
+            userConversations: [
+              {
+                userAccount: {
+                  id: 2,
+                  deletedAt: null,
+                  user: { firstName: "Aisha", lastName: "Doe" },
+                },
+              },
+            ],
+            messages: [
+              {
+                id: 1,
+                content: "Lorem ipsum dolor sit amet",
+                createdAt: "2026-01-01T20:00:00.000Z",
+              },
+              {
+                id: 2,
+                content: "Consectetur adipiscing elit",
+                createdAt: "2026-01-01T20:10:00.000Z",
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    test("returns empty array for no conversations", async () => {
+      const res = await request(app).get("/api/conversations").send({ id: 1 });
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({ success: true, data: [] });
+    });
+
+    test("returns validation errors for invalid user account ID", async () => {
+      const res = await request(app).get("/api/conversations").send({});
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "",
+            msg: "User account ID is required",
+            path: "id",
+            location: "body",
+          },
+          {
+            type: "field",
+            value: "",
+            msg: "Invalid user account ID, expected number",
+            path: "id",
+            location: "body",
+          },
+        ],
+      });
+    });
+  });
+
   describe("create conversation endpoint", () => {
     test("create a conversation", async () => {
       const conversation = {

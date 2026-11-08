@@ -1,8 +1,40 @@
 import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../../types/message-types.ts";
+import type { UserAccount } from "../../generated/prisma/client.ts";
 
 type CreateConversationParams = Omit<MessageInput, "conversationId">;
 type AddMessageToConversationParams = MessageInput;
+
+const getConversationsByUserAccountId = async (
+  userAccountId: UserAccount["id"],
+) => {
+  const conversations = await prisma.conversation.findMany({
+    where: { deletedAt: null, userConversations: { some: { userAccountId } } },
+    select: {
+      id: true,
+      updatedAt: true,
+      messages: {
+        select: { id: true, content: true, createdAt: true },
+        orderBy: { createdAt: "asc" },
+      },
+      userConversations: {
+        where: { userAccountId: { not: userAccountId } },
+        select: {
+          userAccount: {
+            select: {
+              id: true,
+              deletedAt: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+        },
+      },
+    },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  return conversations;
+};
 
 const createConversation = async ({
   content,
@@ -101,4 +133,8 @@ const addMessageToConversation = async ({
   return conversation;
 };
 
-export { createConversation, addMessageToConversation };
+export {
+  getConversationsByUserAccountId,
+  createConversation,
+  addMessageToConversation,
+};

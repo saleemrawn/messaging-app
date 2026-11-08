@@ -3,6 +3,12 @@ import * as controller from "../controllers/conversation-controllers.ts";
 
 const router = Router();
 
+router.get(
+  "/",
+  controller.getConversationsByUserAccountIdValidators,
+  controller.getConversationsByUserAccountId,
+);
+
 router.post(
   "/",
   controller.createConversationValidators,
