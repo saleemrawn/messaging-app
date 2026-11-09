@@ -9,6 +9,12 @@ router.get(
   controller.getConversationsByUserAccountId,
 );
 
+router.get(
+  "/:id",
+  controller.getConversationByIdValidators,
+  controller.getConversationById,
+);
+
 router.post(
   "/",
   controller.createConversationValidators,

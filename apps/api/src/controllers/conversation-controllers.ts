@@ -54,6 +54,8 @@ const recipientIdValidator = body("recipientId")
 
 const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
 
+const getConversationByIdValidators = [conversationIdValidator];
+
 const createConversationValidators = [
   contentValidator,
   senderIdValidator,
@@ -67,16 +69,14 @@ const addMessageToConversationValidators = [
   recipientIdValidator,
 ];
 
-type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
-type CreateConversationResBody = Pick<Conversation, "id">;
-type AddMessageToConversationResBody = Pick<Conversation, "id">;
-type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
 interface AddMessageToConversationReqParams {
   id: string;
 }
+
 interface GetConversationsByUserAccountIdReqBody {
   id: number;
 }
+
 interface GetConversationsByUserAccountIdResBody {
   id: Conversation["id"];
   updatedAt: Conversation["updatedAt"];
@@ -97,6 +97,34 @@ interface GetConversationsByUserAccountIdResBody {
   }[];
 }
 
+interface GetConversationByIdReqBody {
+  id: Conversation["id"];
+}
+
+interface GetConversationByIdResBody {
+  id: Conversation["id"];
+  updatedAt: Conversation["updatedAt"];
+  messages: {
+    id: Message["id"];
+    content: Message["content"];
+    createdAt: Message["createdAt"];
+    userAccount: {
+      id: UserAccount["id"];
+      deletedAt: UserAccount["deletedAt"];
+      user: {
+        id: User["id"];
+        firstName: User["firstName"];
+        lastName: User["lastName"];
+      };
+    };
+  }[];
+}
+
+type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
+type CreateConversationResBody = Pick<Conversation, "id">;
+type AddMessageToConversationResBody = Pick<Conversation, "id">;
+type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
+
 const getConversationsByUserAccountId = async (
   req: Request<object, object, GetConversationsByUserAccountIdReqBody, object>,
   res: Response<
@@ -116,6 +144,34 @@ const getConversationsByUserAccountId = async (
     const conversations = await repository.getConversationsByUserAccountId(id);
 
     res.status(200).json({ success: true, data: conversations });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getConversationById = async (
+  req: Request<GetConversationByIdReqBody, object, object, object>,
+  res: Response<ApiResponse<GetConversationByIdResBody, ValidationError[]>>,
+  next: NextFunction,
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
+    const { id }: GetConversationByIdReqBody = matchedData(req);
+
+    const conversation = await repository.getConversationById(id);
+    if (!conversation) {
+      res
+        .status(404)
+        .json({ success: false, message: "Conversation not found" });
+      return;
+    }
+
+    res.status(200).json({ success: true, data: conversation });
   } catch (err) {
     next(err);
   }
@@ -194,9 +250,11 @@ const addMessageToConversation = async (
 
 export {
   getConversationsByUserAccountId,
+  getConversationById,
   createConversation,
   addMessageToConversation,
   getConversationsByUserAccountIdValidators,
+  getConversationByIdValidators,
   createConversationValidators,
   addMessageToConversationValidators,
 };

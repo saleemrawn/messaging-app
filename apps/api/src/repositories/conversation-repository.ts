@@ -1,6 +1,9 @@
 import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../../types/message-types.ts";
-import type { UserAccount } from "../../generated/prisma/client.ts";
+import type {
+  Conversation,
+  UserAccount,
+} from "../../generated/prisma/client.ts";
 
 type CreateConversationParams = Omit<MessageInput, "conversationId">;
 type AddMessageToConversationParams = MessageInput;
@@ -34,6 +37,32 @@ const getConversationsByUserAccountId = async (
   });
 
   return conversations;
+};
+
+const getConversationById = async (id: Conversation["id"]) => {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      updatedAt: true,
+      messages: {
+        select: {
+          id: true,
+          content: true,
+          createdAt: true,
+          userAccount: {
+            select: {
+              id: true,
+              deletedAt: true,
+              user: { select: { id: true, firstName: true, lastName: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+  return conversation;
 };
 
 const createConversation = async ({
@@ -135,6 +164,7 @@ const addMessageToConversation = async ({
 
 export {
   getConversationsByUserAccountId,
+  getConversationById,
   createConversation,
   addMessageToConversation,
 };

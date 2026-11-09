@@ -127,6 +127,59 @@ describe("conversation route", () => {
     });
   });
 
+  describe("get conversation by ID route", () => {
+    test("returns a conversation by ID", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app).get("/api/conversations/1");
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: true,
+        data: {
+          id: 1,
+          updatedAt: "2026-01-01T20:10:00.000Z",
+          messages: [
+            {
+              id: 1,
+              content: "Lorem ipsum dolor sit amet",
+              createdAt: "2026-01-01T20:00:00.000Z",
+              userAccount: {
+                id: 1,
+                deletedAt: null,
+                user: { id: 1, firstName: "John", lastName: "Doe" },
+              },
+            },
+            {
+              id: 2,
+              content: "Consectetur adipiscing elit",
+              createdAt: "2026-01-01T20:10:00.000Z",
+              userAccount: {
+                id: 2,
+                deletedAt: null,
+                user: { id: 2, firstName: "Aisha", lastName: "Doe" },
+              },
+            },
+          ],
+        },
+      });
+    });
+
+    test("returns conversation not found error", async () => {
+      const res = await request(app).get("/api/conversations/9999");
+
+      expect(res.status).toBe(404);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+    });
+  });
+
   describe("create conversation endpoint", () => {
     test("create a conversation", async () => {
       const conversation = {
