@@ -373,6 +373,46 @@ describe("conversation route", () => {
     });
   });
 
+  describe("delete conversation route", () => {
+    test("delete conversation with ID", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app).delete("/api/conversations/1");
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: true,
+        data: { id: 1, deletedAt: anyString() },
+      });
+    });
+
+    test("returns validation error for conversation ID type", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app).delete("/api/conversations/abc");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "abc",
+            msg: "Invalid conversation ID, expected number",
+            path: "id",
+            location: "params",
+          },
+        ],
+      });
+    });
+  });
+
   describe("add message to conversation endpoint", () => {
     test("add message to conversation", async () => {
       await request(app)

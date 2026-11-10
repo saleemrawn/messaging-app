@@ -105,6 +105,15 @@ const createConversation = async ({
   return conversation;
 };
 
+const deleteConversation = async (id: Conversation["id"]) => {
+  const conversation = await prisma.conversation.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+    select: { id: true, deletedAt: true },
+  });
+  return conversation;
+};
+
 const addMessageToConversation = async ({
   conversationId,
   content,
@@ -187,6 +196,7 @@ export {
   getConversationsByUserAccountId,
   getConversationById,
   createConversation,
+  deleteConversation,
   addMessageToConversation,
   addMessageReceipts,
 };

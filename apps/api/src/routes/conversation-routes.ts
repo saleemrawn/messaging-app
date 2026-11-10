@@ -21,6 +21,12 @@ router.post(
   controller.createConversation,
 );
 
+router.delete(
+  "/:id",
+  controller.deleteConversationValidators,
+  controller.deleteConversation,
+);
+
 router.post(
   "/:id/messages",
   controller.addMessageToConversationValidators,

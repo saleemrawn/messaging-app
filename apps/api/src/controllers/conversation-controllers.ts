@@ -73,6 +73,8 @@ const createConversationValidators = [
   recipientIdValidator,
 ];
 
+const deleteConversationValidators = [conversationIdValidator];
+
 const addMessageToConversationValidators = [
   conversationIdValidator,
   contentValidator,
@@ -150,6 +152,8 @@ interface AddMessageReceiptsReqBody {
 
 type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
 type CreateConversationResBody = Pick<Conversation, "id">;
+type DeleteConversationReqBody = Pick<Conversation, "id">;
+type DeleteConversationResBody = Pick<Conversation, "id" | "deletedAt">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
 type AddMessageReceiptsResBody = MsgReceipt[];
@@ -235,6 +239,26 @@ const createConversation = async (
   }
 };
 
+const deleteConversation = async (
+  req: Request<object, object, DeleteConversationReqBody, object>,
+  res: Response<ApiResponse<DeleteConversationResBody, ValidationError[]>>,
+  next: NextFunction,
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+    const { id }: DeleteConversationReqBody = matchedData(req);
+    const conversation = await repository.deleteConversation(id);
+
+    res.status(200).json({ success: true, data: conversation });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const addMessageToConversation = async (
   req: Request<
     AddMessageToConversationReqParams,
@@ -309,11 +333,13 @@ export {
   getConversationsByUserAccountId,
   getConversationById,
   createConversation,
+  deleteConversation,
   addMessageToConversation,
   addMessageReceipts,
   getConversationsByUserAccountIdValidators,
   getConversationByIdValidators,
   createConversationValidators,
+  deleteConversationValidators,
   addMessageToConversationValidators,
   addMessageReceiptsValidators,
 };
