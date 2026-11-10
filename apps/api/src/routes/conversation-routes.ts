@@ -27,4 +27,10 @@ router.post(
   controller.addMessageToConversation,
 );
 
+router.post(
+  "/:id/messages/receipts",
+  controller.addMessageReceiptsValidators,
+  controller.addMessageReceipts,
+);
+
 export default router;

@@ -31,7 +31,9 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app).get("/api/conversations").send({ id: 1 });
+      const res = await request(app)
+        .get("/api/conversations")
+        .send({ userAccountId: 1 });
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
@@ -93,7 +95,9 @@ describe("conversation route", () => {
     });
 
     test("returns empty array for no conversations", async () => {
-      const res = await request(app).get("/api/conversations").send({ id: 1 });
+      const res = await request(app)
+        .get("/api/conversations")
+        .send({ userAccountId: 1 });
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
@@ -112,14 +116,14 @@ describe("conversation route", () => {
             type: "field",
             value: "",
             msg: "User account ID is required",
-            path: "id",
+            path: "userAccountId",
             location: "body",
           },
           {
             type: "field",
             value: "",
             msg: "Invalid user account ID, expected number",
-            path: "id",
+            path: "userAccountId",
             location: "body",
           },
         ],
@@ -566,6 +570,153 @@ describe("conversation route", () => {
             value: "abc",
             msg: "Invalid recipient ID, expected number",
             path: "recipientId",
+            location: "body",
+          },
+        ],
+      });
+    });
+  });
+
+  describe("add message receipts for conversation endpoint", () => {
+    test("add message receipts for a user", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app)
+        .post("/api/conversations/1/messages/receipts")
+        .send({ messageIds: [1], userAccountId: 2 });
+
+      expect(res.status).toBe(201);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: true,
+        data: [
+          {
+            id: 1,
+            messageId: 1,
+            userAccountId: 2,
+            readAt: anyString(),
+          },
+        ],
+      });
+    });
+
+    test("returns validation error for missing message IDs", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app)
+        .post("/api/conversations/1/messages/receipts")
+        .send({ messageIds: [], userAccountId: 2 });
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: [],
+            msg: "One or more message IDs is required",
+            path: "messageIds",
+            location: "body",
+          },
+        ],
+      });
+    });
+
+    test("returns validation error for incorrect message IDs type", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app)
+        .post("/api/conversations/1/messages/receipts")
+        .send({ messageIds: ["a", "b", "c"], userAccountId: 2 });
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "a",
+            msg: "Each message ID must be a positive integer",
+            path: "messageIds[0]",
+            location: "body",
+          },
+          {
+            type: "field",
+            value: "b",
+            msg: "Each message ID must be a positive integer",
+            path: "messageIds[1]",
+            location: "body",
+          },
+          {
+            type: "field",
+            value: "c",
+            msg: "Each message ID must be a positive integer",
+            path: "messageIds[2]",
+            location: "body",
+          },
+        ],
+      });
+    });
+
+    test("returns validation errors for missing user account ID", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app)
+        .post("/api/conversations/1/messages/receipts")
+        .send({ messageIds: [1] });
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "",
+            msg: "User account ID is required",
+            path: "userAccountId",
+            location: "body",
+          },
+          {
+            type: "field",
+            value: "",
+            msg: "Invalid user account ID, expected number",
+            path: "userAccountId",
+            location: "body",
+          },
+        ],
+      });
+    });
+
+    test("returns validation errors for incorrect user account ID type", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const res = await request(app)
+        .post("/api/conversations/1/messages/receipts")
+        .send({ messageIds: [1], userAccountId: "abc" });
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "abc",
+            msg: "Invalid user account ID, expected number",
+            path: "userAccountId",
             location: "body",
           },
         ],

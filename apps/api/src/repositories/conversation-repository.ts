@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../../types/message-types.ts";
 import type {
   Conversation,
+  MessageReceipt,
   UserAccount,
 } from "../../generated/prisma/client.ts";
 
@@ -162,9 +163,30 @@ const addMessageToConversation = async ({
   return conversation;
 };
 
+const addMessageReceipts = async ({
+  messageIds,
+  userAccountId,
+}: {
+  messageIds: MessageReceipt["id"][];
+  userAccountId: MessageReceipt["id"];
+}) => {
+  const receipts = await prisma.messageReceipt.createManyAndReturn({
+    data: messageIds.map((id) => ({
+      messageId: id,
+      userAccountId: userAccountId,
+      readAt: new Date(),
+    })),
+    select: { id: true, messageId: true, userAccountId: true, readAt: true },
+    skipDuplicates: true,
+  });
+
+  return receipts;
+};
+
 export {
   getConversationsByUserAccountId,
   getConversationById,
   createConversation,
   addMessageToConversation,
+  addMessageReceipts,
 };

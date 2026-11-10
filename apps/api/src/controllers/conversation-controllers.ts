@@ -3,6 +3,7 @@ import type { ApiResponse } from "../../types/api-types.ts";
 import type {
   Conversation,
   Message,
+  MessageReceipt,
   UserAccount,
 } from "../../generated/prisma/client.ts";
 import type { MessageInput } from "../../types/message-types.ts";
@@ -16,7 +17,7 @@ import {
 import * as repository from "../repositories/conversation-repository.ts";
 import type { User } from "../../types/user-types.ts";
 
-const userAccountIdValidator = body("id")
+const userAccountIdValidator = body("userAccountId")
   .trim()
   .notEmpty()
   .withMessage("User account ID is required")
@@ -52,6 +53,16 @@ const recipientIdValidator = body("recipientId")
   .withMessage("Invalid recipient ID, expected number")
   .toInt();
 
+const messageIdsValidator = [
+  body("messageIds")
+    .isArray({ min: 1, max: 100 })
+    .withMessage("One or more message IDs is required"),
+  body("messageIds.*")
+    .isInt({ min: 1 })
+    .withMessage("Each message ID must be a positive integer")
+    .toInt(),
+];
+
 const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
 
 const getConversationByIdValidators = [conversationIdValidator];
@@ -69,12 +80,24 @@ const addMessageToConversationValidators = [
   recipientIdValidator,
 ];
 
+const addMessageReceiptsValidators = [
+  ...messageIdsValidator,
+  userAccountIdValidator,
+];
+
+interface MsgReceipt {
+  id: MessageReceipt["id"];
+  messageId: MessageReceipt["messageId"];
+  userAccountId: MessageReceipt["userAccountId"];
+  readAt: MessageReceipt["readAt"];
+}
+
 interface AddMessageToConversationReqParams {
   id: string;
 }
 
 interface GetConversationsByUserAccountIdReqBody {
-  id: number;
+  userAccountId: number;
 }
 
 interface GetConversationsByUserAccountIdResBody {
@@ -120,10 +143,16 @@ interface GetConversationByIdResBody {
   }[];
 }
 
+interface AddMessageReceiptsReqBody {
+  messageIds: MessageReceipt["messageId"][];
+  userAccountId: MessageReceipt["userAccountId"];
+}
+
 type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
 type CreateConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
+type AddMessageReceiptsResBody = MsgReceipt[];
 
 const getConversationsByUserAccountId = async (
   req: Request<object, object, GetConversationsByUserAccountIdReqBody, object>,
@@ -139,9 +168,11 @@ const getConversationsByUserAccountId = async (
       return;
     }
 
-    const { id }: GetConversationsByUserAccountIdReqBody = matchedData(req);
+    const { userAccountId }: GetConversationsByUserAccountIdReqBody =
+      matchedData(req);
 
-    const conversations = await repository.getConversationsByUserAccountId(id);
+    const conversations =
+      await repository.getConversationsByUserAccountId(userAccountId);
 
     res.status(200).json({ success: true, data: conversations });
   } catch (err) {
@@ -248,13 +279,41 @@ const addMessageToConversation = async (
   }
 };
 
+const addMessageReceipts = async (
+  req: Request<object, object, AddMessageReceiptsReqBody, object>,
+  res: Response<ApiResponse<AddMessageReceiptsResBody, ValidationError[]>>,
+  next: NextFunction,
+) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ success: false, errors: errors.array() });
+      return;
+    }
+
+    const { messageIds, userAccountId }: AddMessageReceiptsReqBody =
+      matchedData(req);
+
+    const receipts = await repository.addMessageReceipts({
+      messageIds,
+      userAccountId,
+    });
+
+    res.status(201).json({ success: true, data: receipts });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export {
   getConversationsByUserAccountId,
   getConversationById,
   createConversation,
   addMessageToConversation,
+  addMessageReceipts,
   getConversationsByUserAccountIdValidators,
   getConversationByIdValidators,
   createConversationValidators,
   addMessageToConversationValidators,
+  addMessageReceiptsValidators,
 };
