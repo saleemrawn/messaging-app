@@ -8,6 +8,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/users", routes.user);
 app.use("/api/conversations", routes.conversation);
+app.use("/api/messages", routes.message);
 
 app.listen(process.env.PORT, (err) => {
   if (err) {
