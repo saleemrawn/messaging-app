@@ -168,6 +168,10 @@ describe("conversation route", () => {
               },
             },
           ],
+          userConversations: [
+            { id: 1, userAccountId: 1, unreadCount: 0 },
+            { id: 2, userAccountId: 2, unreadCount: 0 },
+          ],
         },
       });
     });
@@ -639,6 +643,78 @@ describe("conversation route", () => {
             readAt: anyString(),
           },
         ],
+      });
+    });
+
+    test("user unread count resets to zero", async () => {
+      await populateConversation();
+      await populateUserConversation();
+
+      // Send message
+      await request(app)
+        .post("/api/conversations/1/messages")
+        .send({
+          content: "Hello",
+          senderId: 1,
+          recipientId: 2,
+        })
+        .set("Accept", "application/json")
+        .expect(201);
+
+      const beforeRead = await request(app).get("/api/conversations/1");
+      expect(beforeRead.body).toEqual({
+        success: true,
+        data: {
+          id: 1,
+          updatedAt: anyString(),
+          messages: [
+            {
+              id: 1,
+              content: "Hello",
+              createdAt: anyString(),
+              userAccount: {
+                id: 1,
+                deletedAt: null,
+                user: { id: 1, firstName: "John", lastName: "Doe" },
+              },
+            },
+          ],
+          userConversations: [
+            { id: 1, userAccountId: 1, unreadCount: 0 },
+            { id: 2, userAccountId: 2, unreadCount: 1 },
+          ],
+        },
+      });
+
+      // Add message receipt
+      await request(app)
+        .post("/api/conversations/1/messages/receipts")
+        .send({ messageIds: [1], userAccountId: 2 })
+        .expect(201);
+
+      const afterRead = await request(app).get("/api/conversations/1");
+      expect(afterRead.body).toEqual({
+        success: true,
+        data: {
+          id: 1,
+          updatedAt: anyString(),
+          messages: [
+            {
+              id: 1,
+              content: "Hello",
+              createdAt: anyString(),
+              userAccount: {
+                id: 1,
+                deletedAt: null,
+                user: { id: 1, firstName: "John", lastName: "Doe" },
+              },
+            },
+          ],
+          userConversations: [
+            { id: 1, userAccountId: 1, unreadCount: 0 },
+            { id: 2, userAccountId: 2, unreadCount: 0 },
+          ],
+        },
       });
     });
 

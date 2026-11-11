@@ -61,6 +61,9 @@ const getConversationById = async (id: Conversation["id"]) => {
         },
         orderBy: { createdAt: "asc" },
       },
+      userConversations: {
+        select: { id: true, userAccountId: true, unreadCount: true },
+      },
     },
   });
   return conversation;
@@ -179,17 +182,24 @@ const addMessageReceipts = async ({
   messageIds: MessageReceipt["id"][];
   userAccountId: MessageReceipt["id"];
 }) => {
-  const receipts = await prisma.messageReceipt.createManyAndReturn({
-    data: messageIds.map((id) => ({
-      messageId: id,
-      userAccountId: userAccountId,
-      readAt: new Date(),
-    })),
-    select: { id: true, messageId: true, userAccountId: true, readAt: true },
-    skipDuplicates: true,
-  });
+  return await prisma.$transaction(async (tx) => {
+    const receipts = await tx.messageReceipt.createManyAndReturn({
+      data: messageIds.map((id) => ({
+        messageId: id,
+        userAccountId,
+        readAt: new Date(),
+      })),
+      select: { id: true, messageId: true, userAccountId: true, readAt: true },
+      skipDuplicates: true,
+    });
 
-  return receipts;
+    await tx.userConversation.updateMany({
+      where: { userAccountId },
+      data: { unreadCount: 0 },
+    });
+
+    return receipts;
+  });
 };
 
 export {
