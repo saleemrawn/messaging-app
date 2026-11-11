@@ -53,16 +53,6 @@ const recipientIdValidator = body("recipientId")
   .withMessage("Invalid recipient ID, expected number")
   .toInt();
 
-const messageIdsValidator = [
-  body("messageIds")
-    .isArray({ min: 1, max: 100 })
-    .withMessage("One or more message IDs is required"),
-  body("messageIds.*")
-    .isInt({ min: 1 })
-    .withMessage("Each message ID must be a positive integer")
-    .toInt(),
-];
-
 const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
 
 const getConversationByIdValidators = [conversationIdValidator];
@@ -83,7 +73,7 @@ const addMessageToConversationValidators = [
 ];
 
 const addMessageReceiptsValidators = [
-  ...messageIdsValidator,
+  conversationIdValidator,
   userAccountIdValidator,
 ];
 
@@ -145,8 +135,16 @@ interface GetConversationByIdResBody {
   }[];
 }
 
+interface AddMessageReceiptsReqParams {
+  id: Conversation["id"];
+}
+
 interface AddMessageReceiptsReqBody {
-  messageIds: MessageReceipt["messageId"][];
+  userAccountId: MessageReceipt["userAccountId"];
+}
+
+interface AddMessageReceiptsValidatedReq {
+  id: Conversation["id"];
   userAccountId: MessageReceipt["userAccountId"];
 }
 
@@ -304,7 +302,12 @@ const addMessageToConversation = async (
 };
 
 const addMessageReceipts = async (
-  req: Request<object, object, AddMessageReceiptsReqBody, object>,
+  req: Request<
+    AddMessageReceiptsReqParams,
+    object,
+    AddMessageReceiptsReqBody,
+    object
+  >,
   res: Response<ApiResponse<AddMessageReceiptsResBody, ValidationError[]>>,
   next: NextFunction,
 ) => {
@@ -315,11 +318,11 @@ const addMessageReceipts = async (
       return;
     }
 
-    const { messageIds, userAccountId }: AddMessageReceiptsReqBody =
+    const { id, userAccountId }: AddMessageReceiptsValidatedReq =
       matchedData(req);
 
     const receipts = await repository.addMessageReceipts({
-      messageIds,
+      conversationId: id,
       userAccountId,
     });
 

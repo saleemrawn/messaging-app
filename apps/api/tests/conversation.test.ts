@@ -629,7 +629,7 @@ describe("conversation route", () => {
 
       const res = await request(app)
         .post("/api/conversations/1/messages/receipts")
-        .send({ messageIds: [1], userAccountId: 2 });
+        .send({ userAccountId: 2 });
 
       expect(res.status).toBe(201);
       expect(res.type).toBe("application/json");
@@ -689,7 +689,7 @@ describe("conversation route", () => {
       // Add message receipt
       await request(app)
         .post("/api/conversations/1/messages/receipts")
-        .send({ messageIds: [1], userAccountId: 2 })
+        .send({ userAccountId: 2 })
         .expect(201);
 
       const afterRead = await request(app).get("/api/conversations/1");
@@ -715,70 +715,6 @@ describe("conversation route", () => {
             { id: 2, userAccountId: 2, unreadCount: 0 },
           ],
         },
-      });
-    });
-
-    test("returns validation error for missing message IDs", async () => {
-      await populateConversation();
-      await populateUserConversation();
-      await populateMessage();
-
-      const res = await request(app)
-        .post("/api/conversations/1/messages/receipts")
-        .send({ messageIds: [], userAccountId: 2 });
-
-      expect(res.status).toBe(400);
-      expect(res.type).toBe("application/json");
-      expect(res.body).toEqual({
-        success: false,
-        errors: [
-          {
-            type: "field",
-            value: [],
-            msg: "One or more message IDs is required",
-            path: "messageIds",
-            location: "body",
-          },
-        ],
-      });
-    });
-
-    test("returns validation error for incorrect message IDs type", async () => {
-      await populateConversation();
-      await populateUserConversation();
-      await populateMessage();
-
-      const res = await request(app)
-        .post("/api/conversations/1/messages/receipts")
-        .send({ messageIds: ["a", "b", "c"], userAccountId: 2 });
-
-      expect(res.status).toBe(400);
-      expect(res.type).toBe("application/json");
-      expect(res.body).toEqual({
-        success: false,
-        errors: [
-          {
-            type: "field",
-            value: "a",
-            msg: "Each message ID must be a positive integer",
-            path: "messageIds[0]",
-            location: "body",
-          },
-          {
-            type: "field",
-            value: "b",
-            msg: "Each message ID must be a positive integer",
-            path: "messageIds[1]",
-            location: "body",
-          },
-          {
-            type: "field",
-            value: "c",
-            msg: "Each message ID must be a positive integer",
-            path: "messageIds[2]",
-            location: "body",
-          },
-        ],
       });
     });
 

@@ -176,13 +176,20 @@ const addMessageToConversation = async ({
 };
 
 const addMessageReceipts = async ({
-  messageIds,
+  conversationId,
   userAccountId,
 }: {
-  messageIds: MessageReceipt["id"][];
+  conversationId: Conversation["id"];
   userAccountId: MessageReceipt["id"];
 }) => {
   return await prisma.$transaction(async (tx) => {
+    const messages = await tx.message.findMany({
+      where: { conversationId, userAccountId: { not: userAccountId } },
+      select: { id: true },
+    });
+
+    const messageIds = messages.map((m) => m.id);
+
     const receipts = await tx.messageReceipt.createManyAndReturn({
       data: messageIds.map((id) => ({
         messageId: id,
