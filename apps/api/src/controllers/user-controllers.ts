@@ -75,7 +75,7 @@ const updateUserValidators = [
 const deleteUserValidators = [idValidator];
 
 const getUsers = async (
-  req: Request,
+  _req: Request,
   res: Response<ApiResponse<User[]>>,
   next: NextFunction,
 ) => {
