@@ -1,11 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import type { ApiResponse } from "../../types/api-types.ts";
-import {
-  validationResult,
-  matchedData,
-  param,
-  type ValidationError,
-} from "express-validator";
+import { matchedData, param, type ValidationError } from "express-validator";
 import * as repository from "../repositories/message-repository.ts";
 import type { Message } from "../../generated/prisma/client.ts";
 
@@ -33,11 +28,6 @@ const deleteMessage = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
     const { id }: DeleteMessageReqParams = matchedData(req);
     const message = await repository.deleteMessage(id);
 
