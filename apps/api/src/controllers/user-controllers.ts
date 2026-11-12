@@ -3,7 +3,6 @@ import type { ApiResponse } from "../../types/api-types.ts";
 import type { User, UserAccount } from "../../types/user-types.ts";
 import {
   body,
-  validationResult,
   matchedData,
   param,
   type ValidationError,
@@ -122,12 +121,6 @@ const createUser = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const {
       firstName,
       lastName,
@@ -165,12 +158,6 @@ const updateUser = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const {
       id,
       firstName,
