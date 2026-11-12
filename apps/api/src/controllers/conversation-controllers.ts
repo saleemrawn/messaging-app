@@ -9,7 +9,6 @@ import type {
 import type { MessageInput } from "../../types/message-types.ts";
 import {
   body,
-  validationResult,
   matchedData,
   param,
   type ValidationError,
@@ -164,12 +163,6 @@ const getConversationsByUserAccountId = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const { userAccountId }: GetConversationsByUserAccountIdReqBody =
       matchedData(req);
 
@@ -188,15 +181,10 @@ const getConversationById = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const { id }: GetConversationByIdReqBody = matchedData(req);
 
     const conversation = await repository.getConversationById(id);
+
     if (!conversation) {
       res
         .status(404)
@@ -216,12 +204,6 @@ const createConversation = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const { content, senderId, recipientId }: CreateConversationReqBody =
       matchedData(req);
 
@@ -243,11 +225,6 @@ const deleteConversation = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
     const { id }: DeleteConversationReqBody = matchedData(req);
     const conversation = await repository.deleteConversation(id);
 
@@ -270,12 +247,6 @@ const addMessageToConversation = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const {
       id,
       content,
@@ -312,12 +283,6 @@ const addMessageReceipts = async (
   next: NextFunction,
 ) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      res.status(400).json({ success: false, errors: errors.array() });
-      return;
-    }
-
     const { id, userAccountId }: AddMessageReceiptsValidatedReq =
       matchedData(req);
 
