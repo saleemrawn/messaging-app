@@ -88,6 +88,13 @@ interface AddMessageToConversationReqParams {
   id: string;
 }
 
+interface AddMessageToConversationValidatedReq {
+  id: Conversation["id"];
+  content: Message["content"];
+  senderId: UserAccount["id"];
+  recipientId: UserAccount["id"];
+}
+
 interface GetConversationsByUserAccountIdReqBody {
   userAccountId: number;
 }
@@ -238,12 +245,7 @@ const addMessageToConversation = async (
     content,
     senderId,
     recipientId,
-  }: {
-    id: number;
-    content: string;
-    senderId: number;
-    recipientId: number;
-  } = matchedData(req);
+  }: AddMessageToConversationValidatedReq = matchedData(req);
 
   const conversation = await repository.addMessageToConversation({
     conversationId: id,
