@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import type { ApiResponse } from "../../types/api-types.ts";
 import { matchedData, param, type ValidationError } from "express-validator";
 import * as repository from "../repositories/message-repository.ts";
@@ -25,16 +25,11 @@ interface DeleteMessageResBody {
 const deleteMessage = async (
   req: Request<DeleteMessageReqParams, object, object, object>,
   res: Response<ApiResponse<DeleteMessageResBody, ValidationError[]>>,
-  next: NextFunction,
 ) => {
-  try {
-    const { id }: DeleteMessageReqParams = matchedData(req);
-    const message = await repository.deleteMessage(id);
+  const { id }: DeleteMessageReqParams = matchedData(req);
+  const message = await repository.deleteMessage(id);
 
-    res.status(200).json({ success: true, data: message });
-  } catch (err) {
-    next(err);
-  }
+  res.status(200).json({ success: true, data: message });
 };
 
 export { deleteMessage, deleteMessageValidators };

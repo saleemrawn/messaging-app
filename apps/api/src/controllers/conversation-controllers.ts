@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response } from "express";
 import type { ApiResponse } from "../../types/api-types.ts";
 import type {
   Conversation,
@@ -160,78 +160,55 @@ const getConversationsByUserAccountId = async (
   res: Response<
     ApiResponse<GetConversationsByUserAccountIdResBody[], ValidationError[]>
   >,
-  next: NextFunction,
 ) => {
-  try {
-    const { userAccountId }: GetConversationsByUserAccountIdReqBody =
-      matchedData(req);
+  const { userAccountId }: GetConversationsByUserAccountIdReqBody =
+    matchedData(req);
 
-    const conversations =
-      await repository.getConversationsByUserAccountId(userAccountId);
+  const conversations =
+    await repository.getConversationsByUserAccountId(userAccountId);
 
-    res.status(200).json({ success: true, data: conversations });
-  } catch (err) {
-    next(err);
-  }
+  res.status(200).json({ success: true, data: conversations });
 };
 
 const getConversationById = async (
   req: Request<GetConversationByIdReqBody, object, object, object>,
   res: Response<ApiResponse<GetConversationByIdResBody, ValidationError[]>>,
-  next: NextFunction,
 ) => {
-  try {
-    const { id }: GetConversationByIdReqBody = matchedData(req);
+  const { id }: GetConversationByIdReqBody = matchedData(req);
 
-    const conversation = await repository.getConversationById(id);
+  const conversation = await repository.getConversationById(id);
 
-    if (!conversation) {
-      res
-        .status(404)
-        .json({ success: false, message: "Conversation not found" });
-      return;
-    }
-
-    res.status(200).json({ success: true, data: conversation });
-  } catch (err) {
-    next(err);
+  if (!conversation) {
+    res.status(404).json({ success: false, message: "Conversation not found" });
+    return;
   }
+
+  res.status(200).json({ success: true, data: conversation });
 };
 
 const createConversation = async (
   req: Request<object, object, CreateConversationReqBody, object>,
   res: Response<ApiResponse<CreateConversationResBody, ValidationError[]>>,
-  next: NextFunction,
 ) => {
-  try {
-    const { content, senderId, recipientId }: CreateConversationReqBody =
-      matchedData(req);
+  const { content, senderId, recipientId }: CreateConversationReqBody =
+    matchedData(req);
 
-    const conversation = await repository.createConversation({
-      content,
-      senderId,
-      recipientId,
-    });
+  const conversation = await repository.createConversation({
+    content,
+    senderId,
+    recipientId,
+  });
 
-    res.status(201).json({ success: true, data: conversation });
-  } catch (err) {
-    next(err);
-  }
+  res.status(201).json({ success: true, data: conversation });
 };
 
 const deleteConversation = async (
   req: Request<object, object, DeleteConversationReqBody, object>,
   res: Response<ApiResponse<DeleteConversationResBody, ValidationError[]>>,
-  next: NextFunction,
 ) => {
-  try {
-    const { id }: DeleteConversationReqBody = matchedData(req);
-    const conversation = await repository.deleteConversation(id);
-
-    res.status(200).json({ success: true, data: conversation });
-  } catch (err) {
-    next(err);
-  }
+  const { id }: DeleteConversationReqBody = matchedData(req);
+  const conversation = await repository.deleteConversation(id);
+  res.status(200).json({ success: true, data: conversation });
 };
 
 const addMessageToConversation = async (
@@ -244,32 +221,27 @@ const addMessageToConversation = async (
   res: Response<
     ApiResponse<AddMessageToConversationResBody, ValidationError[]>
   >,
-  next: NextFunction,
 ) => {
-  try {
-    const {
-      id,
-      content,
-      senderId,
-      recipientId,
-    }: {
-      id: number;
-      content: string;
-      senderId: number;
-      recipientId: number;
-    } = matchedData(req);
+  const {
+    id,
+    content,
+    senderId,
+    recipientId,
+  }: {
+    id: number;
+    content: string;
+    senderId: number;
+    recipientId: number;
+  } = matchedData(req);
 
-    const conversation = await repository.addMessageToConversation({
-      conversationId: id,
-      content,
-      senderId,
-      recipientId,
-    });
+  const conversation = await repository.addMessageToConversation({
+    conversationId: id,
+    content,
+    senderId,
+    recipientId,
+  });
 
-    res.status(201).json({ success: true, data: conversation });
-  } catch (err) {
-    next(err);
-  }
+  res.status(201).json({ success: true, data: conversation });
 };
 
 const addMessageReceipts = async (
@@ -280,21 +252,16 @@ const addMessageReceipts = async (
     object
   >,
   res: Response<ApiResponse<AddMessageReceiptsResBody, ValidationError[]>>,
-  next: NextFunction,
 ) => {
-  try {
-    const { id, userAccountId }: AddMessageReceiptsValidatedReq =
-      matchedData(req);
+  const { id, userAccountId }: AddMessageReceiptsValidatedReq =
+    matchedData(req);
 
-    const receipts = await repository.addMessageReceipts({
-      conversationId: id,
-      userAccountId,
-    });
+  const receipts = await repository.addMessageReceipts({
+    conversationId: id,
+    userAccountId,
+  });
 
-    res.status(201).json({ success: true, data: receipts });
-  } catch (err) {
-    next(err);
-  }
+  res.status(201).json({ success: true, data: receipts });
 };
 
 export {
