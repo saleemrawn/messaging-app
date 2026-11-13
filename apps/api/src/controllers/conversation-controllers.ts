@@ -27,6 +27,7 @@ const userAccountIdValidator = body("userAccountId")
 const conversationIdValidator = param("id")
   .trim()
   .notEmpty()
+  .withMessage("Conversation ID is required")
   .isInt()
   .withMessage("Invalid conversation ID, expected number")
   .toInt();
