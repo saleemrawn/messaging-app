@@ -115,6 +115,10 @@ interface GetConversationByIdReqParams {
   id: string;
 }
 
+interface GetConversationByIdValidatedReq {
+  id: Conversation["id"];
+}
+
 interface GetConversationByIdResBody {
   id: Conversation["id"];
   updatedAt: Conversation["updatedAt"];
@@ -174,10 +178,9 @@ const getConversationById = async (
   req: Request<GetConversationByIdReqParams, object, object, object>,
   res: Response<ApiResponse<GetConversationByIdResBody, ValidationError[]>>,
 ) => {
-  const { id }: GetConversationByIdReqParams = matchedData(req);
+  const { id }: GetConversationByIdValidatedReq = matchedData(req);
 
   const conversation = await repository.getConversationById(id);
-
   if (!conversation) {
     res.status(404).json({ success: false, message: "Conversation not found" });
     return;
