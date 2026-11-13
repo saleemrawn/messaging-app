@@ -111,8 +111,8 @@ interface GetConversationsByUserAccountIdResBody {
   }[];
 }
 
-interface GetConversationByIdReqBody {
-  id: Conversation["id"];
+interface GetConversationByIdReqParams {
+  id: string;
 }
 
 interface GetConversationByIdResBody {
@@ -171,10 +171,10 @@ const getConversationsByUserAccountId = async (
 };
 
 const getConversationById = async (
-  req: Request<GetConversationByIdReqBody, object, object, object>,
+  req: Request<GetConversationByIdReqParams, object, object, object>,
   res: Response<ApiResponse<GetConversationByIdResBody, ValidationError[]>>,
 ) => {
-  const { id }: GetConversationByIdReqBody = matchedData(req);
+  const { id }: GetConversationByIdReqParams = matchedData(req);
 
   const conversation = await repository.getConversationById(id);
 
