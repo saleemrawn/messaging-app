@@ -139,7 +139,7 @@ interface GetConversationByIdResBody {
 }
 
 interface AddMessageReceiptsReqParams {
-  id: Conversation["id"];
+  id: string;
 }
 
 interface AddMessageReceiptsReqBody {
