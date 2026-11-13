@@ -16,14 +16,19 @@ import {
 import * as repository from "../repositories/conversation-repository.ts";
 import type { User } from "../../types/user-types.ts";
 
-const userAccountIdValidator = body("userAccountId")
-  .trim()
-  .notEmpty()
-  .withMessage("User account ID is required")
-  .isInt()
-  .withMessage("Invalid user account ID, expected number")
-  .toInt();
+const intBodyValidator = (field: string) => {
+  return body(field)
+    .trim()
+    .notEmpty()
+    .withMessage(`${field} is required`)
+    .isInt()
+    .withMessage(`Invalid ${field}, expected number`)
+    .toInt();
+};
 
+const userAccountIdValidator = intBodyValidator("userAccountId");
+const senderIdValidator = intBodyValidator("senderId");
+const recipientIdValidator = intBodyValidator("recipientId");
 const conversationIdValidator = param("id")
   .trim()
   .notEmpty()
@@ -37,33 +42,15 @@ const contentValidator = body("content")
   .notEmpty()
   .withMessage("Message content required");
 
-const senderIdValidator = body("senderId")
-  .trim()
-  .notEmpty()
-  .withMessage("Sender ID is required")
-  .isInt()
-  .withMessage("Invalid sender ID, expected number")
-  .toInt();
-
-const recipientIdValidator = body("recipientId")
-  .trim()
-  .notEmpty()
-  .withMessage("Recipient ID is required")
-  .isInt()
-  .withMessage("Invalid recipient ID, expected number")
-  .toInt();
-
 const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
-
 const getConversationByIdValidators = [conversationIdValidator];
+const deleteConversationValidators = [conversationIdValidator];
 
 const createConversationValidators = [
   contentValidator,
   senderIdValidator,
   recipientIdValidator,
 ];
-
-const deleteConversationValidators = [conversationIdValidator];
 
 const addMessageToConversationValidators = [
   conversationIdValidator,
