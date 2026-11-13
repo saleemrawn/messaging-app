@@ -151,9 +151,16 @@ interface AddMessageReceiptsValidatedReq {
   userAccountId: MessageReceipt["userAccountId"];
 }
 
+interface DeleteConversationReqParams {
+  id: string;
+}
+
+interface DeleteConversationValidatedReq {
+  id: Conversation["id"];
+}
+
 type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
 type CreateConversationResBody = Pick<Conversation, "id">;
-type DeleteConversationReqBody = Pick<Conversation, "id">;
 type DeleteConversationResBody = Pick<Conversation, "id" | "deletedAt">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
@@ -206,10 +213,10 @@ const createConversation = async (
 };
 
 const deleteConversation = async (
-  req: Request<object, object, DeleteConversationReqBody, object>,
+  req: Request<DeleteConversationReqParams, object, object, object>,
   res: Response<ApiResponse<DeleteConversationResBody, ValidationError[]>>,
 ) => {
-  const { id }: DeleteConversationReqBody = matchedData(req);
+  const { id }: DeleteConversationValidatedReq = matchedData(req);
   const conversation = await repository.deleteConversation(id);
   res.status(200).json({ success: true, data: conversation });
 };
