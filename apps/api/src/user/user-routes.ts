@@ -1,5 +1,10 @@
 import { Router } from "express";
 import * as controller from "./user-controllers.ts";
+import {
+  createUserValidators,
+  updateUserValidators,
+  deleteUserValidators,
+} from "./user-validators.ts";
 import { handleValidationErrors } from "../middleware/validation-error-middleware.ts";
 
 const router = Router();
@@ -8,19 +13,19 @@ router.get("/", controller.getUsers);
 router.get("/:id", controller.getUserById);
 router.post(
   "/",
-  controller.createUserValidators,
+  createUserValidators,
   handleValidationErrors,
   controller.createUser,
 );
 router.put(
   "/:id",
-  controller.updateUserValidators,
+  updateUserValidators,
   handleValidationErrors,
   controller.updateUser,
 );
 router.delete(
   "/:id",
-  controller.deleteUserValidators,
+  deleteUserValidators,
   handleValidationErrors,
   controller.deleteUser,
 );

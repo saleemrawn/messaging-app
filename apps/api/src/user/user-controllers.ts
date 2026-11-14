@@ -1,78 +1,9 @@
 import type { Request, Response } from "express";
 import type { ApiResponse } from "../types/api-types.ts";
 import type { User, UserAccount } from "../types/user-types.ts";
-import {
-  body,
-  matchedData,
-  param,
-  type ValidationError,
-} from "express-validator";
+import { matchedData, type ValidationError } from "express-validator";
 import * as repository from "./user-repository.ts";
 import bcrypt from "bcrypt";
-
-const idValidator = param("id")
-  .trim()
-  .optional()
-  .isInt()
-  .withMessage("Invalid user ID, expected number")
-  .toInt();
-
-const firstNameValidator = body("firstName")
-  .trim()
-  .notEmpty()
-  .withMessage("First name required")
-  .isAlpha()
-  .withMessage("First name should only contain letters");
-
-const lastNameValidator = body("lastName")
-  .trim()
-  .notEmpty()
-  .withMessage("Last name required")
-  .isAlpha()
-  .withMessage("Last name should only contain letters");
-
-const emailValidator = body("email")
-  .trim()
-  .notEmpty()
-  .withMessage("Email is required")
-  .isEmail()
-  .withMessage("Email must be a valid format");
-
-const usernameValidator = body("username")
-  .trim()
-  .notEmpty()
-  .withMessage("Username is required")
-  .isLength({ min: 3, max: 30 })
-  .withMessage("Username must be between 3 and 30 characters long")
-  .isAlphanumeric(undefined, { ignore: "_-." })
-  .withMessage(
-    "Username must contain only letters, numbers, hyphen (-), underscore (_) or period (.)",
-  );
-
-const passwordValidator = body("password")
-  .notEmpty()
-  .withMessage("Password is required")
-  .isStrongPassword()
-  .withMessage(
-    "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
-  );
-
-const createUserValidators = [
-  firstNameValidator,
-  lastNameValidator,
-  emailValidator,
-  usernameValidator,
-  passwordValidator,
-];
-
-const updateUserValidators = [
-  idValidator,
-  firstNameValidator,
-  lastNameValidator,
-  emailValidator,
-];
-
-const deleteUserValidators = [idValidator];
 
 const getUsers = async (_req: Request, res: Response<ApiResponse<User[]>>) => {
   const users = await repository.getUsers();
@@ -160,13 +91,4 @@ const deleteUser = async (
   res.status(200).json({ success: true, data: user });
 };
 
-export {
-  getUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser,
-  createUserValidators,
-  updateUserValidators,
-  deleteUserValidators,
-};
+export { getUsers, getUserById, createUser, updateUser, deleteUser };
