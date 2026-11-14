@@ -1,4 +1,4 @@
-import message from "../src/routes/message-routes.ts";
+import message from "../src/message/message-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
 import {

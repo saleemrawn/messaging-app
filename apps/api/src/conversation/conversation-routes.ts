@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { handleValidationErrors } from "../middleware/validation-error-middleware.ts";
-import * as controller from "../controllers/conversation-controllers.ts";
+import * as controller from "./conversation-controllers.ts";
 
 const router = Router();
 

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { ApiResponse } from "../types/api-types.ts";
 import { matchedData, param, type ValidationError } from "express-validator";
-import * as repository from "../repositories/message-repository.ts";
+import * as repository from "./message-repository.ts";
 import type { Message } from "../../generated/prisma/client.ts";
 
 const messageIdParamValidator = param("id")

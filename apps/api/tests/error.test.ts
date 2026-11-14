@@ -1,4 +1,4 @@
-import user from "../src/routes/user-routes.ts";
+import user from "../src/user/user-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
 import {

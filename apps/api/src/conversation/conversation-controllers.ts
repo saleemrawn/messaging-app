@@ -13,7 +13,7 @@ import {
   param,
   type ValidationError,
 } from "express-validator";
-import * as repository from "../repositories/conversation-repository.ts";
+import * as repository from "./conversation-repository.ts";
 import type { User } from "../types/user-types.ts";
 
 const intBodyValidator = (field: string) => {

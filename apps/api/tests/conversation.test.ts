@@ -1,4 +1,4 @@
-import conversation from "../src/routes/conversation-routes.ts";
+import conversation from "../src/conversation/conversation-routes.ts";
 import express, { type Express } from "express";
 import request from "supertest";
 import {

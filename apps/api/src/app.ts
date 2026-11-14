@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express, { type Express } from "express";
 import { errorHandler } from "./middleware/error-middleware.ts";
-import * as routes from "./routes/routes.ts";
+import * as routes from "./routes.ts";
 
 const app: Express = express();
 

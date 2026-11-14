@@ -7,7 +7,7 @@ import {
   param,
   type ValidationError,
 } from "express-validator";
-import * as repository from "../repositories/user-repository.ts";
+import * as repository from "./user-repository.ts";
 import bcrypt from "bcrypt";
 
 const idValidator = param("id")
