@@ -1,5 +1,11 @@
 import { Router } from "express";
-import * as controller from "./user-controllers.ts";
+import {
+  getUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser,
+} from "./user-controllers.ts";
 import {
   createUserValidators,
   updateUserValidators,
@@ -9,25 +15,10 @@ import { handleValidationErrors } from "../middleware/validation-error-middlewar
 
 const router = Router();
 
-router.get("/", controller.getUsers);
-router.get("/:id", controller.getUserById);
-router.post(
-  "/",
-  createUserValidators,
-  handleValidationErrors,
-  controller.createUser,
-);
-router.put(
-  "/:id",
-  updateUserValidators,
-  handleValidationErrors,
-  controller.updateUser,
-);
-router.delete(
-  "/:id",
-  deleteUserValidators,
-  handleValidationErrors,
-  controller.deleteUser,
-);
+router.get("/", getUsers);
+router.get("/:id", getUserById);
+router.post("/", createUserValidators, handleValidationErrors, createUser);
+router.put("/:id", updateUserValidators, handleValidationErrors, updateUser);
+router.delete("/:id", deleteUserValidators, handleValidationErrors, deleteUser);
 
 export default router;
