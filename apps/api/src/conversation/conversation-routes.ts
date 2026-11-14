@@ -1,50 +1,64 @@
 import { Router } from "express";
 import { handleValidationErrors } from "../middleware/validation-error-middleware.ts";
-import * as validator from "./conversation-validators.ts";
-import * as controller from "./conversation-controllers.ts";
+import {
+  getConversationsByUserAccountIdValidators,
+  getConversationByIdValidators,
+  deleteConversationValidators,
+  createConversationValidators,
+  addMessageToConversationValidators,
+  addMessageReceiptsValidators,
+} from "./conversation-validators.ts";
+import {
+  getConversationsByUserAccountId,
+  getConversationById,
+  createConversation,
+  deleteConversation,
+  addMessageToConversation,
+  addMessageReceipts,
+} from "./conversation-controllers.ts";
 
 const router = Router();
 
 router.get(
   "/",
-  validator.getConversationsByUserAccountIdValidators,
+  getConversationsByUserAccountIdValidators,
   handleValidationErrors,
-  controller.getConversationsByUserAccountId,
+  getConversationsByUserAccountId,
 );
 
 router.get(
   "/:id",
-  validator.getConversationByIdValidators,
+  getConversationByIdValidators,
   handleValidationErrors,
-  controller.getConversationById,
+  getConversationById,
 );
 
 router.post(
   "/",
-  validator.createConversationValidators,
+  createConversationValidators,
   handleValidationErrors,
-  controller.createConversation,
+  createConversation,
 );
 
 router.delete(
   "/:id",
-  validator.deleteConversationValidators,
+  deleteConversationValidators,
   handleValidationErrors,
-  controller.deleteConversation,
+  deleteConversation,
 );
 
 router.post(
   "/:id/messages",
-  validator.addMessageToConversationValidators,
+  addMessageToConversationValidators,
   handleValidationErrors,
-  controller.addMessageToConversation,
+  addMessageToConversation,
 );
 
 router.post(
   "/:id/messages/receipts",
-  validator.addMessageReceiptsValidators,
+  addMessageReceiptsValidators,
   handleValidationErrors,
-  controller.addMessageReceipts,
+  addMessageReceipts,
 );
 
 export default router;
