@@ -1,17 +1,8 @@
 import type { Request, Response } from "express";
 import type { ApiResponse } from "../types/api-types.ts";
-import { matchedData, param, type ValidationError } from "express-validator";
+import { matchedData, type ValidationError } from "express-validator";
 import * as repository from "./message-repository.ts";
 import type { Message } from "../../generated/prisma/client.ts";
-
-const messageIdParamValidator = param("id")
-  .trim()
-  .notEmpty()
-  .isInt()
-  .withMessage("Invalid param message ID, expected number")
-  .toInt();
-
-const deleteMessageValidators = [messageIdParamValidator];
 
 interface DeleteMessageReqParams {
   id: Message["id"];
@@ -32,4 +23,4 @@ const deleteMessage = async (
   res.status(200).json({ success: true, data: message });
 };
 
-export { deleteMessage, deleteMessageValidators };
+export { deleteMessage };
