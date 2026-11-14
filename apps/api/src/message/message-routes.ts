@@ -1,5 +1,5 @@
 import { Router } from "express";
-import * as controller from "./message-controllers.ts";
+import { deleteMessage } from "./message-controllers.ts";
 import { deleteMessageValidators } from "./message-validators.ts";
 import { handleValidationErrors } from "../middleware/validation-error-middleware.ts";
 
@@ -9,7 +9,7 @@ router.delete(
   "/:id",
   deleteMessageValidators,
   handleValidationErrors,
-  controller.deleteMessage,
+  deleteMessage,
 );
 
 export default router;
