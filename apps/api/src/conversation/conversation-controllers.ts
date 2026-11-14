@@ -7,62 +7,9 @@ import type {
   UserAccount,
 } from "../../generated/prisma/client.ts";
 import type { MessageInput } from "../types/message-types.ts";
-import {
-  body,
-  matchedData,
-  param,
-  type ValidationError,
-} from "express-validator";
-import * as repository from "./conversation-repository.ts";
 import type { User } from "../types/user-types.ts";
-
-const intBodyValidator = (field: string) => {
-  return body(field)
-    .trim()
-    .notEmpty()
-    .withMessage(`${field} is required`)
-    .isInt()
-    .withMessage(`Invalid ${field}, expected number`)
-    .toInt();
-};
-
-const userAccountIdValidator = intBodyValidator("userAccountId");
-const senderIdValidator = intBodyValidator("senderId");
-const recipientIdValidator = intBodyValidator("recipientId");
-const conversationIdValidator = param("id")
-  .trim()
-  .notEmpty()
-  .withMessage("Conversation ID is required")
-  .isInt()
-  .withMessage("Invalid conversation ID, expected number")
-  .toInt();
-
-const contentValidator = body("content")
-  .trim()
-  .notEmpty()
-  .withMessage("Message content required");
-
-const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
-const getConversationByIdValidators = [conversationIdValidator];
-const deleteConversationValidators = [conversationIdValidator];
-
-const createConversationValidators = [
-  contentValidator,
-  senderIdValidator,
-  recipientIdValidator,
-];
-
-const addMessageToConversationValidators = [
-  conversationIdValidator,
-  contentValidator,
-  senderIdValidator,
-  recipientIdValidator,
-];
-
-const addMessageReceiptsValidators = [
-  conversationIdValidator,
-  userAccountIdValidator,
-];
+import { matchedData, type ValidationError } from "express-validator";
+import * as repository from "./conversation-repository.ts";
 
 interface MsgReceipt {
   id: MessageReceipt["id"];
@@ -271,10 +218,4 @@ export {
   deleteConversation,
   addMessageToConversation,
   addMessageReceipts,
-  getConversationsByUserAccountIdValidators,
-  getConversationByIdValidators,
-  createConversationValidators,
-  deleteConversationValidators,
-  addMessageToConversationValidators,
-  addMessageReceiptsValidators,
 };
