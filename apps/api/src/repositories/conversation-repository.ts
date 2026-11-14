@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.ts";
-import type { MessageInput } from "../../types/message-types.ts";
+import type { MessageInput } from "../types/message-types.ts";
 import type {
   Conversation,
   MessageReceipt,

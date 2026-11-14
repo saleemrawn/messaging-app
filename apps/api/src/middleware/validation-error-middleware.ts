@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import type { ApiResponse } from "../../types/api-types.ts";
+import type { ApiResponse } from "../types/api-types.ts";
 import { validationResult, type ValidationError } from "express-validator";
 
 const handleValidationErrors = (

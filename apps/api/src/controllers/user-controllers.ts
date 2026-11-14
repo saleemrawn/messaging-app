@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { ApiResponse } from "../../types/api-types.ts";
-import type { User, UserAccount } from "../../types/user-types.ts";
+import type { ApiResponse } from "../types/api-types.ts";
+import type { User, UserAccount } from "../types/user-types.ts";
 import {
   body,
   matchedData,

@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.ts";
-import type { User, UserAccount } from "../../types/user-types.ts";
+import type { User, UserAccount } from "../types/user-types.ts";
 
 const getUsers = async () => {
   const users = await prisma.user.findMany({

@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
-import type { ApiResponse } from "../../types/api-types.ts";
+import type { ApiResponse } from "../types/api-types.ts";
 import type {
   Conversation,
   Message,
   MessageReceipt,
   UserAccount,
 } from "../../generated/prisma/client.ts";
-import type { MessageInput } from "../../types/message-types.ts";
+import type { MessageInput } from "../types/message-types.ts";
 import {
   body,
   matchedData,
@@ -14,7 +14,7 @@ import {
   type ValidationError,
 } from "express-validator";
 import * as repository from "../repositories/conversation-repository.ts";
-import type { User } from "../../types/user-types.ts";
+import type { User } from "../types/user-types.ts";
 
 const intBodyValidator = (field: string) => {
   return body(field)

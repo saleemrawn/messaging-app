@@ -2,7 +2,7 @@ import type {
   Message,
   User,
   Conversation,
-} from "../generated/prisma/client.ts";
+} from "../../generated/prisma/client.ts";
 
 interface MessageInput {
   conversationId: Conversation["id"];
