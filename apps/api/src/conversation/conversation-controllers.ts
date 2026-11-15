@@ -26,7 +26,7 @@ import * as repository from "./conversation-repository.ts";
 const getConversationsByUserAccountId = async (
   req: Request<object, object, GetConversationsByUserAccountIdReqBody, object>,
   res: Response<
-    ApiResponse<GetConversationsByUserAccountIdResBody[], ValidationError[]>
+    ApiResponse<GetConversationsByUserAccountIdResBody, ValidationError[]>
   >,
 ) => {
   const { userAccountId }: GetConversationsByUserAccountIdReqBody =
