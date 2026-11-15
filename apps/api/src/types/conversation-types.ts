@@ -7,13 +7,6 @@ import type {
 import type { MessageInput } from "../types/message-types.ts";
 import * as repository from "../conversation/conversation-repository.ts";
 
-interface MsgReceipt {
-  id: MessageReceipt["id"];
-  messageId: MessageReceipt["messageId"];
-  userAccountId: MessageReceipt["userAccountId"];
-  readAt: MessageReceipt["readAt"];
-}
-
 interface AddMessageToConversationReqParams {
   id: string;
 }
@@ -71,7 +64,7 @@ type CreateConversationResBody = Pick<Conversation, "id">;
 type DeleteConversationResBody = Pick<Conversation, "id" | "deletedAt">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
-type AddMessageReceiptsResBody = MsgReceipt[];
+type AddMessageReceiptsResBody = MessageReceipt[];
 
 export type {
   AddMessageToConversationReqParams,
