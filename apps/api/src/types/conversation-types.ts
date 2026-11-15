@@ -5,7 +5,6 @@ import type {
   UserAccount,
 } from "../../generated/prisma/client.ts";
 import type { MessageInput } from "../types/message-types.ts";
-import type { User } from "../types/user-types.ts";
 import * as repository from "../conversation/conversation-repository.ts";
 
 interface MsgReceipt {
@@ -30,35 +29,12 @@ interface GetConversationsByUserAccountIdReqBody {
   userAccountId: number;
 }
 
-type GetConversationsByUserAccountIdResBody = Awaited<
-  ReturnType<typeof repository.getConversationsByUserAccountId>
->;
-
 interface GetConversationByIdReqParams {
   id: string;
 }
 
 interface GetConversationByIdValidatedReq {
   id: Conversation["id"];
-}
-
-interface GetConversationByIdResBody {
-  id: Conversation["id"];
-  updatedAt: Conversation["updatedAt"];
-  messages: {
-    id: Message["id"];
-    content: Message["content"];
-    createdAt: Message["createdAt"];
-    userAccount: {
-      id: UserAccount["id"];
-      deletedAt: UserAccount["deletedAt"];
-      user: {
-        id: User["id"];
-        firstName: User["firstName"];
-        lastName: User["lastName"];
-      };
-    };
-  }[];
 }
 
 interface AddMessageReceiptsReqParams {
@@ -81,6 +57,14 @@ interface DeleteConversationReqParams {
 interface DeleteConversationValidatedReq {
   id: Conversation["id"];
 }
+
+type GetConversationsByUserAccountIdResBody = Awaited<
+  ReturnType<typeof repository.getConversationsByUserAccountId>
+>;
+
+type GetConversationByIdResBody = Awaited<
+  ReturnType<typeof repository.getConversationById>
+>;
 
 type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
 type CreateConversationResBody = Pick<Conversation, "id">;
