@@ -1,17 +1,11 @@
 import type { Request, Response } from "express";
 import type { ApiResponse } from "../types/api-types.ts";
+import type {
+  DeleteMessageReqParams,
+  DeleteMessageResBody,
+} from "../types/message-types.ts";
 import { matchedData, type ValidationError } from "express-validator";
 import * as repository from "./message-repository.ts";
-import type { Message } from "../../generated/prisma/client.ts";
-
-interface DeleteMessageReqParams {
-  id: Message["id"];
-}
-
-interface DeleteMessageResBody {
-  id: Message["id"];
-  deletedAt: Message["deletedAt"];
-}
 
 const deleteMessage = async (
   req: Request<DeleteMessageReqParams, object, object, object>,

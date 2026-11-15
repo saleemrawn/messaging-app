@@ -11,4 +11,13 @@ interface MessageInput {
   recipientId: User["id"];
 }
 
-export type { MessageInput };
+interface DeleteMessageReqParams {
+  id: Message["id"];
+}
+
+interface DeleteMessageResBody {
+  id: Message["id"];
+  deletedAt: Message["deletedAt"];
+}
+
+export type { MessageInput, DeleteMessageReqParams, DeleteMessageResBody };
