@@ -25,7 +25,9 @@ const conversationIdValidator = param("id")
 const contentValidator = body("content")
   .trim()
   .notEmpty()
-  .withMessage("Message content required");
+  .withMessage("Message required")
+  .isLength({ min: 1, max: 5000 })
+  .withMessage("Message must be between 1 and 5,000 characters");
 
 const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
 const getConversationByIdValidators = [conversationIdValidator];

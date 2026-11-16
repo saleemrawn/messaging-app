@@ -11,6 +11,7 @@ import {
 } from "./helpers/database.ts";
 import { beforeEach, describe, expect, test } from "vitest";
 import { anyString } from "./helpers/types.ts";
+import { faker } from "@faker-js/faker";
 
 const app: Express = express();
 
@@ -242,7 +243,44 @@ describe("conversation route", () => {
           {
             type: "field",
             value: "",
-            msg: "Message content required",
+            msg: "Message required",
+            path: "content",
+            location: "body",
+          },
+          {
+            type: "field",
+            value: "",
+            msg: "Message must be between 1 and 5,000 characters",
+            path: "content",
+            location: "body",
+          },
+        ],
+      });
+    });
+
+    test("returns message max. length error", async () => {
+      const randomText = faker.lorem.words(2000);
+
+      const conversation = {
+        content: randomText,
+        senderId: 1,
+        recipientId: 2,
+      };
+
+      const res = await request(app)
+        .post("/api/conversations")
+        .send(conversation)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: randomText,
+            msg: "Message must be between 1 and 5,000 characters",
             path: "content",
             location: "body",
           },
@@ -486,7 +524,44 @@ describe("conversation route", () => {
           {
             type: "field",
             value: "",
-            msg: "Message content required",
+            msg: "Message required",
+            path: "content",
+            location: "body",
+          },
+          {
+            type: "field",
+            value: "",
+            msg: "Message must be between 1 and 5,000 characters",
+            path: "content",
+            location: "body",
+          },
+        ],
+      });
+    });
+
+    test("returns message max. length error", async () => {
+      const randomText = faker.lorem.words(2000);
+
+      const message = {
+        content: randomText,
+        senderId: 1,
+        recipientId: 2,
+      };
+
+      const res = await request(app)
+        .post("/api/conversations/1/messages")
+        .send(message)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: randomText,
+            msg: "Message must be between 1 and 5,000 characters",
             path: "content",
             location: "body",
           },
