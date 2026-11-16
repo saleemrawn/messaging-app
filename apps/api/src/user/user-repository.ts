@@ -16,7 +16,7 @@ const getUsers = async () => {
   return users;
 };
 
-const getUser = async (id: number) => {
+const getUserById = async (id: number) => {
   const user = await prisma.user.findUnique({
     where: { id, userAccount: { deletedAt: null } },
     select: {
@@ -105,4 +105,4 @@ const deleteUser = async (id: number) => {
   return user;
 };
 
-export { getUsers, getUser, createUser, updateUser, deleteUser };
+export { getUsers, getUserById as getUser, createUser, updateUser, deleteUser };
