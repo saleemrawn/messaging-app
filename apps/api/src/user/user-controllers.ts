@@ -12,7 +12,7 @@ const getUsers = async (_req: Request, res: Response<ApiResponse<User[]>>) => {
 
 const getUserById = async (req: Request, res: Response<ApiResponse<User>>) => {
   const id = Number(req.params.id);
-  const user = await repository.getUser(id);
+  const user = await repository.getUserById(id);
 
   if (!user) {
     res.status(404).json({ success: false, message: "User not found" });

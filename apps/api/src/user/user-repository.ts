@@ -105,4 +105,4 @@ const deleteUser = async (id: number) => {
   return user;
 };
 
-export { getUsers, getUserById as getUser, createUser, updateUser, deleteUser };
+export { getUsers, getUserById, createUser, updateUser, deleteUser };
