@@ -16,6 +16,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+app.use("/api/auth", routes.auth);
 app.use("/api/users", routes.user);
 app.use("/api/conversations", routes.conversation);
 app.use("/api/messages", routes.message);
