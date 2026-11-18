@@ -1,9 +1,9 @@
 import { Strategy as LocalStrategy } from "passport-local";
-import { getUserByUsername } from "../../user/user-repository.ts";
+import { getUserCredentialsByUsername } from "../../user/user-repository.ts";
 import bcrypt from "bcrypt";
 
 const localStrategy = new LocalStrategy((username, password, done) => {
-  getUserByUsername(username)
+  getUserCredentialsByUsername(username)
     .then((user) => {
       if (!user) {
         done(null, false, {
