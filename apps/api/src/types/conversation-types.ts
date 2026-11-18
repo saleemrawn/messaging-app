@@ -15,7 +15,6 @@ interface AddMessageToConversationReqParams extends ParamsDictionary {
 interface AddMessageToConversationValidatedReq {
   id: Conversation["id"];
   content: Message["content"];
-  senderId: UserAccount["id"];
   recipientId: UserAccount["id"];
 }
 
@@ -35,13 +34,8 @@ interface AddMessageReceiptsReqParams extends ParamsDictionary {
   id: string;
 }
 
-interface AddMessageReceiptsReqBody {
-  userAccountId: MessageReceipt["userAccountId"];
-}
-
 interface AddMessageReceiptsValidatedReq {
   id: Conversation["id"];
-  userAccountId: MessageReceipt["userAccountId"];
 }
 
 interface DeleteConversationReqParams extends ParamsDictionary {
@@ -76,7 +70,6 @@ export type {
   GetConversationByIdValidatedReq,
   GetConversationByIdResBody,
   AddMessageReceiptsReqParams,
-  AddMessageReceiptsReqBody,
   AddMessageReceiptsValidatedReq,
   DeleteConversationReqParams,
   DeleteConversationResBody,

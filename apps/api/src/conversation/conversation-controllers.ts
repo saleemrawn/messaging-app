@@ -3,13 +3,11 @@ import type { ApiResponse } from "../types/api-types.ts";
 import type {
   AddMessageToConversationReqParams,
   AddMessageToConversationValidatedReq,
-  GetConversationsByUserAccountIdReqBody,
   GetConversationsByUserAccountIdResBody,
   GetConversationByIdReqParams,
   GetConversationByIdValidatedReq,
   GetConversationByIdResBody,
   AddMessageReceiptsReqParams,
-  AddMessageReceiptsReqBody,
   AddMessageReceiptsValidatedReq,
   DeleteConversationReqParams,
   DeleteConversationResBody,
@@ -21,17 +19,16 @@ import type {
   AddMessageReceiptsResBody,
 } from "../types/conversation-types.ts";
 import { matchedData, type ValidationError } from "express-validator";
+import { getAuthenticatedUserId } from "../user/user-helpers.ts";
 import * as repository from "./conversation-repository.ts";
 
 const getConversationsByUserAccountId = async (
-  req: Request<object, object, GetConversationsByUserAccountIdReqBody, object>,
+  req: Request,
   res: Response<
     ApiResponse<GetConversationsByUserAccountIdResBody, ValidationError[]>
   >,
 ) => {
-  const { userAccountId }: GetConversationsByUserAccountIdReqBody =
-    matchedData(req);
-
+  const userAccountId = getAuthenticatedUserId(req);
   const conversations =
     await repository.getConversationsByUserAccountId(userAccountId);
 
@@ -57,8 +54,8 @@ const createConversation = async (
   req: Request<object, object, CreateConversationReqBody, object>,
   res: Response<ApiResponse<CreateConversationResBody, ValidationError[]>>,
 ) => {
-  const { content, senderId, recipientId }: CreateConversationReqBody =
-    matchedData(req);
+  const { content, recipientId }: CreateConversationReqBody = matchedData(req);
+  const senderId = getAuthenticatedUserId(req);
 
   const conversation = await repository.createConversation({
     content,
@@ -89,12 +86,9 @@ const addMessageToConversation = async (
     ApiResponse<AddMessageToConversationResBody, ValidationError[]>
   >,
 ) => {
-  const {
-    id,
-    content,
-    senderId,
-    recipientId,
-  }: AddMessageToConversationValidatedReq = matchedData(req);
+  const { id, content, recipientId }: AddMessageToConversationValidatedReq =
+    matchedData(req);
+  const senderId = getAuthenticatedUserId(req);
 
   const conversation = await repository.addMessageToConversation({
     conversationId: id,
@@ -107,16 +101,11 @@ const addMessageToConversation = async (
 };
 
 const addMessageReceipts = async (
-  req: Request<
-    AddMessageReceiptsReqParams,
-    object,
-    AddMessageReceiptsReqBody,
-    object
-  >,
+  req: Request<AddMessageReceiptsReqParams>,
   res: Response<ApiResponse<AddMessageReceiptsResBody, ValidationError[]>>,
 ) => {
-  const { id, userAccountId }: AddMessageReceiptsValidatedReq =
-    matchedData(req);
+  const { id }: AddMessageReceiptsValidatedReq = matchedData(req);
+  const userAccountId = getAuthenticatedUserId(req);
 
   const receipts = await repository.addMessageReceipts({
     conversationId: id,

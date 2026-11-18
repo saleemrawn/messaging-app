@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { handleValidationErrors } from "../middleware/validation-error-middleware.ts";
 import {
-  getConversationsByUserAccountIdValidators,
   getConversationByIdValidators,
   deleteConversationValidators,
   createConversationValidators,
@@ -20,17 +19,10 @@ import { requireAuth } from "../auth/require-auth.ts";
 
 const router = Router();
 
-router.get(
-  "/",
-  requireAuth,
-  getConversationsByUserAccountIdValidators,
-  handleValidationErrors,
-  getConversationsByUserAccountId,
-);
-
+router.use(requireAuth);
+router.get("/", getConversationsByUserAccountId);
 router.get(
   "/:id",
-  requireAuth,
   getConversationByIdValidators,
   handleValidationErrors,
   getConversationById,
@@ -38,7 +30,6 @@ router.get(
 
 router.post(
   "/",
-  requireAuth,
   createConversationValidators,
   handleValidationErrors,
   createConversation,
@@ -46,7 +37,6 @@ router.post(
 
 router.delete(
   "/:id",
-  requireAuth,
   deleteConversationValidators,
   handleValidationErrors,
   deleteConversation,
@@ -54,7 +44,6 @@ router.delete(
 
 router.post(
   "/:id/messages",
-  requireAuth,
   addMessageToConversationValidators,
   handleValidationErrors,
   addMessageToConversation,
@@ -62,7 +51,6 @@ router.post(
 
 router.post(
   "/:id/messages/receipts",
-  requireAuth,
   addMessageReceiptsValidators,
   handleValidationErrors,
   addMessageReceipts,

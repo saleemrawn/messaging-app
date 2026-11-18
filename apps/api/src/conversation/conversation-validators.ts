@@ -10,8 +10,6 @@ const intBodyValidator = (field: string) => {
     .toInt();
 };
 
-const userAccountIdValidator = intBodyValidator("userAccountId");
-const senderIdValidator = intBodyValidator("senderId");
 const recipientIdValidator = intBodyValidator("recipientId");
 
 const conversationIdValidator = param("id")
@@ -29,30 +27,19 @@ const contentValidator = body("content")
   .isLength({ min: 1, max: 5000 })
   .withMessage("Message must be between 1 and 5,000 characters");
 
-const getConversationsByUserAccountIdValidators = [userAccountIdValidator];
 const getConversationByIdValidators = [conversationIdValidator];
 const deleteConversationValidators = [conversationIdValidator];
+const addMessageReceiptsValidators = [conversationIdValidator];
 
-const createConversationValidators = [
-  contentValidator,
-  senderIdValidator,
-  recipientIdValidator,
-];
+const createConversationValidators = [contentValidator, recipientIdValidator];
 
 const addMessageToConversationValidators = [
   conversationIdValidator,
   contentValidator,
-  senderIdValidator,
   recipientIdValidator,
 ];
 
-const addMessageReceiptsValidators = [
-  conversationIdValidator,
-  userAccountIdValidator,
-];
-
 export {
-  getConversationsByUserAccountIdValidators,
   getConversationByIdValidators,
   deleteConversationValidators,
   createConversationValidators,
