@@ -1,4 +1,5 @@
 import { prisma } from "../../src/lib/prisma.ts";
+import bcrypt from "bcrypt";
 
 async function resetDbTables() {
   if (process.env.NODE_ENV === "production") {
@@ -55,33 +56,35 @@ async function populateUserAccount() {
     throw new Error("Refusing to seed in production");
   }
 
+  const hashedPassword = await bcrypt.hash("Testpassword01!", 10);
+
   await prisma.userAccount.createMany({
     data: [
       {
         userId: 1,
         username: "johndoe01",
-        password: "Monkey123!",
+        password: hashedPassword,
         createdAt: new Date("2026-01-01T20:00:00"),
         updatedAt: new Date("2026-01-01T20:00:00"),
       },
       {
         userId: 2,
         username: "aishadoe01",
-        password: "Monkey123!",
+        password: hashedPassword,
         createdAt: new Date("2026-01-01T20:00:00"),
         updatedAt: new Date("2026-01-01T20:00:00"),
       },
       {
         userId: 3,
         username: "phillipedoe01",
-        password: "Monkey123!",
+        password: hashedPassword,
         createdAt: new Date("2026-01-01T20:00:00"),
         updatedAt: new Date("2026-01-01T20:00:00"),
       },
       {
         userId: 4,
         username: "janedoe01",
-        password: "Monkey123!",
+        password: hashedPassword,
         createdAt: new Date("2026-01-01T20:00:00"),
         updatedAt: new Date("2026-01-01T20:00:00"),
       },
