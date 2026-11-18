@@ -32,6 +32,20 @@ const getUserById = async (id: number) => {
   return user;
 };
 
+const getUserCredentialsByUsername = async (
+  username: UserAccount["username"],
+) => {
+  const user = await prisma.userAccount.findUnique({
+    where: { username },
+    select: {
+      id: true,
+      username: true,
+      password: true,
+    },
+  });
+  return user;
+};
+
 const createUser = async ({
   firstName,
   lastName,
@@ -105,4 +119,11 @@ const deleteUser = async (id: number) => {
   return user;
 };
 
-export { getUsers, getUserById, createUser, updateUser, deleteUser };
+export {
+  getUsers,
+  getUserById,
+  getUserCredentialsByUsername,
+  createUser,
+  updateUser,
+  deleteUser,
+};
