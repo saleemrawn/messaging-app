@@ -2,6 +2,7 @@ import type {
   Message,
   User,
   Conversation,
+  UserAccount,
 } from "../../generated/prisma/client.ts";
 
 interface MessageInput {
@@ -9,6 +10,11 @@ interface MessageInput {
   content: Message["content"];
   senderId: User["id"];
   recipientId: User["id"];
+}
+
+interface DeleteMessageInput {
+  id: Message["id"];
+  userAccountId: UserAccount["id"];
 }
 
 interface DeleteMessageReqParams {
@@ -20,4 +26,9 @@ interface DeleteMessageResBody {
   deletedAt: Message["deletedAt"];
 }
 
-export type { MessageInput, DeleteMessageReqParams, DeleteMessageResBody };
+export type {
+  MessageInput,
+  DeleteMessageInput,
+  DeleteMessageReqParams,
+  DeleteMessageResBody,
+};

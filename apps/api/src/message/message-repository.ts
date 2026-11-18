@@ -1,13 +1,19 @@
 import { prisma } from "../lib/prisma.ts";
-import type { Message } from "../../generated/prisma/client.ts";
+import type { DeleteMessageInput } from "../types/message-types.ts";
 
-const deleteMessage = async (id: Message["id"]) => {
-  const message = await prisma.message.update({
-    where: { id },
-    data: { deletedAt: new Date() },
-    select: { id: true, deletedAt: true },
+const deleteMessage = async ({ id, userAccountId }: DeleteMessageInput) => {
+  const deletedAt = new Date();
+
+  const { count } = await prisma.message.updateMany({
+    where: { id, userAccountId, deletedAt: null },
+    data: { deletedAt },
   });
-  return message;
+
+  if (count === 0) {
+    return null;
+  }
+
+  return { id, deletedAt };
 };
 
 export { deleteMessage };
