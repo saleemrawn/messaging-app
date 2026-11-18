@@ -16,11 +16,13 @@ import {
   addMessageToConversation,
   addMessageReceipts,
 } from "./conversation-controllers.ts";
+import { requireAuth } from "../auth/require-auth.ts";
 
 const router = Router();
 
 router.get(
   "/",
+  requireAuth,
   getConversationsByUserAccountIdValidators,
   handleValidationErrors,
   getConversationsByUserAccountId,
@@ -28,6 +30,7 @@ router.get(
 
 router.get(
   "/:id",
+  requireAuth,
   getConversationByIdValidators,
   handleValidationErrors,
   getConversationById,
@@ -35,6 +38,7 @@ router.get(
 
 router.post(
   "/",
+  requireAuth,
   createConversationValidators,
   handleValidationErrors,
   createConversation,
@@ -42,6 +46,7 @@ router.post(
 
 router.delete(
   "/:id",
+  requireAuth,
   deleteConversationValidators,
   handleValidationErrors,
   deleteConversation,
@@ -49,6 +54,7 @@ router.delete(
 
 router.post(
   "/:id/messages",
+  requireAuth,
   addMessageToConversationValidators,
   handleValidationErrors,
   addMessageToConversation,
@@ -56,6 +62,7 @@ router.post(
 
 router.post(
   "/:id/messages/receipts",
+  requireAuth,
   addMessageReceiptsValidators,
   handleValidationErrors,
   addMessageReceipts,

@@ -1,6 +1,3 @@
-import conversation from "../src/conversation/conversation-routes.ts";
-import express, { type Express } from "express";
-import request from "supertest";
 import {
   populateConversation,
   populateMessage,
@@ -12,12 +9,7 @@ import {
 import { beforeEach, describe, expect, test } from "vitest";
 import { anyString } from "./helpers/types.ts";
 import { faker } from "@faker-js/faker";
-
-const app: Express = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use("/api/conversations", conversation);
+import { createAuthenticatedAgent } from "./helpers/auth.ts";
 
 beforeEach(async () => {
   await resetDbTables();
@@ -32,7 +24,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .get("/api/conversations")
         .send({ userAccountId: 1 });
 
@@ -96,7 +89,8 @@ describe("conversation route", () => {
     });
 
     test("returns empty array for no conversations", async () => {
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .get("/api/conversations")
         .send({ userAccountId: 1 });
 
@@ -106,7 +100,8 @@ describe("conversation route", () => {
     });
 
     test("returns validation errors for invalid user account ID", async () => {
-      const res = await request(app).get("/api/conversations").send({});
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations").send({});
 
       expect(res.status).toBe(400);
       expect(res.type).toBe("application/json");
@@ -138,7 +133,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app).get("/api/conversations/1");
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations/1");
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
@@ -178,7 +174,8 @@ describe("conversation route", () => {
     });
 
     test("returns conversation not found error", async () => {
-      const res = await request(app).get("/api/conversations/9999");
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations/9999");
 
       expect(res.status).toBe(404);
       expect(res.type).toBe("application/json");
@@ -191,16 +188,15 @@ describe("conversation route", () => {
 
   describe("create conversation endpoint", () => {
     test("create a conversation", async () => {
+      const agent = await createAuthenticatedAgent();
+
       const conversation = {
         content: "Hello, how is it going?",
         senderId: 1,
         recipientId: 2,
       };
 
-      const res = await request(app)
-        .post("/api/conversations")
-        .send(conversation)
-        .set("Accept", "application/json");
+      const res = await agent.post("/api/conversations").send(conversation);
 
       expect(res.status).toBe(201);
       expect(res.type).toBe("application/json");
@@ -224,13 +220,15 @@ describe("conversation route", () => {
     });
 
     test("returns missing content error", async () => {
+      const agent = await createAuthenticatedAgent();
+
       const conversation = {
         content: "",
         senderId: 1,
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations")
         .send(conversation)
         .set("Accept", "application/json");
@@ -259,6 +257,7 @@ describe("conversation route", () => {
     });
 
     test("returns message max. length error", async () => {
+      const agent = await createAuthenticatedAgent();
       const randomText = faker.lorem.words(2000);
 
       const conversation = {
@@ -267,7 +266,7 @@ describe("conversation route", () => {
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations")
         .send(conversation)
         .set("Accept", "application/json");
@@ -289,13 +288,14 @@ describe("conversation route", () => {
     });
 
     test("returns missing sender ID errors", async () => {
+      const agent = await createAuthenticatedAgent();
       const conversation = {
         content: "Hello, how is it going?",
         senderId: null,
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations")
         .send(conversation)
         .set("Accept", "application/json");
@@ -324,13 +324,14 @@ describe("conversation route", () => {
     });
 
     test("returns missing recipient ID errors", async () => {
+      const agent = await createAuthenticatedAgent();
       const conversation = {
         content: "Hello, how is it going?",
         senderId: 1,
         recipientId: null,
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations")
         .send(conversation)
         .set("Accept", "application/json");
@@ -359,13 +360,14 @@ describe("conversation route", () => {
     });
 
     test("returns invalid sender ID error", async () => {
+      const agent = await createAuthenticatedAgent();
       const conversation = {
         content: "Hello, how is it going?",
         senderId: "abc",
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations")
         .send(conversation)
         .set("Accept", "application/json");
@@ -387,13 +389,14 @@ describe("conversation route", () => {
     });
 
     test("returns invalid recipient ID error", async () => {
+      const agent = await createAuthenticatedAgent();
       const conversation = {
         content: "Hello, how is it going?",
         senderId: 1,
         recipientId: "abc",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations")
         .send(conversation)
         .set("Accept", "application/json");
@@ -421,7 +424,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app).delete("/api/conversations/1");
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.delete("/api/conversations/1");
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
@@ -436,7 +440,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app).delete("/api/conversations/abc");
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.delete("/api/conversations/abc");
 
       expect(res.status).toBe(400);
       expect(res.type).toBe("application/json");
@@ -457,7 +462,8 @@ describe("conversation route", () => {
 
   describe("add message to conversation endpoint", () => {
     test("add message to conversation", async () => {
-      await request(app)
+      const agent = await createAuthenticatedAgent();
+      await agent
         .post("/api/conversations")
         .send({
           content: "Hello, how is it going?",
@@ -473,7 +479,7 @@ describe("conversation route", () => {
         recipientId: 1,
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -511,7 +517,8 @@ describe("conversation route", () => {
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -548,7 +555,8 @@ describe("conversation route", () => {
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -576,7 +584,8 @@ describe("conversation route", () => {
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -611,7 +620,8 @@ describe("conversation route", () => {
         recipientId: null,
       };
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -646,7 +656,8 @@ describe("conversation route", () => {
         recipientId: 2,
       };
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -674,7 +685,8 @@ describe("conversation route", () => {
         recipientId: "abc",
       };
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages")
         .send(message)
         .set("Accept", "application/json");
@@ -702,7 +714,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages/receipts")
         .send({ userAccountId: 2 });
 
@@ -725,8 +738,10 @@ describe("conversation route", () => {
       await populateConversation();
       await populateUserConversation();
 
+      const agent = await createAuthenticatedAgent();
+
       // Send message
-      await request(app)
+      await agent
         .post("/api/conversations/1/messages")
         .send({
           content: "Hello",
@@ -736,7 +751,7 @@ describe("conversation route", () => {
         .set("Accept", "application/json")
         .expect(201);
 
-      const beforeRead = await request(app).get("/api/conversations/1");
+      const beforeRead = await agent.get("/api/conversations/1");
       expect(beforeRead.body).toEqual({
         success: true,
         data: {
@@ -762,12 +777,12 @@ describe("conversation route", () => {
       });
 
       // Add message receipt
-      await request(app)
+      await agent
         .post("/api/conversations/1/messages/receipts")
         .send({ userAccountId: 2 })
         .expect(201);
 
-      const afterRead = await request(app).get("/api/conversations/1");
+      const afterRead = await agent.get("/api/conversations/1");
       expect(afterRead.body).toEqual({
         success: true,
         data: {
@@ -798,7 +813,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages/receipts")
         .send({ messageIds: [1] });
 
@@ -830,7 +846,8 @@ describe("conversation route", () => {
       await populateUserConversation();
       await populateMessage();
 
-      const res = await request(app)
+      const agent = await createAuthenticatedAgent();
+      const res = await agent
         .post("/api/conversations/1/messages/receipts")
         .send({ messageIds: [1], userAccountId: "abc" });
 

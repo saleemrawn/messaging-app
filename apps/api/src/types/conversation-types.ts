@@ -8,7 +8,7 @@ import type { ParamsDictionary } from "express-serve-static-core";
 import type { MessageInput } from "../types/message-types.ts";
 import * as repository from "../conversation/conversation-repository.ts";
 
-interface AddMessageToConversationReqParams {
+interface AddMessageToConversationReqParams extends ParamsDictionary {
   id: string;
 }
 
@@ -31,7 +31,7 @@ interface GetConversationByIdValidatedReq {
   id: Conversation["id"];
 }
 
-interface AddMessageReceiptsReqParams {
+interface AddMessageReceiptsReqParams extends ParamsDictionary {
   id: string;
 }
 
@@ -44,7 +44,7 @@ interface AddMessageReceiptsValidatedReq {
   userAccountId: MessageReceipt["userAccountId"];
 }
 
-interface DeleteConversationReqParams {
+interface DeleteConversationReqParams extends ParamsDictionary {
   id: string;
 }
 
