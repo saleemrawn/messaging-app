@@ -4,6 +4,7 @@ import type {
   MessageReceipt,
   UserAccount,
 } from "../../generated/prisma/client.ts";
+import type { ParamsDictionary } from "express-serve-static-core";
 import type { MessageInput } from "../types/message-types.ts";
 import * as repository from "../conversation/conversation-repository.ts";
 
@@ -22,7 +23,7 @@ interface GetConversationsByUserAccountIdReqBody {
   userAccountId: number;
 }
 
-interface GetConversationByIdReqParams {
+interface GetConversationByIdReqParams extends ParamsDictionary {
   id: string;
 }
 
