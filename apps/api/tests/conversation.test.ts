@@ -7,7 +7,7 @@ import {
   resetDbTables,
 } from "./helpers/database.ts";
 import { beforeEach, describe, expect, test } from "vitest";
-import { anyString } from "./helpers/types.ts";
+import { isoDateString } from "./helpers/types.ts";
 import { faker } from "@faker-js/faker";
 import { createAuthenticatedAgent } from "./helpers/auth.ts";
 
@@ -208,7 +208,7 @@ describe("conversation route", () => {
             {
               id: 1,
               content: "Hello, how is it going?",
-              createdAt: anyString(),
+              createdAt: isoDateString(),
             },
           ],
           userConversations: [
@@ -431,7 +431,7 @@ describe("conversation route", () => {
       expect(res.type).toBe("application/json");
       expect(res.body).toEqual({
         success: true,
-        data: { id: 1, deletedAt: anyString() },
+        data: { id: 1, deletedAt: isoDateString() },
       });
     });
 
@@ -498,12 +498,12 @@ describe("conversation route", () => {
             {
               id: 1,
               content: "Hello, how is it going?",
-              createdAt: anyString(),
+              createdAt: isoDateString(),
             },
             {
               id: 2,
               content: "I'm doing well thanks!",
-              createdAt: anyString(),
+              createdAt: isoDateString(),
             },
           ],
         },
@@ -728,7 +728,7 @@ describe("conversation route", () => {
             id: 1,
             messageId: 1,
             userAccountId: 2,
-            readAt: anyString(),
+            readAt: isoDateString(),
           },
         ],
       });
@@ -756,12 +756,12 @@ describe("conversation route", () => {
         success: true,
         data: {
           id: 1,
-          updatedAt: anyString(),
+          updatedAt: isoDateString(),
           messages: [
             {
               id: 1,
               content: "Hello",
-              createdAt: anyString(),
+              createdAt: isoDateString(),
               userAccount: {
                 id: 1,
                 deletedAt: null,
@@ -787,12 +787,12 @@ describe("conversation route", () => {
         success: true,
         data: {
           id: 1,
-          updatedAt: anyString(),
+          updatedAt: isoDateString(),
           messages: [
             {
               id: 1,
               content: "Hello",
-              createdAt: anyString(),
+              createdAt: isoDateString(),
               userAccount: {
                 id: 1,
                 deletedAt: null,
