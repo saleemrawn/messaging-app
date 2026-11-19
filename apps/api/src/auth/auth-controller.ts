@@ -32,7 +32,7 @@ const login = async (
       });
     }
 
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
+    const token = jwt.sign({ userAccountId: user.id }, JWT_SECRET, {
       expiresIn: "1h",
     });
 

@@ -21,8 +21,8 @@ const jwtStrategy = new JwtStrategy(
     ]),
     secretOrKey: JWT_SECRET,
   },
-  (jwtPayload: { userId: number }, done) => {
-    getUserByAccountId(jwtPayload.userId)
+  (jwtPayload: { userAccountId: number }, done) => {
+    getUserByAccountId(jwtPayload.userAccountId)
       .then((user) => {
         if (!user) {
           done(null, false);

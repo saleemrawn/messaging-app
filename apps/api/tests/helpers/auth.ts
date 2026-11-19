@@ -23,7 +23,7 @@ const createUnauthenticatedAgent = () => request.agent(app);
 // Agent authenticated as a given user account ID, without needing that
 // user's password. Signs a token directly and sends it as a Bearer header.
 const createAuthenticatedAgentAs = (userAccountId: number) => {
-  const token = jwt.sign({ userId: userAccountId }, JWT_SECRET, {
+  const token = jwt.sign({ userAccountId }, JWT_SECRET, {
     expiresIn: "1h",
   });
 
