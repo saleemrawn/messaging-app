@@ -47,6 +47,8 @@ const passwordValidator = body("password")
     "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
   );
 
+const getUserByIdValidators = [idValidator];
+
 const createUserValidators = [
   firstNameValidator,
   lastNameValidator,
@@ -64,4 +66,9 @@ const updateUserValidators = [
 
 const deleteUserValidators = [idValidator];
 
-export { createUserValidators, updateUserValidators, deleteUserValidators };
+export {
+  getUserByIdValidators,
+  createUserValidators,
+  updateUserValidators,
+  deleteUserValidators,
+};

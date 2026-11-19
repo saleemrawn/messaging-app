@@ -5,7 +5,7 @@ import type {
   DeleteMessageResBody,
 } from "../types/message-types.ts";
 import { matchedData, type ValidationError } from "express-validator";
-import { getAuthenticatedUserId } from "../user/user-helpers.ts";
+import { getAuthenticatedUserId } from "../auth/auth-helpers.ts";
 import * as repository from "./message-repository.ts";
 
 const deleteMessage = async (

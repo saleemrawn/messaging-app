@@ -1,18 +1,14 @@
-import user from "../src/user/user-routes.ts";
-import express, { type Express } from "express";
-import request from "supertest";
 import {
   populateUser,
   populateUserAccount,
   resetDbTables,
 } from "./helpers/database.ts";
 import { beforeEach, describe, expect, test } from "vitest";
-
-const app: Express = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use("/api/users", user);
+import {
+  createAuthenticatedAgent,
+  createAuthenticatedAgentAs,
+  createUnauthenticatedAgent,
+} from "./helpers/auth.ts";
 
 const users = {
   data: [
@@ -67,8 +63,28 @@ beforeEach(async () => {
 });
 
 describe("user route", () => {
+  describe("authentication", () => {
+    const routes: ["get" | "put" | "delete", string][] = [
+      ["get", "/api/users"],
+      ["get", "/api/users/4"],
+      ["put", "/api/users/4"],
+      ["delete", "/api/users/4"],
+    ];
+
+    test.each(routes)(
+      "%s %s returns 401 without a token",
+      async (method, path) => {
+        const agent = createUnauthenticatedAgent();
+        const res = await agent[method](path);
+
+        expect(res.status).toBe(401);
+      },
+    );
+  });
+
   test("returns all users", async () => {
-    const res = await request(app).get("/api/users");
+    const agent = await createAuthenticatedAgent();
+    const res = await agent.get("/api/users");
 
     expect(res.status).toBe(200);
     expect(res.type).toBe("application/json");
@@ -77,7 +93,8 @@ describe("user route", () => {
 
   describe("get user endpoint", () => {
     test("returns a user", async () => {
-      const res = await request(app).get("/api/users/4");
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/users/4");
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
@@ -97,15 +114,39 @@ describe("user route", () => {
     });
 
     test("returns user not found", async () => {
-      const res = await request(app).get("/api/users/9999");
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/users/9999");
 
       expect(res.status).toBe(404);
       expect(res.type).toBe("application/json");
       expect(res.body).toEqual({ success: false, message: "User not found" });
     });
+
+    test("returns validation error for user ID type", async () => {
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/users/abc");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "abc",
+            msg: "Invalid user ID, expected number",
+            path: "id",
+            location: "params",
+          },
+        ],
+      });
+    });
   });
 
   describe("create user endpoint", () => {
+    // Sign-up is public, so none of these requests carry a token
+    const agent = createUnauthenticatedAgent();
+
     test("create a user", async () => {
       const user = {
         firstName: "Antoine",
@@ -115,7 +156,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -137,6 +178,24 @@ describe("user route", () => {
       });
     });
 
+    test("created user can log in", async () => {
+      await agent
+        .post("/api/users")
+        .send({
+          firstName: "Antoine",
+          lastName: "Doe",
+          email: "antoine.doe01@email.com",
+          username: "antoinedoe01",
+          password: "Money0987!",
+        })
+        .expect(201);
+
+      await agent
+        .post("/api/auth/login")
+        .send({ username: "antoinedoe01", password: "Money0987!" })
+        .expect(200);
+    });
+
     test("returns missing first name errors", async () => {
       const user = {
         lastName: "Doe",
@@ -145,7 +204,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -182,7 +241,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -211,7 +270,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -248,7 +307,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -277,7 +336,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -314,7 +373,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -344,7 +403,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -388,7 +447,7 @@ describe("user route", () => {
         password: "Money0987!",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -418,7 +477,7 @@ describe("user route", () => {
         password: "",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -455,7 +514,7 @@ describe("user route", () => {
         password: "money",
       };
 
-      const res = await request(app)
+      const res = await agent
         .post("/api/users")
         .send(user)
         .set("Accept", "application/json");
@@ -478,6 +537,9 @@ describe("user route", () => {
   });
 
   describe("update user endpoint", () => {
+    // Jane is user 4, so these requests update her own account
+    const jane = createAuthenticatedAgentAs(4);
+
     test("update user first name", async () => {
       const user = {
         firstName: "Janet",
@@ -485,7 +547,7 @@ describe("user route", () => {
         email: "jane.doe01@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -514,7 +576,7 @@ describe("user route", () => {
         email: "jane.doe01@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -543,7 +605,7 @@ describe("user route", () => {
         email: "janedoe@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -565,13 +627,65 @@ describe("user route", () => {
       });
     });
 
+    test("returns forbidden when updating another user", async () => {
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .put("/api/users/4")
+        .send({
+          firstName: "Janet",
+          lastName: "Doe",
+          email: "jane.doe01@email.com",
+        })
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(403);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        message: "You can only update your own account",
+      });
+
+      // Jane's details are unchanged
+      const check = await john.get("/api/users/4");
+      expect(check.body).toMatchObject({ data: { id: 4, firstName: "Jane" } });
+    });
+
+    test("returns validation error for user ID type", async () => {
+      const user = {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane.doe01@email.com",
+      };
+
+      const res = await jane
+        .put("/api/users/abc")
+        .send(user)
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "abc",
+            msg: "Invalid user ID, expected number",
+            path: "id",
+            location: "params",
+          },
+        ],
+      });
+    });
+
     test("returns missing first name errors", async () => {
       const user = {
         lastName: "Doe",
         email: "janedoe@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -606,7 +720,7 @@ describe("user route", () => {
         email: "janedoe@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -633,7 +747,7 @@ describe("user route", () => {
         email: "janedoe@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -668,7 +782,7 @@ describe("user route", () => {
         email: "janedoe@email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -695,7 +809,7 @@ describe("user route", () => {
         lastName: "Doe",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -730,7 +844,7 @@ describe("user route", () => {
         email: "jane.doe01email.com",
       };
 
-      const res = await request(app)
+      const res = await jane
         .put("/api/users/4")
         .send(user)
         .set("Accept", "application/json");
@@ -753,8 +867,11 @@ describe("user route", () => {
   });
 
   describe("delete user endpoint", () => {
+    // Jane is user 4, so these requests delete her own account
+    const jane = createAuthenticatedAgentAs(4);
+
     test("soft delete user", async () => {
-      const res = await request(app).delete("/api/users/4");
+      const res = await jane.delete("/api/users/4");
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
@@ -774,12 +891,57 @@ describe("user route", () => {
     });
 
     test("returns 404 for a soft-deleted user", async () => {
-      await request(app).delete("/api/users/4").expect(200);
+      await jane.delete("/api/users/4").expect(200);
 
-      const res = await request(app).get("/api/users/4");
+      const john = await createAuthenticatedAgent();
+      const res = await john.get("/api/users/4");
+
       expect(res.status).toBe(404);
       expect(res.type).toBe("application/json");
       expect(res.body).toEqual({ success: false, message: "User not found" });
+    });
+
+    test("rejects the token of a deleted user", async () => {
+      await jane.delete("/api/users/4").expect(200);
+
+      const res = await jane.get("/api/users/1");
+
+      expect(res.status).toBe(401);
+    });
+
+    test("returns forbidden when deleting another user", async () => {
+      const john = await createAuthenticatedAgent();
+
+      const res = await john.delete("/api/users/4");
+
+      expect(res.status).toBe(403);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        message: "You can only delete your own account",
+      });
+
+      // Jane still exists
+      await john.get("/api/users/4").expect(200);
+    });
+
+    test("returns validation error for user ID type", async () => {
+      const res = await jane.delete("/api/users/abc");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "abc",
+            msg: "Invalid user ID, expected number",
+            path: "id",
+            location: "params",
+          },
+        ],
+      });
     });
   });
 });
