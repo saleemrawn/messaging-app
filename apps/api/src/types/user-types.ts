@@ -10,6 +10,14 @@ interface UserAccount extends User {
   password: string;
 }
 
+interface UserResBody {
+  id: UserAccount["id"];
+  username: UserAccount["username"];
+  firstName: User["firstName"];
+  lastName: User["lastName"];
+  email: User["email"];
+}
+
 interface GetUserByIdReqParams {
   id: UserAccount["id"];
 }
@@ -62,6 +70,7 @@ interface DeleteUserValidatedReq {
 export type {
   User,
   UserAccount,
+  UserResBody,
   CreateUserReqBody,
   CreateUserValidatedData,
   GetUserByIdReqParams,

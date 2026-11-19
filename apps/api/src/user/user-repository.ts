@@ -1,34 +1,35 @@
 import { prisma } from "../lib/prisma.ts";
-import type { User, UserAccount } from "../types/user-types.ts";
+import type {
+  UserAccount,
+  UserResBody,
+  CreateUserReqBody,
+  UpdateUserReqBody,
+} from "../types/user-types.ts";
 
 const accountSelect = {
   id: true,
   username: true,
-  user: { select: { id: true, firstName: true, lastName: true, email: true } },
+  user: { select: { firstName: true, lastName: true, email: true } },
 } as const;
 
-const toUserWithAccount = (account: {
+const toUserResBody = (account: {
   id: number;
   username: string;
-  user: { id: number; firstName: string; lastName: string; email: string };
-}) => ({
-  ...account.user,
-  userAccount: { id: account.id, username: account.username },
+  user: { firstName: string; lastName: string; email: string };
+}): UserResBody => ({
+  id: account.id,
+  username: account.username,
+  firstName: account.user.firstName,
+  lastName: account.user.lastName,
+  email: account.user.email,
 });
 
 const getUsers = async () => {
-  const users = await prisma.user.findMany({
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      userAccount: {
-        select: { id: true, username: true },
-      },
-    },
+  const accounts = await prisma.userAccount.findMany({
+    select: accountSelect,
+    orderBy: { id: "asc" },
   });
-  return users;
+  return accounts.map(toUserResBody);
 };
 
 const getUserByAccountId = async (userAccountId: UserAccount["id"]) => {
@@ -36,7 +37,7 @@ const getUserByAccountId = async (userAccountId: UserAccount["id"]) => {
     where: { id: userAccountId, deletedAt: null, user: { deletedAt: null } },
     select: accountSelect,
   });
-  return account ? toUserWithAccount(account) : null;
+  return account ? toUserResBody(account) : null;
 };
 
 const getUserCredentialsByUsername = async (
@@ -59,28 +60,16 @@ const createUser = async ({
   email,
   username,
   password,
-}: Pick<
-  UserAccount,
-  "firstName" | "lastName" | "email" | "username" | "password"
->) => {
-  const user = await prisma.user.create({
+}: CreateUserReqBody) => {
+  const account = await prisma.userAccount.create({
     data: {
-      firstName,
-      lastName,
-      email,
-      userAccount: { create: { username, password } },
+      username,
+      password,
+      user: { create: { firstName, lastName, email } },
     },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      userAccount: {
-        select: { id: true, username: true },
-      },
-    },
+    select: accountSelect,
   });
-  return user;
+  return toUserResBody(account);
 };
 
 const updateUser = async ({
@@ -88,15 +77,13 @@ const updateUser = async ({
   firstName,
   lastName,
   email,
-}: Pick<User, "firstName" | "lastName" | "email"> & {
-  userAccountId: UserAccount["id"];
-}) => {
+}: UpdateUserReqBody & { userAccountId: UserAccount["id"] }) => {
   const account = await prisma.userAccount.update({
     where: { id: userAccountId },
     data: { user: { update: { firstName, lastName, email } } },
     select: accountSelect,
   });
-  return toUserWithAccount(account);
+  return toUserResBody(account);
 };
 
 const deleteUser = async (userAccountId: UserAccount["id"]) => {
@@ -106,7 +93,7 @@ const deleteUser = async (userAccountId: UserAccount["id"]) => {
     data: { deletedAt, user: { update: { deletedAt } } },
     select: accountSelect,
   });
-  return toUserWithAccount(account);
+  return toUserResBody(account);
 };
 
 export {

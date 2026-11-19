@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import type { ApiResponse } from "../types/api-types.ts";
 import type {
-  User,
+  UserResBody,
   CreateUserReqBody,
   CreateUserValidatedData,
   GetUserByIdReqParams,
@@ -17,14 +17,17 @@ import { matchedData, type ValidationError } from "express-validator";
 import * as repository from "./user-repository.ts";
 import bcrypt from "bcrypt";
 
-const getUsers = async (_req: Request, res: Response<ApiResponse<User[]>>) => {
+const getUsers = async (
+  _req: Request,
+  res: Response<ApiResponse<UserResBody[]>>,
+) => {
   const users = await repository.getUsers();
   res.status(200).json({ success: true, data: users });
 };
 
 const getUserById = async (
   req: Request<GetUserByIdReqParams>,
-  res: Response<ApiResponse<User>>,
+  res: Response<ApiResponse<UserResBody>>,
 ) => {
   const { id }: GetUserByIdValidatedReq = matchedData(req);
   const user = await repository.getUserByAccountId(id);
@@ -40,7 +43,7 @@ const getUserById = async (
 // Public route: used by new users to sign up, so no authentication required
 const createUser = async (
   req: Request<object, object, CreateUserReqBody, object>,
-  res: Response<ApiResponse<User, ValidationError[]>>,
+  res: Response<ApiResponse<UserResBody, ValidationError[]>>,
 ) => {
   const {
     firstName,
@@ -64,7 +67,7 @@ const createUser = async (
 
 const updateUser = async (
   req: Request<UpdateUserReqParams, object, UpdateUserReqBody, object>,
-  res: Response<ApiResponse<User, ValidationError[]>>,
+  res: Response<ApiResponse<UserResBody, ValidationError[]>>,
 ) => {
   const { id, firstName, lastName, email }: UpdateUserValidatedReq =
     matchedData(req);
@@ -90,7 +93,7 @@ const updateUser = async (
 
 const deleteUser = async (
   req: Request<DeleteUserReqParams, object, object, object>,
-  res: Response<ApiResponse<User>>,
+  res: Response<ApiResponse<UserResBody>>,
 ) => {
   const { id }: DeleteUserValidatedReq = matchedData(req);
   const authenticatedUserId = getAuthenticatedUserAccountId(req);

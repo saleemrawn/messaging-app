@@ -10,7 +10,7 @@ import {
   createUnauthenticatedAgent,
 } from "./helpers/auth.ts";
 
-const users = {
+/* const users = {
   data: [
     {
       id: 1,
@@ -51,6 +51,40 @@ const users = {
         id: 4,
         username: "janedoe01",
       },
+    },
+  ],
+  success: true,
+}; */
+
+const users = {
+  data: [
+    {
+      id: 1,
+      username: "johndoe01",
+      firstName: "John",
+      lastName: "Doe",
+      email: "john.doe01@email.com",
+    },
+    {
+      id: 2,
+      username: "aishadoe01",
+      firstName: "Aisha",
+      lastName: "Doe",
+      email: "aisha.doe01@email.com",
+    },
+    {
+      id: 3,
+      username: "phillipedoe01",
+      firstName: "Phillipe",
+      lastName: "Doe",
+      email: "phillipe.doe01@email.com",
+    },
+    {
+      id: 4,
+      username: "janedoe01",
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane.doe01@email.com",
     },
   ],
   success: true,
@@ -102,13 +136,10 @@ describe("user route", () => {
         success: true,
         data: {
           id: 4,
+          username: "janedoe01",
           firstName: "Jane",
           lastName: "Doe",
           email: "jane.doe01@email.com",
-          userAccount: {
-            id: 4,
-            username: "janedoe01",
-          },
         },
       });
     });
@@ -167,13 +198,10 @@ describe("user route", () => {
         success: true,
         data: {
           id: 5,
+          username: "antoinedoe01",
           firstName: "Antoine",
           lastName: "Doe",
           email: "antoine.doe01@email.com",
-          userAccount: {
-            id: 5,
-            username: "antoinedoe01",
-          },
         },
       });
     });
@@ -558,13 +586,10 @@ describe("user route", () => {
         success: true,
         data: {
           id: 4,
+          username: "janedoe01",
           firstName: "Janet",
           lastName: "Doe",
           email: "jane.doe01@email.com",
-          userAccount: {
-            id: 4,
-            username: "janedoe01",
-          },
         },
       });
     });
@@ -587,13 +612,10 @@ describe("user route", () => {
         success: true,
         data: {
           id: 4,
+          username: "janedoe01",
           firstName: "Jane",
           lastName: "Doey",
           email: "jane.doe01@email.com",
-          userAccount: {
-            id: 4,
-            username: "janedoe01",
-          },
         },
       });
     });
@@ -616,13 +638,10 @@ describe("user route", () => {
         success: true,
         data: {
           id: 4,
+          username: "janedoe01",
           firstName: "Jane",
           lastName: "Doe",
           email: "janedoe@email.com",
-          userAccount: {
-            id: 4,
-            username: "janedoe01",
-          },
         },
       });
     });
@@ -879,13 +898,10 @@ describe("user route", () => {
         success: true,
         data: {
           id: 4,
+          username: "janedoe01",
           firstName: "Jane",
           lastName: "Doe",
           email: "jane.doe01@email.com",
-          userAccount: {
-            id: 4,
-            username: "janedoe01",
-          },
         },
       });
     });
