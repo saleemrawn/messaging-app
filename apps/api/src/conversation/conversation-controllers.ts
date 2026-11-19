@@ -19,7 +19,7 @@ import type {
   AddMessageReceiptsResBody,
 } from "../types/conversation-types.ts";
 import { matchedData, type ValidationError } from "express-validator";
-import { getAuthenticatedUserId } from "../user/user-helpers.ts";
+import { getAuthenticatedUserId } from "../auth/auth-helpers.ts";
 import * as repository from "./conversation-repository.ts";
 
 const getConversationsByUserAccountId = async (
