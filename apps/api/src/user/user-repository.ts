@@ -1,6 +1,21 @@
 import { prisma } from "../lib/prisma.ts";
 import type { User, UserAccount } from "../types/user-types.ts";
 
+const accountSelect = {
+  id: true,
+  username: true,
+  user: { select: { id: true, firstName: true, lastName: true, email: true } },
+} as const;
+
+const toUserWithAccount = (account: {
+  id: number;
+  username: string;
+  user: { id: number; firstName: string; lastName: string; email: string };
+}) => ({
+  ...account.user,
+  userAccount: { id: account.id, username: account.username },
+});
+
 const getUsers = async () => {
   const users = await prisma.user.findMany({
     select: {
@@ -16,20 +31,12 @@ const getUsers = async () => {
   return users;
 };
 
-const getUserById = async (id: number) => {
-  const user = await prisma.user.findUnique({
-    where: { id, userAccount: { deletedAt: null } },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      userAccount: {
-        select: { id: true, username: true },
-      },
-    },
+const getUserByAccountId = async (userAccountId: UserAccount["id"]) => {
+  const account = await prisma.userAccount.findFirst({
+    where: { id: userAccountId, deletedAt: null, user: { deletedAt: null } },
+    select: accountSelect,
   });
-  return user;
+  return account ? toUserWithAccount(account) : null;
 };
 
 const getUserCredentialsByUsername = async (
@@ -77,51 +84,34 @@ const createUser = async ({
 };
 
 const updateUser = async ({
-  id,
+  userAccountId,
   firstName,
   lastName,
   email,
-}: Pick<User, "id" | "firstName" | "lastName" | "email">) => {
-  const user = await prisma.user.update({
-    where: { id },
-    data: { firstName, lastName, email },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      userAccount: {
-        select: { id: true, username: true },
-      },
-    },
+}: Pick<User, "firstName" | "lastName" | "email"> & {
+  userAccountId: UserAccount["id"];
+}) => {
+  const account = await prisma.userAccount.update({
+    where: { id: userAccountId },
+    data: { user: { update: { firstName, lastName, email } } },
+    select: accountSelect,
   });
-  return user;
+  return toUserWithAccount(account);
 };
 
-const deleteUser = async (id: number) => {
-  const user = await prisma.user.update({
-    where: { id },
-    data: {
-      deletedAt: new Date(),
-      userAccount: { update: { deletedAt: new Date() } },
-    },
-    select: {
-      id: true,
-      firstName: true,
-      lastName: true,
-      email: true,
-      userAccount: {
-        select: { id: true, username: true },
-      },
-    },
+const deleteUser = async (userAccountId: UserAccount["id"]) => {
+  const deletedAt = new Date();
+  const account = await prisma.userAccount.update({
+    where: { id: userAccountId },
+    data: { deletedAt, user: { update: { deletedAt } } },
+    select: accountSelect,
   });
-
-  return user;
+  return toUserWithAccount(account);
 };
 
 export {
   getUsers,
-  getUserById,
+  getUserByAccountId,
   getUserCredentialsByUsername,
   createUser,
   updateUser,

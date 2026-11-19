@@ -5,7 +5,7 @@ import type {
   DeleteMessageResBody,
 } from "../types/message-types.ts";
 import { matchedData, type ValidationError } from "express-validator";
-import { getAuthenticatedUserId } from "../auth/auth-helpers.ts";
+import { getAuthenticatedUserAccountId } from "../auth/auth-helpers.ts";
 import * as repository from "./message-repository.ts";
 
 const deleteMessage = async (
@@ -13,7 +13,7 @@ const deleteMessage = async (
   res: Response<ApiResponse<DeleteMessageResBody, ValidationError[]>>,
 ) => {
   const { id }: DeleteMessageReqParams = matchedData(req);
-  const userAccountId = getAuthenticatedUserId(req);
+  const userAccountId = getAuthenticatedUserAccountId(req);
 
   const message = await repository.deleteMessage({ id, userAccountId });
   if (!message) {

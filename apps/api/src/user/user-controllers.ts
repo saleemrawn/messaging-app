@@ -12,7 +12,7 @@ import type {
   DeleteUserReqParams,
   DeleteUserValidatedReq,
 } from "../types/user-types.ts";
-import { getAuthenticatedUserId } from "../auth/auth-helpers.ts";
+import { getAuthenticatedUserAccountId } from "../auth/auth-helpers.ts";
 import { matchedData, type ValidationError } from "express-validator";
 import * as repository from "./user-repository.ts";
 import bcrypt from "bcrypt";
@@ -27,7 +27,7 @@ const getUserById = async (
   res: Response<ApiResponse<User>>,
 ) => {
   const { id }: GetUserByIdValidatedReq = matchedData(req);
-  const user = await repository.getUserById(id);
+  const user = await repository.getUserByAccountId(id);
 
   if (!user) {
     res.status(404).json({ success: false, message: "User not found" });
@@ -69,8 +69,9 @@ const updateUser = async (
   const { id, firstName, lastName, email }: UpdateUserValidatedReq =
     matchedData(req);
 
-  const authenticatedUserId = getAuthenticatedUserId(req);
-  if (id !== authenticatedUserId) {
+  const userAccountId = getAuthenticatedUserAccountId(req);
+
+  if (id !== userAccountId) {
     res.status(403).json({
       success: false,
       message: "You can only update your own account",
@@ -79,7 +80,7 @@ const updateUser = async (
   }
 
   const user = await repository.updateUser({
-    id: authenticatedUserId,
+    userAccountId,
     firstName,
     lastName,
     email,
@@ -92,7 +93,7 @@ const deleteUser = async (
   res: Response<ApiResponse<User>>,
 ) => {
   const { id }: DeleteUserValidatedReq = matchedData(req);
-  const authenticatedUserId = getAuthenticatedUserId(req);
+  const authenticatedUserId = getAuthenticatedUserAccountId(req);
 
   if (id !== authenticatedUserId) {
     res.status(403).json({

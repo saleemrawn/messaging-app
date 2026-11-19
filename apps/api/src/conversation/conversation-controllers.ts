@@ -19,7 +19,7 @@ import type {
   AddMessageReceiptsResBody,
 } from "../types/conversation-types.ts";
 import { matchedData, type ValidationError } from "express-validator";
-import { getAuthenticatedUserId } from "../auth/auth-helpers.ts";
+import { getAuthenticatedUserAccountId } from "../auth/auth-helpers.ts";
 import * as repository from "./conversation-repository.ts";
 
 const getConversationsByUserAccountId = async (
@@ -28,7 +28,7 @@ const getConversationsByUserAccountId = async (
     ApiResponse<GetConversationsByUserAccountIdResBody, ValidationError[]>
   >,
 ) => {
-  const userAccountId = getAuthenticatedUserId(req);
+  const userAccountId = getAuthenticatedUserAccountId(req);
   const conversations =
     await repository.getConversationsByUserAccountId(userAccountId);
 
@@ -55,7 +55,7 @@ const createConversation = async (
   res: Response<ApiResponse<CreateConversationResBody, ValidationError[]>>,
 ) => {
   const { content, recipientId }: CreateConversationReqBody = matchedData(req);
-  const senderId = getAuthenticatedUserId(req);
+  const senderId = getAuthenticatedUserAccountId(req);
 
   const conversation = await repository.createConversation({
     content,
@@ -88,7 +88,7 @@ const addMessageToConversation = async (
 ) => {
   const { id, content, recipientId }: AddMessageToConversationValidatedReq =
     matchedData(req);
-  const senderId = getAuthenticatedUserId(req);
+  const senderId = getAuthenticatedUserAccountId(req);
 
   const conversation = await repository.addMessageToConversation({
     conversationId: id,
@@ -105,7 +105,7 @@ const addMessageReceipts = async (
   res: Response<ApiResponse<AddMessageReceiptsResBody, ValidationError[]>>,
 ) => {
   const { id }: AddMessageReceiptsValidatedReq = matchedData(req);
-  const userAccountId = getAuthenticatedUserId(req);
+  const userAccountId = getAuthenticatedUserAccountId(req);
 
   const receipts = await repository.addMessageReceipts({
     conversationId: id,

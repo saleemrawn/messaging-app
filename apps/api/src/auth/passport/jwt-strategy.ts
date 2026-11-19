@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
-import { getUserById } from "../../user/user-repository.ts";
+import { getUserByAccountId } from "../../user/user-repository.ts";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -22,7 +22,7 @@ const jwtStrategy = new JwtStrategy(
     secretOrKey: JWT_SECRET,
   },
   (jwtPayload: { userId: number }, done) => {
-    getUserById(jwtPayload.userId)
+    getUserByAccountId(jwtPayload.userId)
       .then((user) => {
         if (!user) {
           done(null, false);
