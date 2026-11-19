@@ -1,20 +1,17 @@
-import user from "../src/user/user-routes.ts";
-import express, { type Express } from "express";
-import request from "supertest";
 import {
+  populateConversation,
   populateUser,
   populateUserAccount,
+  populateUserConversation,
   resetDbTables,
 } from "./helpers/database.ts";
-import { beforeEach, describe, expect, test } from "vitest";
-import { errorHandler } from "../src/middleware/error-middleware.ts";
-
-const app: Express = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use("/api/users", user);
-app.use(errorHandler);
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  createAuthenticatedAgentAs,
+  createUnauthenticatedAgent,
+} from "./helpers/auth.ts";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/client";
+import * as userRepository from "../src/user/user-repository.ts";
 
 beforeEach(async () => {
   await resetDbTables();
@@ -22,33 +19,131 @@ beforeEach(async () => {
   await populateUserAccount();
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("error middleware", () => {
-  test("returns resource already exists error", async () => {
-    const res = await request(app).post("/api/users").send({
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@email.com",
-      username: "johndoe01",
-      password: "Monkey123!",
+  describe("unique constraint errors (P2002)", () => {
+    test("returns resource already exists error for a duplicate username", async () => {
+      const user = {
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@email.com",
+        username: "johndoe01",
+        password: "Monkey123!",
+      };
+
+      const agent = createUnauthenticatedAgent();
+      const res = await agent.post("/api/users").send(user);
+
+      expect(res.status).toBe(409);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        code: "P2002",
+        message: "Resource already exists",
+      });
     });
 
-    expect(res.status).toBe(409);
-    expect(res.type).toBe("application/json");
-    expect(res.body).toEqual({
-      success: false,
-      code: "P2002",
-      message: "Resource already exists",
+    test("returns resource already exists error for a duplicate email", async () => {
+      const user = {
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe01@email.com",
+        username: "johndoe02",
+        password: "Monkey123!",
+      };
+
+      const agent = createUnauthenticatedAgent();
+      const res = await agent.post("/api/users").send(user);
+
+      expect(res.status).toBe(409);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        code: "P2002",
+        message: "Resource already exists",
+      });
     });
   });
 
-  test("returns resource not found error", async () => {
-    const res = await request(app).get("/api/users/999");
+  describe("record not found errors (P2025)", () => {
+    test("returns resource not found error when Prisma cannot find the record", async () => {
+      await populateConversation();
+      await populateUserConversation();
 
-    expect(res.status).toBe(404);
-    expect(res.type).toBe("application/json");
-    expect(res.body).toEqual({
-      success: false,
-      message: "User not found",
+      // deleteConversation updates by ID with no existence check, so a
+      // missing conversation reaches the middleware as a Prisma P2025 error
+      const agent = createAuthenticatedAgentAs(1);
+      const res = await agent.delete("/api/conversations/9999");
+
+      expect(res.status).toBe(404);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        code: "P2025",
+        message: "Resource not found",
+      });
+    });
+  });
+
+  describe("unexpected errors", () => {
+    test("returns a generic 500 error and does not leak error details", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      vi.spyOn(userRepository, "getUsers").mockRejectedValueOnce(
+        new Error("database exploded"),
+      );
+
+      const agent = createAuthenticatedAgentAs(1);
+      const res = await agent.get("/api/users");
+
+      expect(res.status).toBe(500);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        message: "Internal Server Error",
+      });
+      expect(JSON.stringify(res.body)).not.toContain("database exploded");
+    });
+  });
+
+  describe("unmapped Prisma errors", () => {
+    test("returns a generic database error and does not leak error details", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+      vi.spyOn(userRepository, "getUsers").mockRejectedValueOnce(
+        new PrismaClientKnownRequestError(
+          "Foreign key constraint failed on table user_account",
+          { code: "P2003", clientVersion: "test" },
+        ),
+      );
+
+      const agent = createAuthenticatedAgentAs(1);
+      const res = await agent.get("/api/users");
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        code: "P2003",
+        message: "Database request failed",
+      });
+      expect(JSON.stringify(res.body)).not.toContain("user_account");
+    });
+  });
+
+  describe("malformed requests", () => {
+    // body-parser attaches statusCode 400 to its parse errors
+    test("returns a 400 JSON error for a malformed JSON body", async () => {
+      const agent = createUnauthenticatedAgent();
+      const res = await agent
+        .post("/api/users")
+        .set("Content-Type", "application/json")
+        .send('{"firstName": "John",');
+
+      expect(res.status).toBe(400);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toMatchObject({ success: false });
     });
   });
 });
