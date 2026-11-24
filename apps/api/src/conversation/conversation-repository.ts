@@ -1,6 +1,9 @@
 import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../types/message-types.ts";
-import type { ConversationSummary } from "../types/conversation-types.ts";
+import type {
+  ConversationDetail,
+  ConversationSummary,
+} from "../types/conversation-types.ts";
 import type {
   Conversation,
   MessageReceipt,
@@ -114,33 +117,113 @@ const toConversationSummary = ({
   };
 };
 
-const getConversationById = async (id: Conversation["id"]) => {
-  const conversation = await prisma.conversation.findUnique({
-    where: { id },
+// True when the account is an active participant of a live conversation.
+const isConversationMember = async (
+  conversationId: Conversation["id"],
+  userAccountId: UserAccount["id"],
+): Promise<boolean> => {
+  const count = await prisma.userConversation.count({
+    where: {
+      conversationId,
+      userAccountId,
+      deletedAt: null,
+      conversation: { deletedAt: null },
+    },
+  });
+  return count > 0;
+};
+
+// The conversation as the caller sees it, or null when it doesn't exist, is
+// deleted, or the caller isn't a participant.
+const getConversationById = async (
+  id: Conversation["id"],
+  userAccountId: UserAccount["id"],
+): Promise<ConversationDetail | null> => {
+  const conversation = await prisma.conversation.findFirst({
+    where: {
+      id,
+      deletedAt: null,
+      userConversations: { some: { userAccountId, deletedAt: null } },
+    },
     select: {
       id: true,
       updatedAt: true,
       messages: {
+        where: { deletedAt: null },
         select: {
           id: true,
           content: true,
           createdAt: true,
-          userAccount: {
-            select: {
-              id: true,
-              deletedAt: true,
-              user: { select: { id: true, firstName: true, lastName: true } },
-            },
-          },
+          userAccountId: true,
+          messageReceipts: { select: { userAccountId: true, readAt: true } },
         },
         orderBy: { createdAt: "asc" },
       },
       userConversations: {
-        select: { id: true, userAccountId: true, unreadCount: true },
+        where: { userAccountId: { not: userAccountId } },
+        select: {
+          userAccount: {
+            select: {
+              id: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+        },
+        take: 1,
       },
     },
   });
-  return conversation;
+
+  return conversation ? toConversationDetail(conversation) : null;
+};
+
+interface ConversationWithMessages {
+  id: number;
+  updatedAt: Date;
+  messages: {
+    id: number;
+    content: string;
+    createdAt: Date;
+    userAccountId: number;
+    messageReceipts: { userAccountId: number; readAt: Date }[];
+  }[];
+  userConversations: ConversationMembership["conversation"]["userConversations"];
+}
+
+const toConversationDetail = ({
+  id,
+  updatedAt,
+  messages,
+  userConversations,
+}: ConversationWithMessages): ConversationDetail => {
+  const recipientMembership = userConversations.at(0);
+
+  if (!recipientMembership) {
+    throw new Error(`Conversation ${String(id)} has no other participant`);
+  }
+
+  const { userAccount } = recipientMembership;
+
+  return {
+    id,
+    updatedAt,
+    recipient: {
+      id: userAccount.id,
+      firstName: userAccount.user.firstName,
+      lastName: userAccount.user.lastName,
+    },
+    messages: messages.map((message) => ({
+      id: message.id,
+      content: message.content,
+      createdAt: message.createdAt,
+      senderId: message.userAccountId,
+      // In a two-person conversation the reader is whoever didn't send it.
+      readAt:
+        message.messageReceipts.find(
+          (receipt) => receipt.userAccountId !== message.userAccountId,
+        )?.readAt ?? null,
+    })),
+  };
 };
 
 const createConversation = async ({
@@ -261,7 +344,11 @@ const addMessageReceipts = async ({
 }) => {
   return await prisma.$transaction(async (tx) => {
     const messages = await tx.message.findMany({
-      where: { conversationId, userAccountId: { not: userAccountId } },
+      where: {
+        conversationId,
+        userAccountId: { not: userAccountId },
+        deletedAt: null,
+      },
       select: { id: true },
     });
 
@@ -288,6 +375,7 @@ const addMessageReceipts = async ({
 
 export {
   getConversationsByUserAccountId,
+  isConversationMember,
   getConversationById,
   createConversation,
   deleteConversation,

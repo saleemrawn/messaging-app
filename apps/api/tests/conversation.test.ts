@@ -22,27 +22,21 @@ beforeEach(async () => {
   await populateUserAccount();
 });
 
-// Conversation 1 after John (account 1) sends "Hello" to Aisha (account 2)
-const helloConversationFromJohn = (recipientUnreadCount: number) => ({
+// Conversation 1 as John (account 1) sees it after sending "Hello" to Aisha
+const helloConversationFromJohn = (readAt: unknown) => ({
   success: true,
   data: {
     id: 1,
     updatedAt: isoDateString(),
+    recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
     messages: [
       {
         id: 1,
         content: "Hello",
         createdAt: isoDateString(),
-        userAccount: {
-          id: 1,
-          deletedAt: null,
-          user: { id: 1, firstName: "John", lastName: "Doe" },
-        },
+        senderId: 1,
+        readAt,
       },
-    ],
-    userConversations: [
-      { id: 1, userAccountId: 1, unreadCount: 0 },
-      { id: 2, userAccountId: 2, unreadCount: recipientUnreadCount },
     ],
   },
 });
@@ -279,7 +273,7 @@ describe("conversation route", () => {
   });
 
   describe("get conversation by ID route", () => {
-    test("returns a conversation by ID", async () => {
+    test("returns the conversation as the authenticated user sees it", async () => {
       await populateConversation();
       await populateUserConversation();
       await populateMessage();
@@ -294,34 +288,109 @@ describe("conversation route", () => {
         data: {
           id: 1,
           updatedAt: "2026-01-01T20:10:00.000Z",
+          recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
           messages: [
             {
               id: 1,
               content: "Lorem ipsum dolor sit amet",
               createdAt: "2026-01-01T20:00:00.000Z",
-              userAccount: {
-                id: 1,
-                deletedAt: null,
-                user: { id: 1, firstName: "John", lastName: "Doe" },
-              },
+              senderId: 1,
+              readAt: null,
             },
             {
               id: 2,
               content: "Consectetur adipiscing elit",
               createdAt: "2026-01-01T20:10:00.000Z",
-              userAccount: {
-                id: 2,
-                deletedAt: null,
-                user: { id: 2, firstName: "Aisha", lastName: "Doe" },
-              },
+              senderId: 2,
+              readAt: null,
             },
-          ],
-          userConversations: [
-            { id: 1, userAccountId: 1, unreadCount: 0 },
-            { id: 2, userAccountId: 2, unreadCount: 0 },
           ],
         },
       });
+    });
+
+    test("the recipient is the other participant for either member", async () => {
+      await populateConversation();
+      await populateUserConversation();
+
+      const aisha = createAuthenticatedAgentAs(2);
+      const res = await aisha.get("/api/conversations/1");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        data: { recipient: { id: 1, firstName: "John", lastName: "Doe" } },
+      });
+    });
+
+    test("sets readAt once the other participant has read the message", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      // Aisha (account 2) reads conversation 1, which only covers John's message
+      const aisha = createAuthenticatedAgentAs(2);
+      await aisha.post("/api/conversations/1/messages/receipts").expect(201);
+
+      const john = await createAuthenticatedAgent();
+      const res = await john.get("/api/conversations/1");
+
+      expect(res.body).toMatchObject({
+        data: {
+          messages: [
+            { id: 1, senderId: 1, readAt: isoDateString() },
+            { id: 2, senderId: 2, readAt: null },
+          ],
+        },
+      });
+    });
+
+    test("excludes soft-deleted messages", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await prisma.message.update({
+        where: { id: 2 },
+        data: { deletedAt: new Date() },
+      });
+
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations/1");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ data: { messages: [{ id: 1 }] } });
+      expect(
+        (res.body as { data: { messages: unknown[] } }).data.messages,
+      ).toHaveLength(1);
+    });
+
+    test("returns not found for a conversation the user does not belong to", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      // Jane (account 4) is not in conversation 1
+      const jane = createAuthenticatedAgentAs(4);
+      const res = await jane.get("/api/conversations/1");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+    });
+
+    test("returns not found for a soft-deleted conversation", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await prisma.conversation.update({
+        where: { id: 1 },
+        data: { deletedAt: new Date() },
+      });
+
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations/1");
+
+      expect(res.status).toBe(404);
     });
 
     test("returns conversation not found error", async () => {
@@ -389,21 +458,15 @@ describe("conversation route", () => {
         data: {
           id: 1,
           updatedAt: isoDateString(),
+          recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
           messages: [
             {
               id: 1,
               content: "Hello, how is it going?",
               createdAt: isoDateString(),
-              userAccount: {
-                id: 1,
-                deletedAt: null,
-                user: { id: 1, firstName: "John", lastName: "Doe" },
-              },
+              senderId: 1,
+              readAt: null,
             },
-          ],
-          userConversations: [
-            { id: 1, userAccountId: 1, unreadCount: 0 },
-            { id: 2, userAccountId: 2, unreadCount: 1 },
           ],
         },
       });
@@ -645,7 +708,29 @@ describe("conversation route", () => {
       const res = await agent.get("/api/conversations/1");
 
       expect(res.status).toBe(200);
-      expect(res.body).toEqual(helloConversationFromJohn(1));
+      expect(res.body).toEqual(helloConversationFromJohn(null));
+    });
+
+    test("returns not found for a conversation the user does not belong to", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      // Jane (account 4) is not in conversation 1
+      const jane = createAuthenticatedAgentAs(4);
+      const res = await jane
+        .post("/api/conversations/1/messages")
+        .send({ content: "Let me in", recipientId: 1 })
+        .set("Accept", "application/json");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+      expect(await prisma.message.count({ where: { conversationId: 1 } })).toBe(
+        2,
+      );
     });
 
     test("returns missing content error", async () => {
@@ -831,24 +916,66 @@ describe("conversation route", () => {
       await populateConversation();
       await populateUserConversation();
 
-      const john = await createAuthenticatedAgent();
-
       // John sends a message to Aisha
+      const john = await createAuthenticatedAgent();
       await john
         .post("/api/conversations/1/messages")
         .send({ content: "Hello", recipientId: 2 })
         .set("Accept", "application/json")
         .expect(201);
 
-      const beforeRead = await john.get("/api/conversations/1");
-      expect(beforeRead.body).toEqual(helloConversationFromJohn(1));
+      const aisha = createAuthenticatedAgentAs(2);
+      const beforeRead = await aisha.get("/api/conversations");
+      expect(listedConversation(beforeRead.body, 1)).toMatchObject({
+        unreadCount: 1,
+      });
 
       // Aisha reads the conversation
-      const aisha = createAuthenticatedAgentAs(2);
       await aisha.post("/api/conversations/1/messages/receipts").expect(201);
 
-      const afterRead = await john.get("/api/conversations/1");
-      expect(afterRead.body).toEqual(helloConversationFromJohn(0));
+      const afterRead = await aisha.get("/api/conversations");
+      expect(listedConversation(afterRead.body, 1)).toMatchObject({
+        unreadCount: 0,
+      });
+      const johnView = await john.get("/api/conversations/1");
+      expect(johnView.body).toEqual(helloConversationFromJohn(isoDateString()));
+    });
+
+    test("skips soft-deleted messages", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await prisma.message.update({
+        where: { id: 1 },
+        data: { deletedAt: new Date() },
+      });
+
+      const aisha = createAuthenticatedAgentAs(2);
+      const res = await aisha.post("/api/conversations/1/messages/receipts");
+
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ success: true, data: [] });
+    });
+
+    test("returns not found for a conversation the user does not belong to", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await prisma.userConversation.updateMany({
+        where: { conversationId: 1 },
+        data: { unreadCount: 1 },
+      });
+
+      // Jane (account 4) is not in conversation 1
+      const jane = createAuthenticatedAgentAs(4);
+      const res = await jane.post("/api/conversations/1/messages/receipts");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+      expect(await prisma.messageReceipt.count()).toBe(0);
     });
 
     test("only resets the unread count of the conversation being read", async () => {

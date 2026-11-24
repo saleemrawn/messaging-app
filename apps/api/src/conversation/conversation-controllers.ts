@@ -22,6 +22,11 @@ import { matchedData, type ValidationError } from "express-validator";
 import { getAuthenticatedUserAccountId } from "../auth/auth-helpers.ts";
 import * as repository from "./conversation-repository.ts";
 
+const CONVERSATION_NOT_FOUND = {
+  success: false,
+  message: "Conversation not found",
+} as const;
+
 const getConversationsByUserAccountId = async (
   req: Request,
   res: Response<
@@ -40,10 +45,11 @@ const getConversationById = async (
   res: Response<ApiResponse<GetConversationByIdResBody, ValidationError[]>>,
 ) => {
   const { id }: GetConversationByIdValidatedReq = matchedData(req);
+  const userAccountId = getAuthenticatedUserAccountId(req);
 
-  const conversation = await repository.getConversationById(id);
+  const conversation = await repository.getConversationById(id, userAccountId);
   if (!conversation) {
-    res.status(404).json({ success: false, message: "Conversation not found" });
+    res.status(404).json(CONVERSATION_NOT_FOUND);
     return;
   }
 
@@ -90,6 +96,11 @@ const addMessageToConversation = async (
     matchedData(req);
   const senderId = getAuthenticatedUserAccountId(req);
 
+  if (!(await repository.isConversationMember(id, senderId))) {
+    res.status(404).json(CONVERSATION_NOT_FOUND);
+    return;
+  }
+
   const conversation = await repository.addMessageToConversation({
     conversationId: id,
     content,
@@ -106,6 +117,11 @@ const addMessageReceipts = async (
 ) => {
   const { id }: AddMessageReceiptsValidatedReq = matchedData(req);
   const userAccountId = getAuthenticatedUserAccountId(req);
+
+  if (!(await repository.isConversationMember(id, userAccountId))) {
+    res.status(404).json(CONVERSATION_NOT_FOUND);
+    return;
+  }
 
   const receipts = await repository.addMessageReceipts({
     conversationId: id,
