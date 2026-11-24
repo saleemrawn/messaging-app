@@ -2,7 +2,9 @@ import type {
   Conversation,
   Message,
   MessageReceipt,
+  User,
   UserAccount,
+  UserConversation,
 } from "../../generated/prisma/client.ts";
 import type { ParamsDictionary } from "express-serve-static-core";
 import type { MessageInput } from "../types/message-types.ts";
@@ -18,8 +20,21 @@ interface AddMessageToConversationValidatedReq {
   recipientId: UserAccount["id"];
 }
 
-interface GetConversationsByUserAccountIdReqBody {
-  userAccountId: number;
+interface ConversationSummary {
+  id: Conversation["id"];
+  updatedAt: Conversation["updatedAt"];
+  unreadCount: UserConversation["unreadCount"];
+  recipient: {
+    id: UserAccount["id"];
+    firstName: User["firstName"];
+    lastName: User["lastName"];
+  };
+  latestMessage: {
+    id: Message["id"];
+    content: Message["content"];
+    createdAt: Message["createdAt"];
+    senderId: UserAccount["id"];
+  } | null;
 }
 
 interface GetConversationByIdReqParams extends ParamsDictionary {
@@ -46,9 +61,7 @@ interface DeleteConversationValidatedReq {
   id: Conversation["id"];
 }
 
-type GetConversationsByUserAccountIdResBody = Awaited<
-  ReturnType<typeof repository.getConversationsByUserAccountId>
->;
+type GetConversationsByUserAccountIdResBody = ConversationSummary[];
 
 type GetConversationByIdResBody = Awaited<
   ReturnType<typeof repository.getConversationById>
@@ -64,7 +77,7 @@ type AddMessageReceiptsResBody = MessageReceipt[];
 export type {
   AddMessageToConversationReqParams,
   AddMessageToConversationValidatedReq,
-  GetConversationsByUserAccountIdReqBody,
+  ConversationSummary,
   GetConversationsByUserAccountIdResBody,
   GetConversationByIdReqParams,
   GetConversationByIdValidatedReq,

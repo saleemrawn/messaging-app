@@ -9,6 +9,7 @@ import {
 import { beforeEach, describe, expect, test } from "vitest";
 import { isoDateString } from "./helpers/types.ts";
 import { faker } from "@faker-js/faker";
+import { prisma } from "../src/lib/prisma.ts";
 import {
   createAuthenticatedAgent,
   createAuthenticatedAgentAs,
@@ -53,30 +54,58 @@ const aishaConversationList = {
     {
       id: 1,
       updatedAt: "2026-01-01T20:10:00.000Z",
-      userConversations: [
-        {
-          userAccount: {
-            id: 1,
-            deletedAt: null,
-            user: { firstName: "John", lastName: "Doe" },
-          },
-        },
-      ],
-      messages: [
-        {
-          id: 1,
-          content: "Lorem ipsum dolor sit amet",
-          createdAt: "2026-01-01T20:00:00.000Z",
-        },
-        {
-          id: 2,
-          content: "Consectetur adipiscing elit",
-          createdAt: "2026-01-01T20:10:00.000Z",
-        },
-      ],
+      unreadCount: 0,
+      recipient: { id: 1, firstName: "John", lastName: "Doe" },
+      latestMessage: {
+        id: 2,
+        content: "Consectetur adipiscing elit",
+        createdAt: "2026-01-01T20:10:00.000Z",
+        senderId: 2,
+      },
     },
   ],
 };
+
+// What John (account 1) should see in his conversation list, newest first
+const johnConversationList = {
+  success: true,
+  data: [
+    {
+      id: 2,
+      updatedAt: "2026-01-01T21:10:00.000Z",
+      unreadCount: 0,
+      recipient: { id: 3, firstName: "Phillipe", lastName: "Doe" },
+      latestMessage: {
+        id: 4,
+        content: "Labore et dolore magna aliqua",
+        createdAt: "2026-01-01T21:10:00.000Z",
+        senderId: 3,
+      },
+    },
+    {
+      id: 1,
+      updatedAt: "2026-01-01T20:10:00.000Z",
+      unreadCount: 0,
+      recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+      latestMessage: {
+        id: 2,
+        content: "Consectetur adipiscing elit",
+        createdAt: "2026-01-01T20:10:00.000Z",
+        senderId: 2,
+      },
+    },
+  ],
+};
+
+interface ConversationListBody {
+  data: { id: number; updatedAt: string }[];
+}
+
+const listedConversations = (body: unknown) =>
+  (body as ConversationListBody).data;
+
+const listedConversation = (body: unknown, id: number) =>
+  listedConversations(body).find((conversation) => conversation.id === id);
 
 describe("conversation route", () => {
   describe("authentication", () => {
@@ -111,61 +140,7 @@ describe("conversation route", () => {
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
-      expect(res.body).toEqual({
-        success: true,
-        data: [
-          {
-            id: 2,
-            updatedAt: "2026-01-01T21:10:00.000Z",
-            userConversations: [
-              {
-                userAccount: {
-                  id: 3,
-                  deletedAt: null,
-                  user: { firstName: "Phillipe", lastName: "Doe" },
-                },
-              },
-            ],
-            messages: [
-              {
-                id: 3,
-                content: "Sed do eiusmod tempor incididunt",
-                createdAt: "2026-01-01T21:00:00.000Z",
-              },
-              {
-                id: 4,
-                content: "Labore et dolore magna aliqua",
-                createdAt: "2026-01-01T21:10:00.000Z",
-              },
-            ],
-          },
-          {
-            id: 1,
-            updatedAt: "2026-01-01T20:10:00.000Z",
-            userConversations: [
-              {
-                userAccount: {
-                  id: 2,
-                  deletedAt: null,
-                  user: { firstName: "Aisha", lastName: "Doe" },
-                },
-              },
-            ],
-            messages: [
-              {
-                id: 1,
-                content: "Lorem ipsum dolor sit amet",
-                createdAt: "2026-01-01T20:00:00.000Z",
-              },
-              {
-                id: 2,
-                content: "Consectetur adipiscing elit",
-                createdAt: "2026-01-01T20:10:00.000Z",
-              },
-            ],
-          },
-        ],
-      });
+      expect(res.body).toEqual(johnConversationList);
     });
 
     test("only returns conversations the authenticated user belongs to", async () => {
@@ -203,6 +178,103 @@ describe("conversation route", () => {
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
       expect(res.body).toEqual({ success: true, data: [] });
+    });
+
+    test("returns the authenticated user's unread count", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await prisma.userConversation.updateMany({
+        where: { userAccountId: 1, conversationId: 2 },
+        data: { unreadCount: 3 },
+      });
+      await prisma.userConversation.updateMany({
+        where: { userAccountId: 3, conversationId: 2 },
+        data: { unreadCount: 7 },
+      });
+
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations");
+
+      expect(res.status).toBe(200);
+      expect(listedConversation(res.body, 2)).toMatchObject({ unreadCount: 3 });
+      expect(listedConversation(res.body, 1)).toMatchObject({ unreadCount: 0 });
+    });
+
+    test("latest message skips soft-deleted messages", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await prisma.message.update({
+        where: { id: 4 },
+        data: { deletedAt: new Date() },
+      });
+
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations");
+
+      expect(res.status).toBe(200);
+      expect(listedConversation(res.body, 2)).toMatchObject({
+        latestMessage: {
+          id: 3,
+          content: "Sed do eiusmod tempor incididunt",
+          createdAt: "2026-01-01T21:00:00.000Z",
+          senderId: 1,
+        },
+      });
+    });
+
+    test("latest message is null when a conversation has no messages", async () => {
+      await populateConversation();
+      await populateUserConversation();
+
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations");
+
+      expect(res.status).toBe(200);
+      expect(listedConversation(res.body, 1)).toMatchObject({
+        latestMessage: null,
+      });
+      expect(listedConversation(res.body, 2)).toMatchObject({
+        latestMessage: null,
+      });
+    });
+
+    test("excludes soft-deleted conversations", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const agent = await createAuthenticatedAgent();
+      await agent.delete("/api/conversations/2").expect(200);
+      const res = await agent.get("/api/conversations");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        success: true,
+        data: [johnConversationList.data[1]],
+      });
+    });
+
+    test("moves a conversation to the top when a message is added", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const agent = await createAuthenticatedAgent();
+      await agent
+        .post("/api/conversations/1/messages")
+        .send({ content: "Bump", recipientId: 2 })
+        .expect(201);
+      const res = await agent.get("/api/conversations");
+
+      expect(res.status).toBe(200);
+      const [newest] = listedConversations(res.body);
+      expect(newest).toMatchObject({
+        id: 1,
+        latestMessage: { content: "Bump", senderId: 1 },
+      });
+      expect(newest.updatedAt).not.toBe("2026-01-01T20:10:00.000Z");
     });
   });
 
@@ -777,6 +849,23 @@ describe("conversation route", () => {
 
       const afterRead = await john.get("/api/conversations/1");
       expect(afterRead.body).toEqual(helloConversationFromJohn(0));
+    });
+
+    test("only resets the unread count of the conversation being read", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await prisma.userConversation.updateMany({
+        where: { userAccountId: 1 },
+        data: { unreadCount: 2 },
+      });
+
+      const john = await createAuthenticatedAgent();
+      await john.post("/api/conversations/1/messages/receipts").expect(201);
+      const res = await john.get("/api/conversations");
+
+      expect(listedConversation(res.body, 1)).toMatchObject({ unreadCount: 0 });
+      expect(listedConversation(res.body, 2)).toMatchObject({ unreadCount: 2 });
     });
   });
 });

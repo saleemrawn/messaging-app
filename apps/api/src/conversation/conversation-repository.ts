@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.ts";
 import type { MessageInput } from "../types/message-types.ts";
+import type { ConversationSummary } from "../types/conversation-types.ts";
 import type {
   Conversation,
   MessageReceipt,
@@ -9,35 +10,108 @@ import type {
 type CreateConversationParams = Omit<MessageInput, "conversationId">;
 type AddMessageToConversationParams = MessageInput;
 
+// Lists the caller's conversations newest first, each with the other
+// participant, the caller's own unread count and only the latest message.
 const getConversationsByUserAccountId = async (
   userAccountId: UserAccount["id"],
-) => {
-  const conversations = await prisma.conversation.findMany({
-    where: { deletedAt: null, userConversations: { some: { userAccountId } } },
+): Promise<ConversationSummary[]> => {
+  const memberships = await prisma.userConversation.findMany({
+    where: {
+      userAccountId,
+      deletedAt: null,
+      conversation: { deletedAt: null },
+    },
     select: {
-      id: true,
-      updatedAt: true,
-      messages: {
-        select: { id: true, content: true, createdAt: true },
-        orderBy: { createdAt: "asc" },
-      },
-      userConversations: {
-        where: { userAccountId: { not: userAccountId } },
+      unreadCount: true,
+      conversation: {
         select: {
-          userAccount: {
+          id: true,
+          updatedAt: true,
+          messages: {
+            where: { deletedAt: null },
             select: {
               id: true,
-              deletedAt: true,
-              user: { select: { firstName: true, lastName: true } },
+              content: true,
+              createdAt: true,
+              userAccountId: true,
             },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+          userConversations: {
+            where: { userAccountId: { not: userAccountId } },
+            select: {
+              userAccount: {
+                select: {
+                  id: true,
+                  user: { select: { firstName: true, lastName: true } },
+                },
+              },
+            },
+            take: 1,
           },
         },
       },
     },
-    orderBy: { updatedAt: "desc" },
+    orderBy: { conversation: { updatedAt: "desc" } },
   });
 
-  return conversations;
+  return memberships.map(toConversationSummary);
+};
+
+interface ConversationMembership {
+  unreadCount: number;
+  conversation: {
+    id: number;
+    updatedAt: Date;
+    messages: {
+      id: number;
+      content: string;
+      createdAt: Date;
+      userAccountId: number;
+    }[];
+    userConversations: {
+      userAccount: {
+        id: number;
+        user: { firstName: string; lastName: string };
+      };
+    }[];
+  };
+}
+
+const toConversationSummary = ({
+  unreadCount,
+  conversation,
+}: ConversationMembership): ConversationSummary => {
+  const latestMessage = conversation.messages.at(0);
+  const recipientMembership = conversation.userConversations.at(0);
+
+  if (!recipientMembership) {
+    throw new Error(
+      `Conversation ${String(conversation.id)} has no other participant`,
+    );
+  }
+
+  const { userAccount } = recipientMembership;
+
+  return {
+    id: conversation.id,
+    updatedAt: conversation.updatedAt,
+    unreadCount,
+    recipient: {
+      id: userAccount.id,
+      firstName: userAccount.user.firstName,
+      lastName: userAccount.user.lastName,
+    },
+    latestMessage: latestMessage
+      ? {
+          id: latestMessage.id,
+          content: latestMessage.content,
+          createdAt: latestMessage.createdAt,
+          senderId: latestMessage.userAccountId,
+        }
+      : null,
+  };
 };
 
 const getConversationById = async (id: Conversation["id"]) => {
@@ -132,6 +206,9 @@ const addMessageToConversation = async ({
   const conversation = await prisma.conversation.update({
     where: { id: conversationId },
     data: {
+      // Set explicitly: Prisma doesn't bump @updatedAt for nested-only writes,
+      // and the conversation list is sorted by it.
+      updatedAt: new Date(),
       messages: {
         create: { content, userAccountId: senderId },
       },
@@ -201,7 +278,7 @@ const addMessageReceipts = async ({
     });
 
     await tx.userConversation.updateMany({
-      where: { userAccountId },
+      where: { userAccountId, conversationId },
       data: { unreadCount: 0 },
     });
 
