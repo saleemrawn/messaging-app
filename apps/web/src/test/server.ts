@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
-import { axios } from "../../lib/axios.ts";
+import { axios } from "../shared/api/axios.ts";
 
 // Mock the same base URL the app's axios instance actually calls.
 const API_URL = axios.defaults.baseURL ?? "";
