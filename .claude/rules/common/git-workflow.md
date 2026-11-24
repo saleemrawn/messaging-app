@@ -15,6 +15,7 @@ Scope is the app being changed, e.g. `feat(api): …`, `fix(web): …`, `chore(w
 ## Important Notes
 
 - DO NOT add authors or co-authors to git commit message
+- Optional body should be written in bullet-points
 
 ## Pull Request Workflow
 
