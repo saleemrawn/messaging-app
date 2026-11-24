@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   MAX_MESSAGES_PER_CONVERSATION,
+  UNREAD_PER_USER,
   buildAnchors,
   buildConversation,
   buildPairs,
@@ -121,6 +122,20 @@ describe("seed data builders", () => {
     }
   });
 
+  test("anchors put 3 conversations today and 2 yesterday", () => {
+    for (let run = 0; run < RUNS; run++) {
+      const anchors = buildAnchors(10, NOW);
+      const today = startOfDay(NOW).getTime();
+      const yesterday = today - 24 * 60 * MINUTE_MS;
+
+      expect(anchors.filter((a) => a.getTime() >= today)).toHaveLength(3);
+      expect(
+        anchors.filter((a) => a.getTime() >= yesterday && a.getTime() < today),
+      ).toHaveLength(2);
+      expect(new Set(anchors.map((a) => a.getTime())).size).toBe(10);
+    }
+  });
+
   test("the today anchor stays on today just after midnight", () => {
     const justAfterMidnight = new Date(2026, 5, 15, 0, 1);
     for (let run = 0; run < RUNS; run++) {
@@ -132,18 +147,35 @@ describe("seed data builders", () => {
     }
   });
 
-  test("buildSeed gives four users a conversation with every other user", () => {
-    const { users, conversations } = buildSeed(4, NOW);
+  test("buildSeed gives 21 users 20 conversations each, 5 of them unread", () => {
+    const { users, conversations } = buildSeed(21, NOW);
 
-    expect(users).toHaveLength(4);
-    expect(conversations).toHaveLength(6);
-    for (const userIndex of [0, 1, 2, 3]) {
+    expect(users).toHaveLength(21);
+    expect(conversations).toHaveLength(210);
+    const times = conversations.map((c) => c.messages.at(-1)?.createdAt.getTime());
+    expect(new Set(times).size).toBe(210);
+    for (const userIndex of users.keys()) {
       const own = conversations.filter(({ pair }) => pair.includes(userIndex));
-      expect(own).toHaveLength(3);
+      const unread = own.filter((c) => (c.unreadCounts[userIndex] ?? 0) > 0);
+      expect(own).toHaveLength(20);
+      expect(unread).toHaveLength(UNREAD_PER_USER);
     }
   });
 
-  test("buildSeed refuses more conversations than there are anchor slots", () => {
-    expect(() => buildSeed(5, NOW)).toThrow(/at most/i);
+  test("buildSeed needs enough users to leave some conversations read", () => {
+    expect(() => buildSeed(4, NOW)).toThrow(/more than/i);
+  });
+
+  test("buildConversation forces unread or read tails when asked", () => {
+    for (let run = 0; run < RUNS; run++) {
+      const unread = buildConversation([0, 1], NOW, NOW, 1);
+      expect(unread.unreadCounts[1]).toBeGreaterThanOrEqual(1);
+      expect(unread.unreadCounts[0]).toBe(0);
+      expect(unread.messages.at(-1)?.senderIndex).toBe(0);
+
+      const read = buildConversation([0, 1], NOW, NOW, null);
+      expect(read.unreadCounts[0]).toBe(0);
+      expect(read.unreadCounts[1]).toBe(0);
+    }
   });
 });

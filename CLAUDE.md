@@ -18,7 +18,7 @@ npm run dev:api          # API dev server (watch mode), port from PORT in apps/a
 npm run dev:web          # Vite dev server
 npm run test:api         # API test suite (vitest, run once)
 npm run test:web         # web test suite (vitest + jsdom + RTL + MSW)
-npm run seed -w apps/api # wipe the DB in DATABASE_URL and seed dev data (4 users, a conversation per pair)
+npm run seed -w apps/api # wipe the DB in DATABASE_URL and seed dev data (21 users, a conversation per pair)
 
 # Single test file / single test
 npm test -w apps/api -- tests/message.test.ts
@@ -68,7 +68,7 @@ Fixtures: four users (`johndoe01`, `aishadoe01`, `phillipedoe01`, `janedoe01`, a
 
 Use `isoDateString()` / `anyString()` from `tests/helpers/types.ts` for timestamp and string matchers.
 
-`prisma/populate.ts` (`npm run seed -w apps/api`) is a separate faker-based dev seed. It TRUNCATEs every table, then writes 4 users (password `Testpassword01!`) with a conversation between every pair, each with 1–5 messages at staggered times. Generation lives in the pure `prisma/seed-data.ts` (unit-tested in `tests/seed-data.test.ts`); `populate.ts` only persists it. Running the API tests wipes seeded data, so re-seed afterwards.
+`prisma/populate.ts` (`npm run seed -w apps/api`) is a separate faker-based dev seed. It TRUNCATEs every table, then writes 21 users (password `Testpassword01!`) with a conversation between every pair, each with 1–5 messages at staggered times. Generation lives in the pure `prisma/seed-data.ts` (unit-tested in `tests/seed-data.test.ts`); `populate.ts` only persists it. Running the API tests wipes seeded data, so re-seed afterwards.
 
 ## Web
 

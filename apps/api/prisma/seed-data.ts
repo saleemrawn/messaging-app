@@ -16,9 +16,22 @@ const DAYTIME_START_MINUTES = 8 * 60;
 const DAYTIME_END_MINUTES = 22 * 60;
 const LONG_MESSAGE_CHANCE = 0.2;
 
-// Days before today for each conversation's latest message, newest first, so
-// the list shows "10:00 AM", "Yesterday" and "Mon 12th Jun" style timestamps.
-const ANCHOR_DAYS_AGO = [0, 1, 3, 9, 30, 75] as const;
+// Each user is the unread recipient in this many conversations (needs
+// 2 * UNREAD_PER_USER < user count so the rest are fully read).
+const UNREAD_PER_USER = 5;
+
+const TODAY_CONVERSATIONS = 3;
+const YESTERDAY_CONVERSATIONS = 2;
+const MAX_ANCHOR_ATTEMPTS = 20;
+
+// Days before today for the nth newest conversation's latest message: the
+// first few are today, the next few yesterday, then one per day, so the list
+// shows "10:00 AM", "Yesterday" and "Mon 12th Jun" style timestamps.
+function anchorDaysAgo(index: number): number {
+  if (index < TODAY_CONVERSATIONS) return 0;
+  if (index < TODAY_CONVERSATIONS + YESTERDAY_CONVERSATIONS) return 1;
+  return index - TODAY_CONVERSATIONS - YESTERDAY_CONVERSATIONS + 2;
+}
 
 type Pair = readonly [number, number];
 
@@ -101,9 +114,21 @@ function buildAnchor(daysAgo: number, now: Date): Date {
 
 // One latest-message time per conversation, newest first.
 function buildAnchors(count: number, now: Date): Date[] {
-  return ANCHOR_DAYS_AGO.slice(0, count).map((daysAgo) =>
-    buildAnchor(daysAgo, now),
-  );
+  const used = new Set<number>();
+
+  return Array.from({ length: count }, (_, i) => {
+    let anchor = buildAnchor(anchorDaysAgo(i), now);
+    // Several anchors share a day, so retry until each time is unique.
+    for (
+      let attempt = 0;
+      used.has(anchor.getTime()) && attempt < MAX_ANCHOR_ATTEMPTS;
+      attempt++
+    ) {
+      anchor = buildAnchor(anchorDaysAgo(i), now);
+    }
+    used.add(anchor.getTime());
+    return anchor;
+  });
 }
 
 function buildMessageContent(): string {
@@ -129,10 +154,13 @@ function readTimeFor(createdAt: Date, now: Date): Date {
 
 // Mirrors the API: replying implies having read everything before. Only the
 // last sender's trailing run can be unread, and the partner may have read it.
+// unreadFor forces that user to have an unread tail; null forces everything
+// read; undefined leaves it random.
 function buildConversation(
   pair: Pair,
   lastMessageAt: Date,
   now: Date,
+  unreadFor?: number | null,
 ): SeedConversation {
   const count = faker.number.int({
     min: 1,
@@ -140,9 +168,13 @@ function buildConversation(
   });
   const times = buildMessageTimes(count, lastMessageAt);
   const senders = times.map(() => faker.helpers.arrayElement(pair));
+  if (typeof unreadFor === "number") {
+    senders[senders.length - 1] = unreadFor === pair[0] ? pair[1] : pair[0];
+  }
   const lastSender = senders.at(-1) ?? pair[0];
   const partner = lastSender === pair[0] ? pair[1] : pair[0];
-  const hasPartnerReadTail = faker.datatype.boolean();
+  const hasPartnerReadTail =
+    unreadFor === null || (unreadFor === undefined && faker.datatype.boolean());
 
   const firstUnreadIndex = senders.findLastIndex((s) => s !== lastSender) + 1;
   const messages = times.map((createdAt, i) => ({
@@ -163,25 +195,42 @@ function buildConversation(
   };
 }
 
+// Who has an unread tail in a pair, or null for none. Users sit on a circle
+// and each is the unread recipient for the UNREAD_PER_USER users just before
+// them, so everyone ends up with exactly UNREAD_PER_USER unread conversations.
+function pickUnreadRecipient([a, b]: Pair, userCount: number): number | null {
+  const forward = b - a;
+  if (forward <= UNREAD_PER_USER) return b;
+  if (userCount - forward <= UNREAD_PER_USER) return a;
+  return null;
+}
+
 function buildSeed(userCount: number, now: Date): Seed {
-  const pairs = faker.helpers.shuffle(buildPairs(userCount));
-  if (pairs.length > ANCHOR_DAYS_AGO.length) {
+  if (userCount <= 2 * UNREAD_PER_USER) {
     throw new Error(
-      `Can seed at most ${String(ANCHOR_DAYS_AGO.length)} conversations, ${String(userCount)} users need ${String(pairs.length)}`,
+      `Need more than ${String(2 * UNREAD_PER_USER)} users, received ${String(userCount)}`,
     );
   }
 
+  const pairs = faker.helpers.shuffle(buildPairs(userCount));
   const anchors = buildAnchors(pairs.length, now);
+
   return {
     users: buildUsers(userCount),
     conversations: pairs.map((pair, i) =>
-      buildConversation(pair, anchors[i] ?? now, now),
+      buildConversation(
+        pair,
+        anchors[i] ?? now,
+        now,
+        pickUnreadRecipient(pair, userCount),
+      ),
     ),
   };
 }
 
 export {
   SEED_PASSWORD,
+  UNREAD_PER_USER,
   MAX_MESSAGES_PER_CONVERSATION,
   buildUsers,
   buildPairs,

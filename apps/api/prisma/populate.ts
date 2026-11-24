@@ -12,7 +12,7 @@ import {
 // Wipes every table and fills it with dev data: USER_COUNT users with a
 // conversation between every pair. Run with `npm run seed -w apps/api`.
 
-const USER_COUNT = 4;
+const USER_COUNT = 21;
 const FAKER_SEED = 2026;
 const BCRYPT_ROUNDS = 10;
 const TRANSACTION_TIMEOUT_MS = 30_000;
