@@ -35,6 +35,11 @@ interface ConversationDetail {
   messages: ConversationMessage[];
 }
 
+// Someone the caller can start a conversation with, found by email.
+interface Recipient extends ConversationRecipient {
+  email: string;
+}
+
 interface NewMessage {
   content: string;
   recipientId: number;
@@ -47,4 +52,5 @@ export type {
   ConversationMessage,
   LatestMessage,
   NewMessage,
+  Recipient,
 };

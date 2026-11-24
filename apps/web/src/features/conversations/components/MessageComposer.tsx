@@ -8,11 +8,16 @@ const MAX_MESSAGE_LENGTH = 5000;
 
 interface MessageComposerProps {
   recipientId: number;
+  // Focus the message box on mount, e.g. for a conversation just started.
+  shouldAutoFocus?: boolean;
 }
 
 // Posts to the current conversation route's action. Mount it with a key per
 // conversation so a draft and its error don't carry over to another one.
-function MessageComposer({ recipientId }: MessageComposerProps) {
+function MessageComposer({
+  recipientId,
+  shouldAutoFocus = false,
+}: MessageComposerProps) {
   const fetcher = useFetcher<SendMessageResult>();
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -58,6 +63,7 @@ function MessageComposer({ recipientId }: MessageComposerProps) {
           ref={textareaRef}
           name="content"
           aria-label="Message"
+          autoFocus={shouldAutoFocus}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
           placeholder="Write a message…"

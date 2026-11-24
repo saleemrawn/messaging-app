@@ -1,6 +1,8 @@
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { useLocation } from "react-router";
 import type { ConversationSummary } from "../types.ts";
 import ConversationListItem from "./ConversationListItem.tsx";
+import NewConversationDialog from "./NewConversationDialog.tsx";
 
 type ConversationFilter = "all" | "unread";
 
@@ -43,6 +45,17 @@ function ConversationList({
   const [unreadOnOpen, setUnreadOnOpen] = useState<ReadonlySet<number>>(
     () => new Set(),
   );
+  const { key: locationKey } = useLocation();
+  // The location the dialog was opened at. Any navigation, including opening
+  // the conversation already on screen, gets a new key and closes the dialog.
+  const [dialogLocationKey, setDialogLocationKey] = useState<string | null>(
+    null,
+  );
+  if (dialogLocationKey !== null && dialogLocationKey !== locationKey) {
+    setDialogLocationKey(null);
+  }
+  const isDialogOpen = dialogLocationKey === locationKey;
+  const newConversationButtonRef = useRef<HTMLButtonElement>(null);
   const idPrefix = useId();
   const tabId = (value: ConversationFilter) => `${idPrefix}-tab-${value}`;
   const panelId = `${idPrefix}-panel`;
@@ -56,9 +69,44 @@ function ConversationList({
   const emptyMessage =
     TABS.find(({ value }) => value === filter)?.emptyMessage ?? "";
 
+  function closeDialog() {
+    setDialogLocationKey(null);
+    newConversationButtonRef.current?.focus();
+  }
+
   return (
     <section className="flex w-96 shrink-0 flex-col border-r border-gray-200 bg-white">
-      <h1 className="px-6 pt-6 pb-4 text-2xl font-semibold">Messages</h1>
+      <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4">
+        <h1 className="text-2xl font-semibold">Messages</h1>
+        <button
+          ref={newConversationButtonRef}
+          type="button"
+          aria-label="New conversation"
+          aria-haspopup="dialog"
+          onClick={() => {
+            setDialogLocationKey(locationKey);
+          }}
+          className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="size-5"
+          >
+            <path d="M10 4v12M4 10h12" />
+          </svg>
+        </button>
+      </div>
+      {isDialogOpen && (
+        <NewConversationDialog
+          conversations={conversations}
+          onClose={closeDialog}
+        />
+      )}
       <div role="tablist" className="flex gap-2 border-b border-gray-200 px-4">
         {TABS.map(({ value, label }) => (
           <button

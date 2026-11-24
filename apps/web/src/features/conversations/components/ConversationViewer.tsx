@@ -32,7 +32,11 @@ function ConversationViewer({
         </h2>
       </header>
       <MessageList conversation={conversation} currentUserId={currentUserId} />
-      <MessageComposer key={conversation.id} recipientId={recipient.id} />
+      <MessageComposer
+        key={conversation.id}
+        recipientId={recipient.id}
+        shouldAutoFocus={conversation.messages.length === 0}
+      />
     </section>
   );
 }

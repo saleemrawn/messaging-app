@@ -11,11 +11,13 @@ interface ConversationListItemProps {
   currentUserId: number;
 }
 
+const EMPTY_PREVIEW = "No messages yet";
+
 function getMessagePreview(
   { latestMessage, recipient }: ConversationSummary,
   currentUserId: number,
 ): string {
-  if (!latestMessage) return "";
+  if (!latestMessage) return EMPTY_PREVIEW;
 
   const author =
     latestMessage.senderId === currentUserId ? "You" : recipient.firstName;
@@ -33,6 +35,9 @@ function ConversationListItem({
 }: ConversationListItemProps) {
   const { id, recipient, updatedAt, unreadCount } = conversation;
   const fullName = formatFullName(recipient);
+  const previewClassName = conversation.latestMessage
+    ? "truncate text-sm text-gray-600"
+    : "truncate text-sm text-gray-400 italic";
 
   return (
     <li>
@@ -43,7 +48,7 @@ function ConversationListItem({
         />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900">{fullName}</p>
-          <p className="truncate text-sm text-gray-600">
+          <p className={previewClassName}>
             {getMessagePreview(conversation, currentUserId)}
           </p>
         </div>

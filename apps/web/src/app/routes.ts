@@ -8,13 +8,18 @@ import {
   MESSAGES_ROUTE_ID,
   UNREAD_COUNT_ROUTE_ID,
   messagesPageLoader,
+  recipientLookupLoader,
   shouldRevalidateUnreadCount,
   unreadCountLoader,
 } from "../features/conversations/loaders.ts";
-import { sendMessageAction } from "../features/conversations/actions.ts";
+import {
+  createConversationAction,
+  sendMessageAction,
+} from "../features/conversations/actions.ts";
 import {
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
+  NEW_CONVERSATION_PATH,
 } from "../features/conversations/paths.ts";
 import AppLayout from "./AppLayout.tsx";
 import MessagesPage from "../features/conversations/pages/MessagesPage.tsx";
@@ -39,6 +44,14 @@ const routes: RouteObject[] = [
             shouldRevalidate: shouldRevalidateUnreadCount,
             children: [
               { path: "/", loader: () => redirect(CONVERSATIONS_PATH) },
+              {
+                // Resource route for the new conversation dialog's fetchers.
+                path: NEW_CONVERSATION_PATH,
+                loader: recipientLookupLoader,
+                action: createConversationAction,
+                // A lookup doesn't depend on any action; don't redo it after one.
+                shouldRevalidate: () => false,
+              },
               {
                 id: MESSAGES_ROUTE_ID,
                 path: MESSAGES_ROUTE_PATH,

@@ -33,7 +33,9 @@ function MessageList({ conversation, currentUserId }: MessageListProps) {
       className="min-h-0 flex-1 overflow-y-auto px-6 py-4 focus-visible:outline-2 focus-visible:outline-blue-600"
     >
       {messageCount === 0 ? (
-        <p className="py-8 text-center text-gray-500">No messages yet</p>
+        <p className="py-8 text-center text-gray-500">
+          No messages yet. Say hello to {recipient.firstName}!
+        </p>
       ) : (
         <ol className="flex flex-col gap-4">
           {messages.map((message) =>
