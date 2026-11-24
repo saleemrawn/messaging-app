@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { CookieOptions, Request, Response } from "express";
 import type { LoginInfo } from "../types/auth-types.ts";
 import type { ApiResponse } from "../types/api-types.ts";
 import type { UserResBody } from "../types/user-types.ts";
@@ -11,6 +11,16 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const TOKEN_COOKIE_NAME = "token";
+const TOKEN_MAX_AGE_MS = 60 * 60 * 1000;
+
+// Shared by login and logout: browsers only drop a cookie when it is cleared
+// with the same attributes it was set with.
+const TOKEN_COOKIE_OPTIONS: CookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+};
 
 const login = async (
   req: Request<object, object, LoginInfo, object>,
@@ -43,11 +53,9 @@ const login = async (
     });
 
     res
-      .cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 1000,
+      .cookie(TOKEN_COOKIE_NAME, token, {
+        ...TOKEN_COOKIE_OPTIONS,
+        maxAge: TOKEN_MAX_AGE_MS,
       })
       .status(200)
       .json({ success: true, message: "Authentication Successful", token });
@@ -72,4 +80,12 @@ const getCurrentUser = async (
   res.status(200).json({ success: true, data: user });
 };
 
-export { login, getCurrentUser };
+// Public and idempotent so a client with an expired token can still log out.
+const logout = (_req: Request, res: Response<ApiResponse<never>>) => {
+  res
+    .clearCookie(TOKEN_COOKIE_NAME, TOKEN_COOKIE_OPTIONS)
+    .status(200)
+    .json({ success: true, message: "Logged out" });
+};
+
+export { login, logout, getCurrentUser };
