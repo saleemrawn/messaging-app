@@ -100,6 +100,7 @@ describe("user route", () => {
   describe("authentication", () => {
     const routes: ["get" | "put" | "delete", string][] = [
       ["get", "/api/users"],
+      ["get", "/api/users/lookup?email=jane.doe01@email.com"],
       ["get", "/api/users/4"],
       ["put", "/api/users/4"],
       ["delete", "/api/users/4"],
@@ -168,6 +169,107 @@ describe("user route", () => {
             msg: "Invalid user ID, expected number",
             path: "id",
             location: "params",
+          },
+        ],
+      });
+    });
+  });
+
+  describe("lookup user by email endpoint", () => {
+    const jane = {
+      id: 4,
+      firstName: "Jane",
+      lastName: "Doe",
+      email: "jane.doe01@email.com",
+    };
+
+    const lookup = async (email: string) => {
+      const agent = await createAuthenticatedAgent();
+      return agent.get("/api/users/lookup").query({ email });
+    };
+
+    test("returns the user's public profile", async () => {
+      const res = await lookup("jane.doe01@email.com");
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({ success: true, data: jane });
+    });
+
+    test("matches case-insensitively and ignores surrounding spaces", async () => {
+      const res = await lookup("  Jane.Doe01@Email.com ");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: jane });
+    });
+
+    test("returns not found for an unknown email", async () => {
+      const res = await lookup("nobody@email.com");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: "User not found" });
+    });
+
+    test("only matches the full email address", async () => {
+      const res = await lookup("jane.doe01@email.co");
+
+      expect(res.status).toBe(404);
+    });
+
+    test("returns not found for the caller's own email", async () => {
+      const res = await lookup("john.doe01@email.com");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: "User not found" });
+    });
+
+    test("returns not found for a soft-deleted user", async () => {
+      await createAuthenticatedAgentAs(4).delete("/api/users/4").expect(200);
+
+      const res = await lookup("jane.doe01@email.com");
+
+      expect(res.status).toBe(404);
+    });
+
+    test("returns validation errors for a missing email", async () => {
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/users/lookup");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "",
+            msg: "Email is required",
+            path: "email",
+            location: "query",
+          },
+          {
+            type: "field",
+            value: "",
+            msg: "Email must be a valid format",
+            path: "email",
+            location: "query",
+          },
+        ],
+      });
+    });
+
+    test("returns a validation error for a malformed email", async () => {
+      const res = await lookup("jane.doe01");
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "jane.doe01",
+            msg: "Email must be a valid format",
+            path: "email",
+            location: "query",
           },
         ],
       });

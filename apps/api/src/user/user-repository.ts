@@ -1,7 +1,9 @@
 import { prisma } from "../lib/prisma.ts";
 import type {
   UserAccount,
+  User,
   UserResBody,
+  LookupUserResBody,
   CreateUserReqBody,
   UpdateUserReqBody,
 } from "../types/user-types.ts";
@@ -38,6 +40,27 @@ const getUserByAccountId = async (userAccountId: UserAccount["id"]) => {
     select: accountSelect,
   });
   return account ? toUserResBody(account) : null;
+};
+
+// The active account whose email matches exactly (case-insensitive), skipping
+// the caller so they can't look themselves up as a recipient.
+const findUserByEmail = async (
+  email: User["email"],
+  excludeUserAccountId: UserAccount["id"],
+): Promise<LookupUserResBody | null> => {
+  const account = await prisma.userAccount.findFirst({
+    where: {
+      id: { not: excludeUserAccountId },
+      deletedAt: null,
+      user: { deletedAt: null, email: { equals: email, mode: "insensitive" } },
+    },
+    select: {
+      id: true,
+      user: { select: { firstName: true, lastName: true, email: true } },
+    },
+  });
+
+  return account ? { id: account.id, ...account.user } : null;
 };
 
 const getUserCredentialsByUsername = async (
@@ -99,6 +122,7 @@ const deleteUser = async (userAccountId: UserAccount["id"]) => {
 export {
   getUsers,
   getUserByAccountId,
+  findUserByEmail,
   getUserCredentialsByUsername,
   createUser,
   updateUser,

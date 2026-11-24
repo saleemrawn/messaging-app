@@ -6,6 +6,9 @@ import type {
   CreateUserValidatedData,
   GetUserByIdReqParams,
   GetUserByIdValidatedReq,
+  LookupUserReqQuery,
+  LookupUserValidatedReq,
+  LookupUserResBody,
   UpdateUserReqParams,
   UpdateUserReqBody,
   UpdateUserValidatedReq,
@@ -32,6 +35,24 @@ const getUserById = async (
   const { id }: GetUserByIdValidatedReq = matchedData(req);
   const user = await repository.getUserByAccountId(id);
 
+  if (!user) {
+    res.status(404).json({ success: false, message: "User not found" });
+    return;
+  }
+
+  res.status(200).json({ success: true, data: user });
+};
+
+// Finds a recipient by their full email address. The caller's own address is
+// treated as not found.
+const lookupUser = async (
+  req: Request<object, object, object, LookupUserReqQuery>,
+  res: Response<ApiResponse<LookupUserResBody, ValidationError[]>>,
+) => {
+  const { email }: LookupUserValidatedReq = matchedData(req);
+  const userAccountId = getAuthenticatedUserAccountId(req);
+
+  const user = await repository.findUserByEmail(email, userAccountId);
   if (!user) {
     res.status(404).json({ success: false, message: "User not found" });
     return;
@@ -110,4 +131,11 @@ const deleteUser = async (
   res.status(200).json({ success: true, data: user });
 };
 
-export { getUsers, getUserById, createUser, updateUser, deleteUser };
+export {
+  getUsers,
+  getUserById,
+  lookupUser,
+  createUser,
+  updateUser,
+  deleteUser,
+};

@@ -26,6 +26,17 @@ interface GetUserByIdValidatedReq {
   id: UserAccount["id"];
 }
 
+interface LookupUserReqQuery {
+  email: string;
+}
+
+interface LookupUserValidatedReq {
+  email: User["email"];
+}
+
+// Deliberately minimal: what's needed to pick a recipient, nothing more.
+type LookupUserResBody = User;
+
 interface CreateUserReqBody {
   firstName: UserAccount["firstName"];
   lastName: UserAccount["lastName"];
@@ -75,6 +86,9 @@ export type {
   CreateUserValidatedData,
   GetUserByIdReqParams,
   GetUserByIdValidatedReq,
+  LookupUserReqQuery,
+  LookupUserValidatedReq,
+  LookupUserResBody,
   UpdateUserReqParams,
   UpdateUserReqBody,
   UpdateUserValidatedReq,

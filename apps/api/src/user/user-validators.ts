@@ -1,4 +1,4 @@
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 
 const idValidator = param("id")
   .trim()
@@ -28,6 +28,15 @@ const emailValidator = body("email")
   .isEmail()
   .withMessage("Email must be a valid format");
 
+// Exact, full-address match only; normalizeEmail() is avoided because it
+// rewrites addresses (e.g. strips dots from Gmail local parts).
+const emailQueryValidator = query("email")
+  .trim()
+  .notEmpty()
+  .withMessage("Email is required")
+  .isEmail()
+  .withMessage("Email must be a valid format");
+
 const usernameValidator = body("username")
   .trim()
   .notEmpty()
@@ -49,6 +58,8 @@ const passwordValidator = body("password")
 
 const getUserByIdValidators = [idValidator];
 
+const lookupUserValidators = [emailQueryValidator];
+
 const createUserValidators = [
   firstNameValidator,
   lastNameValidator,
@@ -68,6 +79,7 @@ const deleteUserValidators = [idValidator];
 
 export {
   getUserByIdValidators,
+  lookupUserValidators,
   createUserValidators,
   updateUserValidators,
   deleteUserValidators,
