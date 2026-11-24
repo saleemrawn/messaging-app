@@ -9,6 +9,7 @@ import {
 } from "./conversation-validators.ts";
 import {
   getConversationsByUserAccountId,
+  getUnreadCount,
   getConversationById,
   createConversation,
   deleteConversation,
@@ -21,6 +22,8 @@ const router = Router();
 
 router.use(requireAuth);
 router.get("/", getConversationsByUserAccountId);
+// Before "/:id", whose integer validator would reject "unread-count".
+router.get("/unread-count", getUnreadCount);
 router.get(
   "/:id",
   getConversationByIdValidators,

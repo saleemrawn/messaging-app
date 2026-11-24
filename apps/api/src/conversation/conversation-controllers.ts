@@ -4,6 +4,7 @@ import type {
   AddMessageToConversationReqParams,
   AddMessageToConversationValidatedReq,
   GetConversationsByUserAccountIdResBody,
+  GetUnreadCountResBody,
   GetConversationByIdReqParams,
   GetConversationByIdValidatedReq,
   GetConversationByIdResBody,
@@ -38,6 +39,17 @@ const getConversationsByUserAccountId = async (
     await repository.getConversationsByUserAccountId(userAccountId);
 
   res.status(200).json({ success: true, data: conversations });
+};
+
+const getUnreadCount = async (
+  req: Request,
+  res: Response<ApiResponse<GetUnreadCountResBody, ValidationError[]>>,
+) => {
+  const userAccountId = getAuthenticatedUserAccountId(req);
+  const unreadCount =
+    await repository.getUnreadCountByUserAccountId(userAccountId);
+
+  res.status(200).json({ success: true, data: { unreadCount } });
 };
 
 const getConversationById = async (
@@ -133,6 +145,7 @@ const addMessageReceipts = async (
 
 export {
   getConversationsByUserAccountId,
+  getUnreadCount,
   getConversationById,
   createConversation,
   deleteConversation,

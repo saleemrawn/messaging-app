@@ -117,6 +117,21 @@ const toConversationSummary = ({
   };
 };
 
+// Total unread messages across the caller's live conversations.
+const getUnreadCountByUserAccountId = async (
+  userAccountId: UserAccount["id"],
+): Promise<number> => {
+  const { _sum } = await prisma.userConversation.aggregate({
+    where: {
+      userAccountId,
+      deletedAt: null,
+      conversation: { deletedAt: null },
+    },
+    _sum: { unreadCount: true },
+  });
+  return _sum.unreadCount ?? 0;
+};
+
 // True when the account is an active participant of a live conversation.
 const isConversationMember = async (
   conversationId: Conversation["id"],
@@ -375,6 +390,7 @@ const addMessageReceipts = async ({
 
 export {
   getConversationsByUserAccountId,
+  getUnreadCountByUserAccountId,
   isConversationMember,
   getConversationById,
   createConversation,

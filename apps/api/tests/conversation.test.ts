@@ -105,6 +105,7 @@ describe("conversation route", () => {
   describe("authentication", () => {
     const routes: ["get" | "post" | "delete", string][] = [
       ["get", "/api/conversations"],
+      ["get", "/api/conversations/unread-count"],
       ["get", "/api/conversations/1"],
       ["post", "/api/conversations"],
       ["delete", "/api/conversations/1"],
@@ -269,6 +270,59 @@ describe("conversation route", () => {
         latestMessage: { content: "Bump", senderId: 1 },
       });
       expect(newest.updatedAt).not.toBe("2026-01-01T20:10:00.000Z");
+    });
+  });
+
+  describe("get unread count route", () => {
+    const setUnreadCounts = async () => {
+      await prisma.userConversation.updateMany({
+        where: { userAccountId: 1, conversationId: 1 },
+        data: { unreadCount: 2 },
+      });
+      await prisma.userConversation.updateMany({
+        where: { userAccountId: 1, conversationId: 2 },
+        data: { unreadCount: 3 },
+      });
+      await prisma.userConversation.updateMany({
+        where: { userAccountId: 3, conversationId: 2 },
+        data: { unreadCount: 7 },
+      });
+    };
+
+    test("returns the sum of the authenticated user's unread counts", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await setUnreadCounts();
+
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations/unread-count");
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({ success: true, data: { unreadCount: 5 } });
+    });
+
+    test("excludes soft-deleted conversations", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      await setUnreadCounts();
+
+      const agent = await createAuthenticatedAgent();
+      await agent.delete("/api/conversations/2").expect(200);
+      const res = await agent.get("/api/conversations/unread-count");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: { unreadCount: 2 } });
+    });
+
+    test("returns zero when the user has no conversations", async () => {
+      const agent = await createAuthenticatedAgent();
+      const res = await agent.get("/api/conversations/unread-count");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: { unreadCount: 0 } });
     });
   });
 

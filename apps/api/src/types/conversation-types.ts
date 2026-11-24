@@ -76,6 +76,10 @@ interface DeleteConversationValidatedReq {
 
 type GetConversationsByUserAccountIdResBody = ConversationSummary[];
 
+interface GetUnreadCountResBody {
+  unreadCount: UserConversation["unreadCount"];
+}
+
 type GetConversationByIdResBody = ConversationDetail;
 
 type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
@@ -91,6 +95,7 @@ export type {
   ConversationSummary,
   ConversationDetail,
   GetConversationsByUserAccountIdResBody,
+  GetUnreadCountResBody,
   GetConversationByIdReqParams,
   GetConversationByIdValidatedReq,
   GetConversationByIdResBody,
