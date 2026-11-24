@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../auth/auth-service.ts";
+import { CONVERSATIONS_PATH } from "../conversations/paths.ts";
 import FormError from "./FormError.tsx";
 
 const LOGOUT_ERROR = "Couldn't log out. Please try again.";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Messages" },
+  { to: CONVERSATIONS_PATH, label: "Messages" },
   { to: "/profile", label: "Profile" },
 ] as const;
 
@@ -42,7 +43,7 @@ function Sidebar() {
         <ul className="flex flex-col gap-1">
           {NAV_ITEMS.map(({ to, label }) => (
             <li key={to}>
-              <NavLink to={to} end={to === "/"} className={navLinkClassName}>
+              <NavLink to={to} className={navLinkClassName}>
                 {label}
               </NavLink>
             </li>

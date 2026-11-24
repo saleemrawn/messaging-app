@@ -97,7 +97,7 @@ describe("sidebar navigation", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /couldn't log out/i,
     );
-    expect(router.state.location.pathname).toBe("/");
+    expect(router.state.location.pathname).toBe("/conversations");
     expect(screen.getByRole("button", { name: /log out/i })).toBeEnabled();
   });
 });

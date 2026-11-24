@@ -75,6 +75,25 @@ function mockApi({
         ? HttpResponse.json({ success: true, data: list })
         : HttpResponse.json({ success: false }, { status }),
     ),
+    // The newest conversation opens in the viewer. These tests only cover the
+    // list, so the list above stays static even after it is marked read.
+    http.get(`${API_URL}/conversations/:id`, ({ params }) => {
+      const summary = list.find(({ id }) => id === Number(params.id));
+      return summary
+        ? HttpResponse.json({
+            success: true,
+            data: {
+              id: summary.id,
+              updatedAt: summary.updatedAt,
+              recipient: summary.recipient,
+              messages: [],
+            },
+          })
+        : HttpResponse.json({ success: false }, { status: 404 });
+    }),
+    http.post(`${API_URL}/conversations/:id/messages/receipts`, () =>
+      HttpResponse.json({ success: true, data: [] }, { status: 201 }),
+    ),
   );
 }
 
@@ -99,6 +118,22 @@ describe("conversation list", () => {
     expect(screen.getByRole("tab", { name: /unread/i })).toHaveAttribute(
       "aria-selected",
       "false",
+    );
+  });
+
+  test("links each row to its conversation", async () => {
+    mockApi();
+
+    renderRoute("/");
+
+    const [phillipe, aisha] = await findRows();
+    expect(within(phillipe).getByRole("link")).toHaveAttribute(
+      "href",
+      "/conversations/2",
+    );
+    expect(within(aisha).getByRole("link")).toHaveAttribute(
+      "href",
+      "/conversations/1",
     );
   });
 

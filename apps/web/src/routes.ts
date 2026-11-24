@@ -4,9 +4,11 @@ import {
   guestOnlyLoader,
   requireUserLoader,
 } from "./auth/loaders.ts";
-import { conversationsLoader } from "./conversations/loaders.ts";
+import { messagesPageLoader } from "./conversations/loaders.ts";
+import { sendMessageAction } from "./conversations/actions.ts";
+import { CONVERSATIONS_PATH } from "./conversations/paths.ts";
 import AppLayout from "./components/AppLayout.tsx";
-import HomePage from "./pages/HomePage.tsx";
+import MessagesPage from "./pages/MessagesPage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import ErrorPage from "./pages/ErrorPage.tsx";
@@ -21,7 +23,14 @@ const routes: RouteObject[] = [
         loader: requireUserLoader,
         Component: AppLayout,
         children: [
-          { path: "/", loader: conversationsLoader, Component: HomePage },
+          { path: "/", loader: () => redirect(CONVERSATIONS_PATH) },
+          {
+            // No id selects the newest conversation.
+            path: `${CONVERSATIONS_PATH}/:conversationId?`,
+            loader: messagesPageLoader,
+            action: sendMessageAction,
+            Component: MessagesPage,
+          },
           { path: "/profile", Component: ProfilePage },
         ],
       },

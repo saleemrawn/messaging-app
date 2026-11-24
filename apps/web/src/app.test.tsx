@@ -49,7 +49,7 @@ describe("routing by auth state", () => {
     expect(
       await screen.findByRole("heading", { name: /^messages$/i }),
     ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe("/");
+    expect(router.state.location.pathname).toBe("/conversations");
   });
 
   test("redirects unknown paths to the homepage", async () => {
@@ -60,7 +60,7 @@ describe("routing by auth state", () => {
     expect(
       await screen.findByRole("heading", { name: /^messages$/i }),
     ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe("/");
+    expect(router.state.location.pathname).toBe("/conversations");
   });
 
   test("shows an error page when the auth check fails unexpectedly", async () => {
@@ -195,7 +195,7 @@ describe("login page", () => {
     expect(
       await screen.findByRole("heading", { name: /^messages$/i }),
     ).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe("/");
+    expect(router.state.location.pathname).toBe("/conversations");
   });
 
   test("shows an error when login credentials are wrong", async () => {

@@ -27,6 +27,27 @@ interface ConversationSummary {
   latestMessage: LatestMessage | null;
 }
 
+interface ConversationMessage {
+  id: number;
+  content: string;
+  createdAt: string;
+  senderId: number;
+  // When the other participant read it; null while unread.
+  readAt: string | null;
+}
+
+interface ConversationDetail {
+  id: number;
+  updatedAt: string;
+  recipient: ConversationRecipient;
+  messages: ConversationMessage[];
+}
+
+interface NewMessage {
+  content: string;
+  recipientId: number;
+}
+
 interface SuccessResponse<Data> {
   success: true;
   message?: string;
@@ -62,7 +83,10 @@ export type {
   User,
   ConversationRecipient,
   ConversationSummary,
+  ConversationDetail,
+  ConversationMessage,
   LatestMessage,
+  NewMessage,
   ApiResponse,
   ErrorResponse,
   FieldValidationError,
