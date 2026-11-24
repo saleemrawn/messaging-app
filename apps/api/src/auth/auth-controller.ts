@@ -1,6 +1,12 @@
 import type { Request, Response } from "express";
 import type { LoginInfo } from "../types/auth-types.ts";
-import { getUserCredentialsByUsername } from "../user/user-repository.ts";
+import type { ApiResponse } from "../types/api-types.ts";
+import type { UserResBody } from "../types/user-types.ts";
+import {
+  getUserByAccountId,
+  getUserCredentialsByUsername,
+} from "../user/user-repository.ts";
+import { getAuthenticatedUserAccountId } from "./auth-helpers.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -51,4 +57,19 @@ const login = async (
   }
 };
 
-export { login };
+const getCurrentUser = async (
+  req: Request,
+  res: Response<ApiResponse<UserResBody>>,
+) => {
+  const userAccountId = getAuthenticatedUserAccountId(req);
+  const user = await getUserByAccountId(userAccountId);
+
+  if (!user) {
+    res.status(404).json({ success: false, message: "User not found" });
+    return;
+  }
+
+  res.status(200).json({ success: true, data: user });
+};
+
+export { login, getCurrentUser };

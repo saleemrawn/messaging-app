@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import passport from "passport";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { errorHandler } from "./middleware/error-middleware.ts";
 import { jwtStrategy } from "./auth/passport/jwt-strategy.ts";
 import { localStrategy } from "./auth/passport/local-strategy.ts";
@@ -12,6 +13,7 @@ export function createApp(): Express {
   passport.use("jwt", jwtStrategy);
   passport.use("local", localStrategy);
 
+  app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
