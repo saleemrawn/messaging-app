@@ -10,10 +10,15 @@ import type {
 const HTTP_UNAUTHORIZED = 401;
 const HTTP_NOT_FOUND = 404;
 
+function isUnauthorizedError(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === HTTP_UNAUTHORIZED;
+}
+
 function isLoggedOutError(error: unknown): boolean {
-  if (!isAxiosError(error)) return false;
-  const status = error.response?.status;
-  return status === HTTP_UNAUTHORIZED || status === HTTP_NOT_FOUND;
+  return (
+    isUnauthorizedError(error) ||
+    (isAxiosError(error) && error.response?.status === HTTP_NOT_FOUND)
+  );
 }
 
 // Returns null when there is no valid session; rethrows anything else so the
@@ -44,4 +49,4 @@ async function signup(details: SignupDetails): Promise<void> {
   await api.post<ApiResponse<User>, SignupDetails>("/users", details);
 }
 
-export { getCurrentUser, login, logout, signup };
+export { getCurrentUser, isUnauthorizedError, login, logout, signup };

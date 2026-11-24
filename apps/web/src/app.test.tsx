@@ -47,7 +47,7 @@ describe("routing by auth state", () => {
     const { router } = renderRoute("/login");
 
     expect(
-      await screen.findByRole("heading", { name: /hello world/i }),
+      await screen.findByRole("heading", { name: /^messages$/i }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/");
   });
@@ -58,7 +58,7 @@ describe("routing by auth state", () => {
     const { router } = renderRoute("/does-not-exist");
 
     expect(
-      await screen.findByRole("heading", { name: /hello world/i }),
+      await screen.findByRole("heading", { name: /^messages$/i }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/");
   });
@@ -193,7 +193,7 @@ describe("login page", () => {
     await user.click(screen.getByRole("button", { name: /^log in$/i }));
 
     expect(
-      await screen.findByRole("heading", { name: /hello world/i }),
+      await screen.findByRole("heading", { name: /^messages$/i }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/");
   });

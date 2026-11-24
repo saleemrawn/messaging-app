@@ -1,5 +1,10 @@
 import { redirect, type RouteObject } from "react-router";
-import { guestOnlyLoader, requireUserLoader } from "./auth/loaders.ts";
+import {
+  APP_ROUTE_ID,
+  guestOnlyLoader,
+  requireUserLoader,
+} from "./auth/loaders.ts";
+import { conversationsLoader } from "./conversations/loaders.ts";
 import AppLayout from "./components/AppLayout.tsx";
 import HomePage from "./pages/HomePage.tsx";
 import LoginPage from "./pages/LoginPage.tsx";
@@ -12,10 +17,11 @@ const routes: RouteObject[] = [
     children: [
       {
         // Pathless layout: every child requires a logged-in user and gets the sidebar.
+        id: APP_ROUTE_ID,
         loader: requireUserLoader,
         Component: AppLayout,
         children: [
-          { path: "/", Component: HomePage },
+          { path: "/", loader: conversationsLoader, Component: HomePage },
           { path: "/profile", Component: ProfilePage },
         ],
       },

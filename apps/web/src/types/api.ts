@@ -6,6 +6,27 @@ interface User {
   email: string;
 }
 
+interface ConversationRecipient {
+  id: number;
+  firstName: string;
+  lastName: string;
+}
+
+interface LatestMessage {
+  id: number;
+  content: string;
+  createdAt: string;
+  senderId: number;
+}
+
+interface ConversationSummary {
+  id: number;
+  updatedAt: string;
+  unreadCount: number;
+  recipient: ConversationRecipient;
+  latestMessage: LatestMessage | null;
+}
+
 interface SuccessResponse<Data> {
   success: true;
   message?: string;
@@ -39,6 +60,9 @@ interface SignupDetails extends LoginCredentials {
 
 export type {
   User,
+  ConversationRecipient,
+  ConversationSummary,
+  LatestMessage,
   ApiResponse,
   ErrorResponse,
   FieldValidationError,
