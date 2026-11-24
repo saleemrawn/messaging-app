@@ -35,8 +35,13 @@ async function login(credentials: LoginCredentials): Promise<void> {
   );
 }
 
+// The token cookie is httpOnly, so only the API can clear it.
+async function logout(): Promise<void> {
+  await api.post<ApiResponse<never>>("/auth/logout");
+}
+
 async function signup(details: SignupDetails): Promise<void> {
   await api.post<ApiResponse<User>, SignupDetails>("/users", details);
 }
 
-export { getCurrentUser, login, signup };
+export { getCurrentUser, login, logout, signup };
