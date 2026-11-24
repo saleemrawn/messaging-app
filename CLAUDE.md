@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm workspaces monorepo (`apps/*`):
 
 - `apps/api`: Express 5 REST API with Prisma 7 (PostgreSQL via `@prisma/adapter-pg`) and Passport (local + JWT). Runs TypeScript directly on Node (`node --watch ./src/server.ts`). There is no build step.
-- `apps/web`: Vite + React 19 + Tailwind v4 frontend. It is an early scaffold: react-router, axios and date-fns are installed, but `App.tsx` is still empty.
+- `apps/web`: Vite + React 19 + Tailwind v4 frontend using react-router data mode (`src/routes.ts`).
 
 ## Commands
 
@@ -17,6 +17,7 @@ Run from the repo root:
 npm run dev:api          # API dev server (watch mode), port from PORT in apps/api/.env
 npm run dev:web          # Vite dev server
 npm run test:api         # API test suite (vitest, run once)
+npm run test:web         # web test suite (vitest + jsdom + RTL + MSW)
 
 # Single test file / single test
 npm test -w apps/api -- tests/message.test.ts
@@ -70,8 +71,11 @@ Use `isoDateString()` / `anyString()` from `tests/helpers/types.ts` for timestam
 
 ## Web
 
-- `apps/web/lib/axios.ts` creates the axios instance (`baseURL: http://localhost:8080/api`, `withCredentials: true` so the auth cookie is sent). `apps/web/adapters/api.ts` wraps it with typed `get/post/put/delete`.
-- These two folders sit **outside `src/`**, but `tsconfig.app.json` only includes `src`, so `tsc -b` does not type-check them.
+- `apps/web/lib/axios.ts` creates the axios instance (`baseURL` from `VITE_API_URL`, default `http://localhost:3000/api`; see `apps/web/.env.example`. `withCredentials: true` so the auth cookie is sent). `apps/web/adapters/api.ts` wraps it with typed `get/post/put/delete`.
+- These two folders sit **outside `src/`**; `tsconfig.app.json` includes them explicitly alongside `src`.
+- Auth gating: the JWT cookie is httpOnly, so the client asks `GET /api/auth/me`. Route loaders in `src/auth/loaders.ts` redirect: `/` needs a user (else `/login`), `/login` is guest-only (else `/`). `getCurrentUser()` maps 401/404 to `null` and rethrows anything else to the route `ErrorBoundary`.
+- The API enables CORS for `CLIENT_ORIGIN` with credentials; the Vite dev origin must match it.
+- Tests: `src/**/*.test.ts(x)`, MSW handlers per test on `server` from `src/test/server.ts`, and `renderRoute(path)` from `src/test/render-route.tsx` (memory router with the real route config). `src/test/setup.ts` switches axios to the fetch adapter because jsdom's XHR enforces CORS against the mocked API.
 
 ## Git
 
