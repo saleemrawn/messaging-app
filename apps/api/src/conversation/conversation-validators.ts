@@ -20,18 +20,28 @@ const conversationIdValidator = param("id")
   .withMessage("Invalid conversation ID, expected number")
   .toInt();
 
-const contentValidator = body("content")
-  .trim()
-  .notEmpty()
-  .withMessage("Message required")
-  .isLength({ min: 1, max: 5000 })
-  .withMessage("Message must be between 1 and 5,000 characters");
+// A factory because validation chains are mutable: .optional() on a shared
+// chain would make it optional everywhere it's used.
+const buildContentValidator = () =>
+  body("content")
+    .trim()
+    .notEmpty()
+    .withMessage("Message required")
+    .isLength({ min: 1, max: 5000 })
+    .withMessage("Message must be between 1 and 5,000 characters");
+
+const contentValidator = buildContentValidator();
+// A new conversation may start empty; content that is given is still checked.
+const optionalContentValidator = buildContentValidator().optional();
 
 const getConversationByIdValidators = [conversationIdValidator];
 const deleteConversationValidators = [conversationIdValidator];
 const addMessageReceiptsValidators = [conversationIdValidator];
 
-const createConversationValidators = [contentValidator, recipientIdValidator];
+const createConversationValidators = [
+  optionalContentValidator,
+  recipientIdValidator,
+];
 
 const addMessageToConversationValidators = [
   conversationIdValidator,

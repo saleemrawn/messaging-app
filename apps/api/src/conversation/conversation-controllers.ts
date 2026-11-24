@@ -14,6 +14,7 @@ import type {
   DeleteConversationResBody,
   DeleteConversationValidatedReq,
   CreateConversationReqBody,
+  CreateConversationValidatedReq,
   CreateConversationResBody,
   AddMessageToConversationReqBody,
   AddMessageToConversationResBody,
@@ -22,6 +23,7 @@ import type {
 import { matchedData, type ValidationError } from "express-validator";
 import { getAuthenticatedUserAccountId } from "../auth/auth-helpers.ts";
 import * as repository from "./conversation-repository.ts";
+import * as userRepository from "../user/user-repository.ts";
 
 const CONVERSATION_NOT_FOUND = {
   success: false,
@@ -68,20 +70,36 @@ const getConversationById = async (
   res.status(200).json({ success: true, data: conversation });
 };
 
+// Get-or-create: answers 201 for a new conversation and 200 with the existing
+// one when the caller already shares a conversation with the recipient.
 const createConversation = async (
   req: Request<object, object, CreateConversationReqBody, object>,
   res: Response<ApiResponse<CreateConversationResBody, ValidationError[]>>,
 ) => {
-  const { content, recipientId }: CreateConversationReqBody = matchedData(req);
+  const { content, recipientId }: CreateConversationValidatedReq =
+    matchedData(req);
   const senderId = getAuthenticatedUserAccountId(req);
 
-  const conversation = await repository.createConversation({
-    content,
+  if (recipientId === senderId) {
+    res.status(400).json({
+      success: false,
+      message: "You can't start a conversation with yourself",
+    });
+    return;
+  }
+
+  if (!(await userRepository.getUserByAccountId(recipientId))) {
+    res.status(404).json({ success: false, message: "User not found" });
+    return;
+  }
+
+  const { id, isCreated } = await repository.findOrCreateConversation({
     senderId,
     recipientId,
+    content,
   });
 
-  res.status(201).json({ success: true, data: conversation });
+  res.status(isCreated ? 201 : 200).json({ success: true, data: { id } });
 };
 
 const deleteConversation = async (

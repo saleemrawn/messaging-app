@@ -6,21 +6,34 @@ import type {
 } from "../types/conversation-types.ts";
 import type {
   Conversation,
+  Message,
   MessageReceipt,
   UserAccount,
 } from "../../generated/prisma/client.ts";
 
-type CreateConversationParams = Omit<MessageInput, "conversationId">;
+interface FindOrCreateConversationParams {
+  senderId: UserAccount["id"];
+  recipientId: UserAccount["id"];
+  content?: Message["content"];
+}
+
+interface FindOrCreateConversationResult {
+  id: Conversation["id"];
+  isCreated: boolean;
+}
+
 type AddMessageToConversationParams = MessageInput;
 
 // Lists the caller's conversations newest first, each with the other
 // participant, the caller's own unread count and only the latest message.
+// Empty conversations someone else started stay hidden until a message arrives.
 const getConversationsByUserAccountId = async (
   userAccountId: UserAccount["id"],
 ): Promise<ConversationSummary[]> => {
   const memberships = await prisma.userConversation.findMany({
     where: {
       userAccountId,
+      isHidden: false,
       deletedAt: null,
       conversation: { deletedAt: null },
     },
@@ -241,43 +254,65 @@ const toConversationDetail = ({
   };
 };
 
-const createConversation = async ({
-  content,
+// Returns the live conversation between the two accounts, creating it if there
+// isn't one. A new conversation without content stays hidden from the
+// recipient until its first message; reusing one reveals it to the caller,
+// who has explicitly chosen to open it.
+const findOrCreateConversation = async ({
   senderId,
   recipientId,
-}: CreateConversationParams) => {
-  const conversation = await prisma.conversation.create({
-    data: {
-      userConversations: {
-        create: [
-          { userAccountId: senderId },
-          { userAccountId: recipientId, unreadCount: 1 },
+  content,
+}: FindOrCreateConversationParams): Promise<FindOrCreateConversationResult> => {
+  return await prisma.$transaction(async (tx) => {
+    const existing = await tx.conversation.findFirst({
+      where: {
+        deletedAt: null,
+        AND: [
+          {
+            userConversations: {
+              some: { userAccountId: senderId, deletedAt: null },
+            },
+          },
+          {
+            userConversations: {
+              some: { userAccountId: recipientId, deletedAt: null },
+            },
+          },
         ],
       },
-      messages: {
-        create: { content, userAccountId: senderId },
-      },
-    },
-    select: {
-      id: true,
-      userConversations: {
-        select: {
-          id: true,
-          unreadCount: true,
+      select: { id: true },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    if (existing) {
+      await tx.userConversation.updateMany({
+        where: { conversationId: existing.id, userAccountId: senderId },
+        data: { isHidden: false },
+      });
+      return { id: existing.id, isCreated: false };
+    }
+
+    const hasContent = content !== undefined;
+    const created = await tx.conversation.create({
+      data: {
+        userConversations: {
+          create: [
+            { userAccountId: senderId },
+            {
+              userAccountId: recipientId,
+              unreadCount: hasContent ? 1 : 0,
+              isHidden: !hasContent,
+            },
+          ],
         },
-        orderBy: { createdAt: "asc" },
+        ...(hasContent && {
+          messages: { create: { content, userAccountId: senderId } },
+        }),
       },
-      messages: {
-        select: {
-          id: true,
-          content: true,
-          createdAt: true,
-        },
-        orderBy: { createdAt: "asc" },
-      },
-    },
+      select: { id: true },
+    });
+    return { id: created.id, isCreated: true };
   });
-  return conversation;
 };
 
 const deleteConversation = async (id: Conversation["id"]) => {
@@ -316,12 +351,15 @@ const addMessageToConversation = async ({
             where: { userAccountId: senderId },
             data: {
               unreadCount: 0,
+              isHidden: false,
             },
           },
           {
             where: { userAccountId: recipientId },
             data: {
               unreadCount: { increment: 1 },
+              // The first message reveals a conversation started empty.
+              isHidden: false,
             },
           },
         ],
@@ -393,7 +431,7 @@ export {
   getUnreadCountByUserAccountId,
   isConversationMember,
   getConversationById,
-  createConversation,
+  findOrCreateConversation,
   deleteConversation,
   addMessageToConversation,
   addMessageReceipts,

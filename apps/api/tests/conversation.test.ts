@@ -473,23 +473,216 @@ describe("conversation route", () => {
 
       expect(res.status).toBe(201);
       expect(res.type).toBe("application/json");
-      expect(res.body).toEqual({
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+
+      // A first message makes it visible and unread for the recipient
+      const aisha = createAuthenticatedAgentAs(2);
+      const list = await aisha.get("/api/conversations");
+      expect(list.body).toEqual({
         success: true,
-        data: {
-          id: 1,
-          messages: [
-            {
+        data: [
+          {
+            id: 1,
+            updatedAt: isoDateString(),
+            unreadCount: 1,
+            recipient: { id: 1, firstName: "John", lastName: "Doe" },
+            latestMessage: {
               id: 1,
               content: "Hello, how is it going?",
               createdAt: isoDateString(),
+              senderId: 1,
             },
-          ],
-          userConversations: [
-            { id: 1, unreadCount: 0 },
-            { id: 2, unreadCount: 1 },
-          ],
+          },
+        ],
+      });
+    });
+
+    test("creates an empty conversation when no content is given", async () => {
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+
+      const list = await john.get("/api/conversations");
+      expect(list.body).toEqual({
+        success: true,
+        data: [
+          {
+            id: 1,
+            updatedAt: isoDateString(),
+            unreadCount: 0,
+            recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+            latestMessage: null,
+          },
+        ],
+      });
+
+      const detail = await john.get("/api/conversations/1");
+      expect(detail.status).toBe(200);
+      expect(detail.body).toEqual({
+        success: true,
+        data: {
+          id: 1,
+          updatedAt: isoDateString(),
+          recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+          messages: [],
         },
       });
+    });
+
+    test("hides an empty conversation from the recipient", async () => {
+      const john = await createAuthenticatedAgent();
+      await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 })
+        .expect(201);
+
+      const aisha = createAuthenticatedAgentAs(2);
+      const list = await aisha.get("/api/conversations");
+      const unread = await aisha.get("/api/conversations/unread-count");
+
+      expect(list.body).toEqual({ success: true, data: [] });
+      expect(unread.body).toEqual({ success: true, data: { unreadCount: 0 } });
+    });
+
+    test("shows the conversation to the recipient once a message is sent", async () => {
+      const john = await createAuthenticatedAgent();
+      await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 })
+        .expect(201);
+      await john
+        .post("/api/conversations/1/messages")
+        .send({ content: "Hi Aisha", recipientId: 2 })
+        .expect(201);
+
+      const aisha = createAuthenticatedAgentAs(2);
+      const list = await aisha.get("/api/conversations");
+
+      expect(list.body).toEqual({
+        success: true,
+        data: [
+          {
+            id: 1,
+            updatedAt: isoDateString(),
+            unreadCount: 1,
+            recipient: { id: 1, firstName: "John", lastName: "Doe" },
+            latestMessage: {
+              id: 1,
+              content: "Hi Aisha",
+              createdAt: isoDateString(),
+              senderId: 1,
+            },
+          },
+        ],
+      });
+    });
+
+    test("returns the existing conversation instead of creating a duplicate", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+      expect(await prisma.conversation.count()).toBe(2);
+    });
+
+    test("returns the existing conversation when either member starts it", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      const aisha = createAuthenticatedAgentAs(2);
+
+      const res = await aisha
+        .post("/api/conversations")
+        .send({ recipientId: 1 });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+    });
+
+    test("ignores a soft-deleted conversation with the same recipient", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await prisma.conversation.update({
+        where: { id: 1 },
+        data: { deletedAt: new Date() },
+      });
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ success: true, data: { id: 3 } });
+    });
+
+    test("reveals a hidden conversation to the recipient when they open it", async () => {
+      const john = await createAuthenticatedAgent();
+      await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 })
+        .expect(201);
+      const aisha = createAuthenticatedAgentAs(2);
+
+      const res = await aisha
+        .post("/api/conversations")
+        .send({ recipientId: 1 });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+
+      const list = await aisha.get("/api/conversations");
+      expect(listedConversation(list.body, 1)).toBeDefined();
+    });
+
+    test("returns an error when starting a conversation with yourself", async () => {
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .post("/api/conversations")
+        .send({ recipientId: 1 });
+
+      expect(res.status).toBe(400);
+      expect(res.body).toEqual({
+        success: false,
+        message: "You can't start a conversation with yourself",
+      });
+      expect(await prisma.conversation.count()).toBe(0);
+    });
+
+    test("returns not found for an unknown recipient", async () => {
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .post("/api/conversations")
+        .send({ recipientId: 999 });
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: "User not found" });
+      expect(await prisma.conversation.count()).toBe(0);
+    });
+
+    test("returns not found for a soft-deleted recipient", async () => {
+      await createAuthenticatedAgentAs(4).delete("/api/users/4").expect(200);
+      const john = await createAuthenticatedAgent();
+
+      const res = await john
+        .post("/api/conversations")
+        .send({ recipientId: 4 });
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({ success: false, message: "User not found" });
     });
 
     test("uses the authenticated user as sender and ignores a senderId in the body", async () => {

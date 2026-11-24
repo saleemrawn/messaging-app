@@ -82,7 +82,16 @@ interface GetUnreadCountResBody {
 
 type GetConversationByIdResBody = ConversationDetail;
 
-type CreateConversationReqBody = Omit<MessageInput, "conversationId">;
+interface CreateConversationReqBody {
+  recipientId: UserAccount["id"];
+  content?: Message["content"];
+}
+
+interface CreateConversationValidatedReq {
+  recipientId: UserAccount["id"];
+  content?: Message["content"];
+}
+
 type CreateConversationResBody = Pick<Conversation, "id">;
 type DeleteConversationResBody = Pick<Conversation, "id" | "deletedAt">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
@@ -105,6 +114,7 @@ export type {
   DeleteConversationResBody,
   DeleteConversationValidatedReq,
   CreateConversationReqBody,
+  CreateConversationValidatedReq,
   CreateConversationResBody,
   AddMessageToConversationReqBody,
   AddMessageToConversationResBody,
