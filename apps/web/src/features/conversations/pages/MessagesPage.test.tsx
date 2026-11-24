@@ -2,7 +2,11 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { API_URL, server } from "../../../test/server.ts";
+import {
+  API_URL,
+  server,
+  unreadCountHandler,
+} from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
 import type {
   ConversationDetail,
@@ -121,6 +125,9 @@ function mockApi({
     ),
     http.get(`${API_URL}/conversations`, () =>
       HttpResponse.json({ success: true, data: details.map(toSummary) }),
+    ),
+    unreadCountHandler(() =>
+      [...unreadCounts.values()].reduce((sum, count) => sum + count, 0),
     ),
     http.get(`${API_URL}/conversations/:id`, ({ params }) => {
       const detail = details.find(({ id }) => id === Number(params.id));
@@ -259,6 +266,46 @@ describe("conversation viewer", () => {
     expect(
       within(getConversationRow("Aisha Khan")).queryByText(/unread/i),
     ).not.toBeInTheDocument();
+  });
+
+  test("updates the nav unread total as conversations are read", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+    const nav = screen.getByRole("navigation", { name: /main/i });
+    const messagesLink = within(nav).getByRole("link", { name: /^messages/i });
+
+    // Phillipe's conversation was read on open, leaving Aisha's one message.
+    expect(
+      within(messagesLink).getByText("1 unread message"),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(getConversationRow("Aisha Khan")).getByRole("link"),
+    );
+    await findViewerHeading("Aisha Khan");
+
+    expect(within(nav).queryByText(/unread/i)).not.toBeInTheDocument();
+  });
+
+  test("keeps the nav unread total current after leaving the messages page", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+    await user.click(
+      within(getConversationRow("Aisha Khan")).getByRole("link"),
+    );
+    await findViewerHeading("Aisha Khan");
+
+    await user.click(screen.getByRole("link", { name: /profile/i }));
+
+    expect(
+      await screen.findByRole("heading", { name: /^profile$/i }),
+    ).toBeInTheDocument();
+    const nav = screen.getByRole("navigation", { name: /main/i });
+    expect(within(nav).queryByText(/unread/i)).not.toBeInTheDocument();
   });
 
   test("shows the recipient's avatar, name, message and time on received messages", async () => {

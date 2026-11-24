@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { API_URL, server } from "../test/server.ts";
+import { API_URL, server, unreadCountHandler } from "../test/server.ts";
 import { renderRoute } from "../test/render-route.tsx";
 
 const currentUser = {
@@ -71,6 +71,34 @@ describe("sidebar navigation", () => {
     expect(
       screen.getByRole("link", { name: /messages/i }),
     ).not.toHaveAttribute("aria-current");
+  });
+
+  test("shows the total unread count on the Messages link", async () => {
+    mockSession();
+    server.use(unreadCountHandler(() => 7));
+
+    renderRoute("/profile");
+
+    const messagesLink = await screen.findByRole("link", {
+      name: /^messages/i,
+    });
+    expect(
+      await within(messagesLink).findByText("7 unread messages"),
+    ).toBeInTheDocument();
+    expect(within(messagesLink).getByText("7")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /profile/i }),
+    ).not.toHaveTextContent(/unread/i);
+  });
+
+  test("hides the unread badge when nothing is unread", async () => {
+    mockSession();
+
+    renderRoute("/profile");
+
+    const nav = await screen.findByRole("navigation", { name: /main/i });
+    expect(within(nav).getByRole("link", { name: "Messages" })).toBeVisible();
+    expect(within(nav).queryByText(/unread/i)).not.toBeInTheDocument();
   });
 
   test("logs out and shows the sign-up form", async () => {

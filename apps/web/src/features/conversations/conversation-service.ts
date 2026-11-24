@@ -14,6 +14,14 @@ async function getConversations(): Promise<ConversationSummary[]> {
   return res.data.success ? (res.data.data ?? []) : [];
 }
 
+// Total unread messages across all of the caller's conversations.
+async function getUnreadCount(): Promise<number> {
+  const res = await api.get<ApiResponse<{ unreadCount: number }>>(
+    "/conversations/unread-count",
+  );
+  return res.data.success ? (res.data.data?.unreadCount ?? 0) : 0;
+}
+
 // One conversation as the caller sees it, messages oldest first.
 async function getConversation(id: number): Promise<ConversationDetail> {
   const res = await api.get<ApiResponse<ConversationDetail>>(
@@ -40,4 +48,10 @@ async function sendMessage(id: number, message: NewMessage): Promise<void> {
   );
 }
 
-export { getConversations, getConversation, markConversationRead, sendMessage };
+export {
+  getConversations,
+  getUnreadCount,
+  getConversation,
+  markConversationRead,
+  sendMessage,
+};

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../features/auth/auth-service.ts";
 import { CONVERSATIONS_PATH } from "../features/conversations/paths.ts";
+import { useUnreadTotal } from "../features/conversations/use-unread-total.ts";
+import UnreadBadge from "../features/conversations/components/UnreadBadge.tsx";
 import FormError from "../shared/components/FormError.tsx";
 
 const LOGOUT_ERROR = "Couldn't log out. Please try again.";
@@ -12,7 +14,8 @@ const NAV_ITEMS = [
 ] as const;
 
 function navLinkClassName({ isActive }: { isActive: boolean }): string {
-  const base = "block rounded px-3 py-2 font-medium";
+  const base =
+    "flex items-center justify-between rounded px-3 py-2 font-medium";
   return isActive
     ? `${base} bg-blue-50 text-blue-700`
     : `${base} text-gray-700 hover:bg-gray-100`;
@@ -22,6 +25,7 @@ function Sidebar() {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string>();
+  const unreadTotal = useUnreadTotal();
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -45,6 +49,9 @@ function Sidebar() {
             <li key={to}>
               <NavLink to={to} className={navLinkClassName}>
                 {label}
+                {to === CONVERSATIONS_PATH && (
+                  <UnreadBadge count={unreadTotal} />
+                )}
               </NavLink>
             </li>
           ))}

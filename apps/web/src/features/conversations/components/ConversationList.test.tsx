@@ -2,7 +2,11 @@ import { describe, expect, test } from "vitest";
 import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { API_URL, server } from "../../../test/server.ts";
+import {
+  API_URL,
+  server,
+  unreadCountHandler,
+} from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
 import type { ConversationSummary } from "../types.ts";
 
@@ -75,6 +79,7 @@ function mockApi({
         ? HttpResponse.json({ success: true, data: list })
         : HttpResponse.json({ success: false }, { status }),
     ),
+    unreadCountHandler(),
     // The newest conversation opens in the viewer. These tests only cover the
     // list, so the list above stays static even after it is marked read.
     http.get(`${API_URL}/conversations/:id`, ({ params }) => {

@@ -1,15 +1,29 @@
 import { isAxiosError } from "axios";
-import { redirect, type LoaderFunctionArgs } from "react-router";
+import {
+  matchPath,
+  redirect,
+  type LoaderFunctionArgs,
+  type ShouldRevalidateFunctionArgs,
+} from "react-router";
 import { isUnauthorizedError } from "../../shared/api/api-errors.ts";
 import {
   getConversation,
   getConversations,
+  getUnreadCount,
   markConversationRead,
 } from "./conversation-service.ts";
-import { CONVERSATIONS_PATH, conversationPath } from "./paths.ts";
+import {
+  CONVERSATIONS_PATH,
+  MESSAGES_ROUTE_PATH,
+  conversationPath,
+} from "./paths.ts";
 import type { ConversationDetail, ConversationSummary } from "./types.ts";
 
 const HTTP_NOT_FOUND = 404;
+
+// Route ids whose loader data feeds the sidebar's unread total.
+const MESSAGES_ROUTE_ID = "messages";
+const UNREAD_COUNT_ROUTE_ID = "unread-count";
 
 interface MessagesPageData {
   conversations: ConversationSummary[];
@@ -65,5 +79,34 @@ async function messagesPageLoader({
   }
 }
 
-export { messagesPageLoader };
+// Runs in parallel with the layout's auth check, so a 401 redirects too.
+async function unreadCountLoader(): Promise<number | Response> {
+  try {
+    return await getUnreadCount();
+  } catch (error: unknown) {
+    if (isUnauthorizedError(error)) return redirect("/login");
+    throw error;
+  }
+}
+
+// A pathless parent's loader doesn't re-run on plain navigation, so its count
+// would go stale once conversations are read. Refresh it whenever navigation
+// lands outside the messages page, which derives the total from its own list.
+function shouldRevalidateUnreadCount({
+  nextUrl,
+  defaultShouldRevalidate,
+}: ShouldRevalidateFunctionArgs): boolean {
+  return (
+    defaultShouldRevalidate ||
+    matchPath(MESSAGES_ROUTE_PATH, nextUrl.pathname) === null
+  );
+}
+
+export {
+  MESSAGES_ROUTE_ID,
+  UNREAD_COUNT_ROUTE_ID,
+  messagesPageLoader,
+  unreadCountLoader,
+  shouldRevalidateUnreadCount,
+};
 export type { MessagesPageData };
