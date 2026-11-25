@@ -16,6 +16,7 @@ const currentUser = {
 // Logged in until a successful POST /auth/logout, like the real cookie session.
 function mockSession(logoutStatus = 200) {
   let isLoggedIn = true;
+  const calls = { logout: 0 };
   server.use(
     http.get(`${API_URL}/auth/me`, () =>
       isLoggedIn
@@ -23,6 +24,7 @@ function mockSession(logoutStatus = 200) {
         : HttpResponse.json({ success: false }, { status: 401 }),
     ),
     http.post(`${API_URL}/auth/logout`, () => {
+      calls.logout += 1;
       if (logoutStatus !== 200) {
         return HttpResponse.json({ success: false }, { status: logoutStatus });
       }
@@ -30,6 +32,13 @@ function mockSession(logoutStatus = 200) {
       return HttpResponse.json({ success: true, message: "Logged out" });
     }),
   );
+  return calls;
+}
+
+async function openLogoutDialog(user: ReturnType<typeof userEvent.setup>) {
+  const sidebar = await screen.findByRole("complementary");
+  await user.click(within(sidebar).getByRole("button", { name: /^logout$/i }));
+  return screen.findByRole("dialog", { name: /logout confirmation/i });
 }
 
 describe("sidebar navigation", () => {
@@ -46,7 +55,7 @@ describe("sidebar navigation", () => {
       "page",
     );
     expect(
-      within(sidebar).getByRole("button", { name: /log out/i }),
+      within(sidebar).getByRole("button", { name: /^logout$/i }),
     ).toBeInTheDocument();
   });
 
@@ -66,7 +75,7 @@ describe("sidebar navigation", () => {
 
     const separator = within(sidebar).getByRole("separator");
     const logoutButton = within(sidebar).getByRole("button", {
-      name: /log out/i,
+      name: /^logout$/i,
     });
     expect(
       accountLink.compareDocumentPosition(separator) &
@@ -163,18 +172,48 @@ describe("sidebar navigation", () => {
     expect(within(nav).queryByText(/unread/i)).not.toBeInTheDocument();
   });
 
-  test("logs out and shows the sign-up form", async () => {
-    mockSession();
+  test("asks for confirmation before logging out", async () => {
+    const calls = mockSession();
     const user = userEvent.setup();
     const { router } = renderRoute("/");
 
-    await user.click(await screen.findByRole("button", { name: /log out/i }));
+    const dialog = await openLogoutDialog(user);
+
+    expect(dialog).toHaveAccessibleDescription(
+      "Are you sure you want to logout?",
+    );
+    expect(router.state.location.pathname).toBe("/conversations");
+    expect(calls.logout).toBe(0);
+  });
+
+  test("cancelling keeps the user logged in", async () => {
+    const calls = mockSession();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+
+    const dialog = await openLogoutDialog(user);
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.getByRole("complementary")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations");
+    expect(calls.logout).toBe(0);
+  });
+
+  test("logs out after confirming and shows the sign-up form", async () => {
+    const calls = mockSession();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+
+    const dialog = await openLogoutDialog(user);
+    await user.click(within(dialog).getByRole("button", { name: /^logout$/i }));
 
     expect(
       await screen.findByRole("heading", { name: /create an account/i }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/login");
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
+    expect(calls.logout).toBe(1);
   });
 
   test("shows an error and stays put when logout fails", async () => {
@@ -182,12 +221,18 @@ describe("sidebar navigation", () => {
     const user = userEvent.setup();
     const { router } = renderRoute("/");
 
-    await user.click(await screen.findByRole("button", { name: /log out/i }));
+    const dialog = await openLogoutDialog(user);
+    await user.click(within(dialog).getByRole("button", { name: /^logout$/i }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       /couldn't log out/i,
     );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/conversations");
-    expect(screen.getByRole("button", { name: /log out/i })).toBeEnabled();
+    expect(
+      within(screen.getByRole("complementary")).getByRole("button", {
+        name: /^logout$/i,
+      }),
+    ).toBeEnabled();
   });
 });

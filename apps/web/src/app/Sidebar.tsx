@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../features/auth/auth-service.ts";
+import LogoutConfirmDialog from "../features/auth/components/LogoutConfirmDialog.tsx";
 import { useCurrentUser } from "../features/auth/use-current-user.ts";
 import {
   ARCHIVE_PATH,
@@ -33,6 +34,7 @@ function accountLinkClassName({ isActive }: { isActive: boolean }): string {
 
 function Sidebar() {
   const navigate = useNavigate();
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string>();
   const unreadTotal = useUnreadTotal();
@@ -82,13 +84,24 @@ function Sidebar() {
         <FormError message={error} />
         <button
           type="button"
+          aria-haspopup="dialog"
           disabled={isLoggingOut}
           className="rounded px-3 py-2 text-left font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-50"
-          onClick={() => void handleLogout()}
+          onClick={() => {
+            setIsConfirmOpen(true);
+          }}
         >
-          {isLoggingOut ? "Logging out…" : "Log out"}
+          {isLoggingOut ? "Logging out…" : "Logout"}
         </button>
       </div>
+      {isConfirmOpen && (
+        <LogoutConfirmDialog
+          onConfirm={() => void handleLogout()}
+          onClose={() => {
+            setIsConfirmOpen(false);
+          }}
+        />
+      )}
     </aside>
   );
 }
