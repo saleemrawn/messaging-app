@@ -200,7 +200,7 @@ describe("sidebar navigation", () => {
     expect(calls.logout).toBe(0);
   });
 
-  test("logs out after confirming and shows the sign-up form", async () => {
+  test("logs out after confirming and shows the login form", async () => {
     const calls = mockSession();
     const user = userEvent.setup();
     const { router } = renderRoute("/");
@@ -209,8 +209,11 @@ describe("sidebar navigation", () => {
     await user.click(within(dialog).getByRole("button", { name: /^logout$/i }));
 
     expect(
-      await screen.findByRole("heading", { name: /create an account/i }),
+      await screen.findByRole("heading", { name: /log in/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /create an account/i }),
+    ).not.toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/login");
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     expect(calls.logout).toBe(1);

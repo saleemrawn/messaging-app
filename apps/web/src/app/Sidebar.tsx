@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from "react-router";
 import { logout } from "../features/auth/auth-service.ts";
 import LogoutConfirmDialog from "../features/auth/components/LogoutConfirmDialog.tsx";
 import { useCurrentUser } from "../features/auth/use-current-user.ts";
+import type { LoginPageState } from "../features/auth/types.ts";
 import {
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
@@ -46,7 +47,8 @@ function Sidebar() {
 
     try {
       await logout();
-      await navigate("/login", { replace: true });
+      const state: LoginPageState = { mode: "login" };
+      await navigate("/login", { replace: true, state });
     } catch {
       setError(LOGOUT_ERROR);
       setIsLoggingOut(false);

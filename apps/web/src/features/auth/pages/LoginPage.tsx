@@ -1,11 +1,19 @@
 import { useState } from "react";
+import { useLocation } from "react-router";
 import SignupForm from "../components/SignupForm.tsx";
 import LoginForm from "../components/LoginForm.tsx";
+import type { AuthMode, LoginPageState } from "../types.ts";
 
-type Mode = "signup" | "login";
+// Navigation state is untrusted (it survives reloads via history), so only
+// an explicit "login" request overrides the sign-up default.
+function initialMode(state: unknown): AuthMode {
+  const requested = (state as Partial<LoginPageState> | null)?.mode;
+  return requested === "login" ? "login" : "signup";
+}
 
 function LoginPage() {
-  const [mode, setMode] = useState<Mode>("signup");
+  const location = useLocation();
+  const [mode, setMode] = useState<AuthMode>(() => initialMode(location.state));
   const [isAccountCreated, setIsAccountCreated] = useState(false);
 
   function handleSignupSuccess() {
@@ -13,7 +21,7 @@ function LoginPage() {
     setMode("login");
   }
 
-  function switchTo(nextMode: Mode) {
+  function switchTo(nextMode: AuthMode) {
     setIsAccountCreated(false);
     setMode(nextMode);
   }
