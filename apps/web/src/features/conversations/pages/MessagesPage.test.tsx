@@ -330,7 +330,7 @@ describe("conversation viewer", () => {
     );
     await findViewerHeading("Aisha Khan");
 
-    await user.click(screen.getByRole("link", { name: /profile/i }));
+    await user.click(screen.getByRole("link", { name: /my account/i }));
 
     expect(
       await screen.findByRole("heading", { name: /^profile$/i }),

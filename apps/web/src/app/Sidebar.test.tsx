@@ -46,11 +46,36 @@ describe("sidebar navigation", () => {
       "page",
     );
     expect(
-      within(nav).getByRole("link", { name: /profile/i }),
-    ).not.toHaveAttribute("aria-current");
-    expect(
       within(sidebar).getByRole("button", { name: /log out/i }),
     ).toBeInTheDocument();
+  });
+
+  test("shows the account link with the user's name above a separator and the logout button", async () => {
+    mockSession();
+
+    renderRoute("/");
+
+    const sidebar = await screen.findByRole("complementary");
+    const accountLink = within(sidebar).getByRole("link", { name: /john doe/i });
+    expect(accountLink).toHaveAttribute("href", "/profile");
+    expect(accountLink).toHaveTextContent("My account");
+    expect(accountLink).toHaveTextContent("JD");
+    expect(accountLink).not.toHaveAttribute("aria-current");
+    const nav = within(sidebar).getByRole("navigation", { name: /main/i });
+    expect(nav).not.toContainElement(accountLink);
+
+    const separator = within(sidebar).getByRole("separator");
+    const logoutButton = within(sidebar).getByRole("button", {
+      name: /log out/i,
+    });
+    expect(
+      accountLink.compareDocumentPosition(separator) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      separator.compareDocumentPosition(logoutButton) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   test("lists Archive directly under Messages", async () => {
@@ -62,7 +87,7 @@ describe("sidebar navigation", () => {
     const labels = within(nav)
       .getAllByRole("link")
       .map((link) => link.textContent);
-    expect(labels).toEqual(["Messages", "Archive", "Profile"]);
+    expect(labels).toEqual(["Messages", "Archive"]);
   });
 
   test("navigates to the archive page and marks only Archive as active", async () => {
@@ -90,18 +115,18 @@ describe("sidebar navigation", () => {
     ).not.toHaveAttribute("aria-current");
   });
 
-  test("navigates to the profile page and marks Profile as active", async () => {
+  test("navigates to the profile page and marks the account link as active", async () => {
     mockSession();
     const user = userEvent.setup();
     const { router } = renderRoute("/");
 
-    await user.click(await screen.findByRole("link", { name: /profile/i }));
+    await user.click(await screen.findByRole("link", { name: /john doe/i }));
 
     expect(
       await screen.findByRole("heading", { name: /^profile$/i }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/profile");
-    expect(screen.getByRole("link", { name: /profile/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /john doe/i })).toHaveAttribute(
       "aria-current",
       "page",
     );
@@ -124,7 +149,7 @@ describe("sidebar navigation", () => {
     ).toBeInTheDocument();
     expect(within(messagesLink).getByText("7")).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /profile/i }),
+      screen.getByRole("link", { name: /john doe/i }),
     ).not.toHaveTextContent(/unread/i);
   });
 

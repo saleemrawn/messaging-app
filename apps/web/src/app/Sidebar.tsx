@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../features/auth/auth-service.ts";
+import { useCurrentUser } from "../features/auth/use-current-user.ts";
 import {
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
@@ -8,13 +9,13 @@ import {
 import { useUnreadTotal } from "../features/conversations/use-unread-total.ts";
 import UnreadBadge from "../features/conversations/components/UnreadBadge.tsx";
 import FormError from "../shared/components/FormError.tsx";
+import UserAvatar from "../shared/components/UserAvatar.tsx";
 
 const LOGOUT_ERROR = "Couldn't log out. Please try again.";
 
 const NAV_ITEMS = [
   { to: CONVERSATIONS_PATH, label: "Messages" },
   { to: ARCHIVE_PATH, label: "Archive" },
-  { to: "/profile", label: "Profile" },
 ] as const;
 
 function navLinkClassName({ isActive }: { isActive: boolean }): string {
@@ -25,11 +26,17 @@ function navLinkClassName({ isActive }: { isActive: boolean }): string {
     : `${base} text-gray-700 hover:bg-gray-100`;
 }
 
+function accountLinkClassName({ isActive }: { isActive: boolean }): string {
+  const base = "flex items-center gap-3 rounded px-3 py-2";
+  return isActive ? `${base} bg-blue-50` : `${base} hover:bg-gray-100`;
+}
+
 function Sidebar() {
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string>();
   const unreadTotal = useUnreadTotal();
+  const { firstName, lastName } = useCurrentUser();
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -62,6 +69,16 @@ function Sidebar() {
         </ul>
       </nav>
       <div className="mt-auto flex flex-col gap-2">
+        <NavLink to="/profile" className={accountLinkClassName}>
+          <UserAvatar firstName={firstName} lastName={lastName} />
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate font-medium text-gray-900">
+              {firstName} {lastName}
+            </span>
+            <span className="text-sm text-gray-500">My account</span>
+          </span>
+        </NavLink>
+        <hr className="border-gray-200" />
         <FormError message={error} />
         <button
           type="button"
