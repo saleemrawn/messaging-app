@@ -79,15 +79,20 @@ function buildConversations(): ConversationDetail[] {
 interface MockApiOptions {
   conversations?: ConversationDetail[];
   sendStatus?: number;
+  archiveStatus?: number;
 }
 
 // A small in-memory backend: receipts clear the unread count and sending
-// appends a message and moves its conversation to the top, like the real API.
+// appends a message and moves its conversation to the top, and archiving moves
+// it from the list to the archive, like the real API.
 function mockApi({
   conversations = buildConversations(),
   sendStatus = 201,
+  archiveStatus = 200,
 }: MockApiOptions = {}) {
   let details = conversations;
+  let archived: ConversationDetail[] = [];
+  const archiveRequests: number[] = [];
   const unreadCounts = new Map<number, number>([
     [2, 1],
     [1, 1],
@@ -129,6 +134,23 @@ function mockApi({
     unreadCountHandler(() =>
       [...unreadCounts.values()].reduce((sum, count) => sum + count, 0),
     ),
+    // Before "/conversations/:id", which would otherwise match this path.
+    http.get(`${API_URL}/conversations/archived`, () =>
+      HttpResponse.json({ success: true, data: archived.map(toSummary) }),
+    ),
+    http.delete(`${API_URL}/conversations/:id`, ({ params }) => {
+      const id = Number(params.id);
+      archiveRequests.push(id);
+      if (archiveStatus !== 200) {
+        return HttpResponse.json({ success: false }, { status: archiveStatus });
+      }
+      const target = details.find((detail) => detail.id === id);
+      if (!target) return notFound();
+      details = details.filter((detail) => detail.id !== id);
+      archived = [target, ...archived];
+      unreadCounts.set(id, 0);
+      return HttpResponse.json({ success: true, data: { id } });
+    }),
     http.get(`${API_URL}/conversations/:id`, ({ params }) => {
       const detail = details.find(({ id }) => id === Number(params.id));
       return detail
@@ -182,11 +204,19 @@ function mockApi({
     ),
   );
 
-  return { receiptRequests, sentBodies };
+  return { receiptRequests, sentBodies, archiveRequests };
 }
 
 async function findViewerHeading(name: string) {
   return screen.findByRole("heading", { level: 2, name });
+}
+
+// The viewer header is the only level-2 heading while no dialog is open, so
+// this catches a previous conversation left behind in the viewer.
+function getViewerHeadings() {
+  return screen
+    .getAllByRole("heading", { level: 2 })
+    .map((heading) => heading.textContent);
 }
 
 function getMessageItems() {
@@ -260,6 +290,7 @@ describe("conversation viewer", () => {
     );
 
     expect(await findViewerHeading("Aisha Khan")).toBeInTheDocument();
+    expect(getViewerHeadings()).toEqual(["Aisha Khan"]);
     expect(router.state.location.pathname).toBe("/conversations/1");
     expect(getMessageItems()[0]).toHaveTextContent("Hi John");
     expect(receiptRequests).toEqual([2, 1]);
@@ -471,5 +502,120 @@ describe("conversation viewer", () => {
     await findViewerHeading("Aisha Khan");
 
     expect(setScrollTop).toHaveBeenLastCalledWith(640);
+  });
+});
+
+describe("archiving a conversation", () => {
+  function getArchiveButton() {
+    return screen.getByRole("button", { name: /^archive$/i });
+  }
+
+  test("removes it from the list and opens the next one", async () => {
+    const { archiveRequests } = mockApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(getArchiveButton());
+
+    expect(await findViewerHeading("Aisha Khan")).toBeInTheDocument();
+    expect(getViewerHeadings()).toEqual(["Aisha Khan"]);
+    expect(archiveRequests).toEqual([2]);
+    expect(router.state.location.pathname).toBe("/conversations/1");
+    // Replaced, so Back doesn't return to the archived conversation.
+    expect(router.state.historyAction).toBe("REPLACE");
+    const panel = screen.getByRole("tabpanel");
+    expect(within(panel).queryByText("Phillipe Doe")).not.toBeInTheDocument();
+    expect(within(panel).getAllByRole("listitem")).toHaveLength(1);
+  });
+
+  test("opens the conversation above when archiving the last one", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/conversations/1");
+    await findViewerHeading("Aisha Khan");
+
+    await user.click(getArchiveButton());
+
+    expect(await findViewerHeading("Phillipe Doe")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations/2");
+    expect(
+      within(screen.getByRole("tabpanel")).queryByText("Aisha Khan"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("shows the placeholder after archiving the only conversation", async () => {
+    mockApi({ conversations: buildConversations().slice(1) });
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+    await findViewerHeading("Aisha Khan");
+
+    await user.click(getArchiveButton());
+
+    expect(
+      await screen.findByText(/no conversation selected/i),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations");
+    expect(screen.getByText("No conversations yet")).toBeInTheDocument();
+  });
+
+  test("lists the archived conversation on the Archive page", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+    await user.click(getArchiveButton());
+    await findViewerHeading("Aisha Khan");
+
+    await user.click(screen.getByRole("link", { name: /^archive$/i }));
+
+    const archiveList = await screen.findByRole("list", {
+      name: /archived conversations/i,
+    });
+    expect(within(archiveList).getByText("Phillipe Doe")).toBeInTheDocument();
+    expect(
+      within(archiveList).queryByText("Aisha Khan"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("shows an error and keeps the conversation when archiving fails", async () => {
+    mockApi({ archiveStatus: 500 });
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(getArchiveButton());
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't archive the conversation. Please try again.",
+    );
+    expect(router.state.location.pathname).toBe("/conversations/2");
+    expect(getArchiveButton()).toBeEnabled();
+    expect(getConversationRow("Phillipe Doe")).toBeInTheDocument();
+  });
+
+  test("redirects to login when the session has expired", async () => {
+    mockApi();
+    let isLoggedIn = true;
+    server.use(
+      http.get(`${API_URL}/auth/me`, () =>
+        isLoggedIn
+          ? HttpResponse.json({ success: true, data: currentUser })
+          : HttpResponse.json({ success: false }, { status: 401 }),
+      ),
+      http.delete(`${API_URL}/conversations/:id`, () => {
+        isLoggedIn = false;
+        return HttpResponse.json({ success: false }, { status: 401 });
+      }),
+    );
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(getArchiveButton());
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
   });
 });

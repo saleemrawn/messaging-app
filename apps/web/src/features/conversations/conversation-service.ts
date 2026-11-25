@@ -30,6 +30,12 @@ async function unarchiveConversation(id: number): Promise<void> {
   );
 }
 
+// Moves the conversation from the caller's list to their archive. The other
+// participant keeps it.
+async function archiveConversation(id: number): Promise<void> {
+  await api.delete<ApiResponse<unknown>>(`/conversations/${String(id)}`);
+}
+
 // Total unread messages across all of the caller's conversations.
 async function getUnreadCount(): Promise<number> {
   const res = await api.get<ApiResponse<{ unreadCount: number }>>(
@@ -94,6 +100,7 @@ export {
   createConversation,
   getConversations,
   getArchivedConversations,
+  archiveConversation,
   unarchiveConversation,
   getUnreadCount,
   getConversation,

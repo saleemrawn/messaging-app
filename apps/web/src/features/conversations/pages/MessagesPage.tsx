@@ -3,6 +3,7 @@ import { useCurrentUser } from "../../auth/use-current-user.ts";
 import ConversationList from "../components/ConversationList.tsx";
 import ConversationViewer from "../components/ConversationViewer.tsx";
 import type { MessagesPageData } from "../loaders.ts";
+import { getNextConversationId } from "../utils/next-conversation.ts";
 
 function MessagesPage() {
   const { conversations, conversation } = useLoaderData<MessagesPageData>();
@@ -16,8 +17,13 @@ function MessagesPage() {
       />
       {conversation ? (
         <ConversationViewer
+          key={conversation.id}
           conversation={conversation}
           currentUserId={currentUser.id}
+          nextConversationId={getNextConversationId(
+            conversations,
+            conversation.id,
+          )}
         />
       ) : (
         <div className="flex flex-1 items-center justify-center bg-white">

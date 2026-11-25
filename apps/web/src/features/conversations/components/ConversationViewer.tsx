@@ -1,18 +1,22 @@
 import { useId } from "react";
 import type { ConversationDetail } from "../types.ts";
-import { formatFullName } from "../../../shared/utils/full-name.ts";
+import ConversationHeader from "./ConversationHeader.tsx";
 import MessageComposer from "./MessageComposer.tsx";
 import MessageList from "./MessageList.tsx";
-import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 
 interface ConversationViewerProps {
   conversation: ConversationDetail;
   currentUserId: number;
+  // Shown after this conversation is archived; null when it's the only one.
+  nextConversationId: number | null;
 }
 
+// Keyed by conversation id where it's rendered, so switching conversations
+// starts fresh: an empty draft and no earlier archive error.
 function ConversationViewer({
   conversation,
   currentUserId,
+  nextConversationId,
 }: ConversationViewerProps) {
   const { recipient } = conversation;
   const headingId = useId();
@@ -22,18 +26,14 @@ function ConversationViewer({
       aria-labelledby={headingId}
       className="flex min-w-0 flex-1 flex-col bg-white"
     >
-      <header className="flex items-center gap-3 border-b border-gray-200 px-6 py-4">
-        <UserAvatar
-          firstName={recipient.firstName}
-          lastName={recipient.lastName}
-        />
-        <h2 id={headingId} className="truncate text-lg font-semibold text-gray-900">
-          {formatFullName(recipient)}
-        </h2>
-      </header>
+      <ConversationHeader
+        conversationId={conversation.id}
+        recipient={recipient}
+        headingId={headingId}
+        nextConversationId={nextConversationId}
+      />
       <MessageList conversation={conversation} currentUserId={currentUserId} />
       <MessageComposer
-        key={conversation.id}
         recipientId={recipient.id}
         shouldAutoFocus={conversation.messages.length === 0}
       />

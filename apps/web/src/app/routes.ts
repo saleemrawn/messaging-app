@@ -14,11 +14,13 @@ import {
   unreadCountLoader,
 } from "../features/conversations/loaders.ts";
 import {
+  archiveConversationAction,
   createConversationAction,
   sendMessageAction,
   unarchiveConversationAction,
 } from "../features/conversations/actions.ts";
 import {
+  ARCHIVE_CONVERSATION_PATH,
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
@@ -55,6 +57,11 @@ const routes: RouteObject[] = [
                 action: createConversationAction,
                 // A lookup doesn't depend on any action; don't redo it after one.
                 shouldRevalidate: () => false,
+              },
+              {
+                // Resource route for the viewer's Archive button.
+                path: ARCHIVE_CONVERSATION_PATH,
+                action: archiveConversationAction,
               },
               {
                 id: MESSAGES_ROUTE_ID,
