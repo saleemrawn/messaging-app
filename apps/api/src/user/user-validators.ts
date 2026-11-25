@@ -1,4 +1,12 @@
-import { body, param, query } from "express-validator";
+import { body, param, query, type Meta } from "express-validator";
+
+const PASSWORD_STRENGTH_MESSAGE =
+  "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol";
+const PASSWORD_CHANGE_FIELDS = [
+  "currentPassword",
+  "newPassword",
+  "confirmNewPassword",
+] as const;
 
 const idValidator = param("id")
   .trim()
@@ -52,9 +60,42 @@ const passwordValidator = body("password")
   .notEmpty()
   .withMessage("Password is required")
   .isStrongPassword()
-  .withMessage(
-    "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
-  );
+  .withMessage(PASSWORD_STRENGTH_MESSAGE);
+
+const bodyField = (req: Meta["req"], name: string): unknown =>
+  (req.body as Record<string, unknown> | undefined)?.[name];
+
+// Filling in any password field means the user wants to change it, so all
+// three become required. All blank leaves the password unchanged.
+const isChangingPassword = (_value: unknown, { req }: Meta): boolean =>
+  PASSWORD_CHANGE_FIELDS.some((name) => {
+    const value = bodyField(req, name);
+    return value !== undefined && value !== null && value !== "";
+  });
+
+const currentPasswordValidator = body("currentPassword")
+  .if(isChangingPassword)
+  .notEmpty()
+  .withMessage("Current password is required")
+  .bail()
+  .isString()
+  .withMessage("Current password is required");
+
+const newPasswordValidator = body("newPassword")
+  .if(isChangingPassword)
+  .notEmpty()
+  .withMessage("New password is required")
+  .bail()
+  .isStrongPassword()
+  .withMessage(PASSWORD_STRENGTH_MESSAGE);
+
+const confirmNewPasswordValidator = body("confirmNewPassword")
+  .if(isChangingPassword)
+  .notEmpty()
+  .withMessage("Please confirm your new password")
+  .bail()
+  .custom((value, { req }) => value === bodyField(req, "newPassword"))
+  .withMessage("Passwords do not match");
 
 const getUserByIdValidators = [idValidator];
 
@@ -73,6 +114,9 @@ const updateUserValidators = [
   firstNameValidator,
   lastNameValidator,
   emailValidator,
+  currentPasswordValidator,
+  newPasswordValidator,
+  confirmNewPasswordValidator,
 ];
 
 const deleteUserValidators = [idValidator];

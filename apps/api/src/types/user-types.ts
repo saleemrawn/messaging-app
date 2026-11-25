@@ -57,13 +57,20 @@ interface UpdateUserReqParams {
   id: UserAccount["id"];
 }
 
-interface UpdateUserReqBody {
+// The password fields are optional: all blank leaves the password unchanged.
+interface PasswordChangeFields {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmNewPassword?: string;
+}
+
+interface UpdateUserReqBody extends PasswordChangeFields {
   firstName: User["firstName"];
   lastName: User["lastName"];
   email: User["email"];
 }
 
-interface UpdateUserValidatedReq {
+interface UpdateUserValidatedReq extends PasswordChangeFields {
   id: UserAccount["id"];
   firstName: User["firstName"];
   lastName: User["lastName"];

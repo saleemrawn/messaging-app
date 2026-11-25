@@ -77,6 +77,13 @@ const getUserCredentialsByUsername = async (
   return user;
 };
 
+const getPasswordHashByAccountId = async (userAccountId: UserAccount["id"]) => {
+  return prisma.userAccount.findFirst({
+    where: { id: userAccountId, deletedAt: null },
+    select: { password: true },
+  });
+};
+
 const createUser = async ({
   firstName,
   lastName,
@@ -95,15 +102,23 @@ const createUser = async ({
   return toUserResBody(account);
 };
 
+// `password` must already be hashed; leave it out to keep the current one.
 const updateUser = async ({
   userAccountId,
   firstName,
   lastName,
   email,
-}: UpdateUserReqBody & { userAccountId: UserAccount["id"] }) => {
+  password,
+}: Pick<UpdateUserReqBody, "firstName" | "lastName" | "email"> & {
+  userAccountId: UserAccount["id"];
+  password?: UserAccount["password"];
+}) => {
   const account = await prisma.userAccount.update({
     where: { id: userAccountId },
-    data: { user: { update: { firstName, lastName, email } } },
+    data: {
+      ...(password && { password }),
+      user: { update: { firstName, lastName, email } },
+    },
     select: accountSelect,
   });
   return toUserResBody(account);
@@ -124,6 +139,7 @@ export {
   getUserByAccountId,
   findUserByEmail,
   getUserCredentialsByUsername,
+  getPasswordHashByAccountId,
   createUser,
   updateUser,
   deleteUser,

@@ -985,6 +985,190 @@ describe("user route", () => {
         ],
       });
     });
+
+    describe("password change", () => {
+      const OLD_PASSWORD = "Testpassword01!";
+      const NEW_PASSWORD = "Newpassword02!";
+      const janeDetails = {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane.doe01@email.com",
+      };
+
+      const loginStatus = async (password: string) => {
+        const res = await createUnauthenticatedAgent()
+          .post("/api/auth/login")
+          .send({ username: "janedoe01", password });
+        return res.status;
+      };
+
+      // Just the path and message of each validation error, in order
+      const fieldErrors = (body: unknown) =>
+        (
+          (body as { errors?: { path: string; msg: string }[] }).errors ?? []
+        ).map(({ path, msg }) => ({ path, msg }));
+
+      test("changes the password when the current password is correct", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          currentPassword: OLD_PASSWORD,
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: NEW_PASSWORD,
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({
+          success: true,
+          data: { id: 4, username: "janedoe01", ...janeDetails },
+        });
+        expect(await loginStatus(NEW_PASSWORD)).toBe(200);
+        expect(await loginStatus(OLD_PASSWORD)).toBe(401);
+      });
+
+      test("updates the name and password in one request", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          firstName: "Janet",
+          currentPassword: OLD_PASSWORD,
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: NEW_PASSWORD,
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ data: { firstName: "Janet" } });
+        expect(await loginStatus(NEW_PASSWORD)).toBe(200);
+      });
+
+      test("keeps the password when all password fields are blank", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          firstName: "Janet",
+          currentPassword: "",
+          newPassword: "",
+          confirmNewPassword: "",
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ data: { firstName: "Janet" } });
+        expect(await loginStatus(OLD_PASSWORD)).toBe(200);
+      });
+
+      test("returns an error when the current password is incorrect", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          firstName: "Janet",
+          currentPassword: "Wrongpassword01!",
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: NEW_PASSWORD,
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toEqual({
+          success: false,
+          errors: [
+            {
+              type: "field",
+              path: "currentPassword",
+              location: "body",
+              msg: "Current password is incorrect",
+            },
+          ],
+        });
+        expect(await loginStatus(OLD_PASSWORD)).toBe(200);
+
+        // Nothing else was saved either
+        const check = await jane.get("/api/users/4");
+        expect(check.body).toMatchObject({ data: { firstName: "Jane" } });
+      });
+
+      test("requires the current password to set a new one", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: NEW_PASSWORD,
+        });
+
+        expect(res.status).toBe(400);
+        expect(fieldErrors(res.body)).toEqual([
+          { path: "currentPassword", msg: "Current password is required" },
+        ]);
+        expect(await loginStatus(OLD_PASSWORD)).toBe(200);
+      });
+
+      test("requires a new password when the current one is given", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          currentPassword: OLD_PASSWORD,
+        });
+
+        expect(res.status).toBe(400);
+        expect(fieldErrors(res.body)).toEqual([
+          { path: "newPassword", msg: "New password is required" },
+          {
+            path: "confirmNewPassword",
+            msg: "Please confirm your new password",
+          },
+        ]);
+      });
+
+      test("returns an error when the confirmation does not match", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          currentPassword: OLD_PASSWORD,
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: "Different02!",
+        });
+
+        expect(res.status).toBe(400);
+        expect(fieldErrors(res.body)).toEqual([
+          { path: "confirmNewPassword", msg: "Passwords do not match" },
+        ]);
+        expect(await loginStatus(OLD_PASSWORD)).toBe(200);
+      });
+
+      test("returns an error when the new password is weak", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          currentPassword: OLD_PASSWORD,
+          newPassword: "weak",
+          confirmNewPassword: "weak",
+        });
+
+        expect(res.status).toBe(400);
+        expect(fieldErrors(res.body)).toEqual([
+          {
+            path: "newPassword",
+            msg: "Passwords must at least 8 characters long and contain an uppercase letter, number and symbol",
+          },
+        ]);
+      });
+
+      test("rejects a current password that is not a string", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          currentPassword: 12345678,
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: NEW_PASSWORD,
+        });
+
+        expect(res.status).toBe(400);
+        expect(fieldErrors(res.body)).toEqual([
+          { path: "currentPassword", msg: "Current password is required" },
+        ]);
+      });
+
+      test("does not return the password in the response", async () => {
+        const res = await jane.put("/api/users/4").send({
+          ...janeDetails,
+          currentPassword: OLD_PASSWORD,
+          newPassword: NEW_PASSWORD,
+          confirmNewPassword: NEW_PASSWORD,
+        });
+
+        expect(res.status).toBe(200);
+        expect(JSON.stringify(res.body)).not.toMatch(/password/i);
+      });
+    });
   });
 
   describe("delete user endpoint", () => {

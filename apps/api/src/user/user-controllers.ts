@@ -86,12 +86,39 @@ const createUser = async (
   res.status(201).json({ success: true, data: user });
 };
 
+const INCORRECT_PASSWORD_ERROR: ValidationError = {
+  type: "field",
+  path: "currentPassword",
+  location: "body",
+  msg: "Current password is incorrect",
+};
+
+// Returns the hash to store for a password change, or null when the current
+// password doesn't match. The validators guarantee both passwords are present.
+const hashNewPassword = async (
+  userAccountId: number,
+  currentPassword: string,
+  newPassword: string,
+): Promise<string | null> => {
+  const account = await repository.getPasswordHashByAccountId(userAccountId);
+  if (!account) return null;
+
+  const isMatch = await bcrypt.compare(currentPassword, account.password);
+  return isMatch ? bcrypt.hash(newPassword, 10) : null;
+};
+
 const updateUser = async (
   req: Request<UpdateUserReqParams, object, UpdateUserReqBody, object>,
   res: Response<ApiResponse<UserResBody, ValidationError[]>>,
 ) => {
-  const { id, firstName, lastName, email }: UpdateUserValidatedReq =
-    matchedData(req);
+  const {
+    id,
+    firstName,
+    lastName,
+    email,
+    currentPassword,
+    newPassword,
+  }: UpdateUserValidatedReq = matchedData(req);
 
   const userAccountId = getAuthenticatedUserAccountId(req);
 
@@ -103,11 +130,24 @@ const updateUser = async (
     return;
   }
 
+  // undefined: no password change requested; null: current password is wrong.
+  const password = newPassword
+    ? await hashNewPassword(userAccountId, currentPassword ?? "", newPassword)
+    : undefined;
+
+  if (password === null) {
+    res
+      .status(400)
+      .json({ success: false, errors: [INCORRECT_PASSWORD_ERROR] });
+    return;
+  }
+
   const user = await repository.updateUser({
     userAccountId,
     firstName,
     lastName,
     email,
+    password,
   });
   res.status(200).json({ success: true, data: user });
 };
