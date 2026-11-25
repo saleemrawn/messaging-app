@@ -5,10 +5,22 @@ interface Props {
   name: string;
   type?: "text" | "email" | "password";
   autoComplete?: string;
+  defaultValue?: string;
+  isRequired?: boolean;
+  isDisabled?: boolean;
   error?: string;
 }
 
-function FormField({ label, name, type = "text", autoComplete, error }: Props) {
+function FormField({
+  label,
+  name,
+  type = "text",
+  autoComplete,
+  defaultValue,
+  isRequired = true,
+  isDisabled = false,
+  error,
+}: Props) {
   const id = useId();
   const errorId = `${id}-error`;
 
@@ -22,10 +34,12 @@ function FormField({ label, name, type = "text", autoComplete, error }: Props) {
         name={name}
         type={type}
         autoComplete={autoComplete}
-        required
+        defaultValue={defaultValue}
+        required={isRequired}
+        disabled={isDisabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className="rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+        className="rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-500"
       />
       {error && (
         <p id={errorId} className="text-sm text-red-600">

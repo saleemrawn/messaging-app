@@ -1,0 +1,152 @@
+import { useId, useState, type SubmitEvent } from "react";
+import { useRevalidator } from "react-router";
+import { updateProfile } from "../profile-service.ts";
+import {
+  parseApiError,
+  type ParsedApiError,
+} from "../../../shared/api/api-errors.ts";
+import { getString } from "../../../shared/utils/form-data.ts";
+import FormField from "../../../shared/components/FormField.tsx";
+import FormError from "../../../shared/components/FormError.tsx";
+import type { User } from "../../auth/types.ts";
+
+interface Props {
+  user: User;
+  onCancel: () => void;
+  onSaved: () => void;
+}
+
+const NO_ERRORS: ParsedApiError = { fieldErrors: {} };
+
+function EditProfileForm({ user, onCancel, onSaved }: Props) {
+  const { revalidate } = useRevalidator();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<ParsedApiError>(NO_ERRORS);
+  const passwordHintId = useId();
+
+  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    setIsSubmitting(true);
+    setError(NO_ERRORS);
+
+    try {
+      await updateProfile(user.id, {
+        firstName: getString(formData, "firstName"),
+        lastName: getString(formData, "lastName"),
+        email: getString(formData, "email"),
+        currentPassword: getString(formData, "currentPassword"),
+        newPassword: getString(formData, "newPassword"),
+        confirmNewPassword: getString(formData, "confirmNewPassword"),
+      });
+    } catch (err: unknown) {
+      setError(parseApiError(err));
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Reloads the current user so the page and sidebar show the new details.
+    await revalidate();
+    onSaved();
+  }
+
+  const { fieldErrors } = error;
+
+  return (
+    <form
+      aria-label="Edit profile"
+      className="flex w-full flex-col gap-4 text-left"
+      onSubmit={(event) => void handleSubmit(event)}
+    >
+      <FormError message={error.message} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <FormField
+          label="First name"
+          name="firstName"
+          autoComplete="given-name"
+          defaultValue={user.firstName}
+          error={fieldErrors.firstName}
+        />
+        <FormField
+          label="Last name"
+          name="lastName"
+          autoComplete="family-name"
+          defaultValue={user.lastName}
+          error={fieldErrors.lastName}
+        />
+      </div>
+      <FormField
+        label="Email"
+        name="email"
+        type="email"
+        autoComplete="email"
+        defaultValue={user.email}
+        error={fieldErrors.email}
+      />
+      <FormField
+        label="Username"
+        name="username"
+        autoComplete="username"
+        defaultValue={user.username}
+        isDisabled
+      />
+
+      <fieldset
+        aria-describedby={passwordHintId}
+        className="mt-2 flex flex-col gap-4 border-t border-gray-200 pt-4"
+      >
+        <legend className="pt-4 text-base font-semibold text-gray-900">
+          Change password
+        </legend>
+        <p id={passwordHintId} className="-mt-2 text-sm text-gray-500">
+          Leave blank to keep your current password.
+        </p>
+        <FormField
+          label="Current password"
+          name="currentPassword"
+          type="password"
+          autoComplete="current-password"
+          isRequired={false}
+          error={fieldErrors.currentPassword}
+        />
+        <FormField
+          label="New password"
+          name="newPassword"
+          type="password"
+          autoComplete="new-password"
+          isRequired={false}
+          error={fieldErrors.newPassword}
+        />
+        <FormField
+          label="Confirm new password"
+          name="confirmNewPassword"
+          type="password"
+          autoComplete="new-password"
+          isRequired={false}
+          error={fieldErrors.confirmNewPassword}
+        />
+      </fieldset>
+
+      <div className="mt-2 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          className="rounded border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+        >
+          {isSubmitting ? "Saving…" : "Save"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+export default EditProfileForm;
