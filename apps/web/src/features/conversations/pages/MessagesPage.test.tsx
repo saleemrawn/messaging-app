@@ -428,6 +428,47 @@ describe("conversation viewer", () => {
     ).toBeInTheDocument();
   });
 
+  test("sends a message when Enter is pressed", async () => {
+    const { sentBodies } = mockApi();
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    const textbox = screen.getByRole("textbox", { name: /^message$/i });
+    await user.type(textbox, "See you there{Enter}");
+
+    await waitFor(() => {
+      expect(getMessageItems()).toHaveLength(4);
+    });
+    expect(getMessageItems()[3]).toHaveTextContent("See you there");
+    expect(sentBodies).toEqual([{ content: "See you there", recipientId: 3 }]);
+    expect(textbox).toHaveValue("");
+  });
+
+  test("inserts a new line on Shift + Enter without sending", async () => {
+    const { sentBodies } = mockApi();
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    const textbox = screen.getByRole("textbox", { name: /^message$/i });
+    await user.type(textbox, "Line one{Shift>}{Enter}{/Shift}Line two");
+
+    expect(textbox).toHaveValue("Line one\nLine two");
+    expect(sentBodies).toEqual([]);
+    expect(getMessageItems()).toHaveLength(3);
+  });
+
+  test("shows the keyboard shortcut hint under the message box", async () => {
+    mockApi();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    expect(
+      screen.getByRole("textbox", { name: /^message$/i }),
+    ).toHaveAccessibleDescription("Enter to send · Shift + Enter for a new line");
+  });
+
   test("does not send an empty message", async () => {
     const { sentBodies } = mockApi();
     const user = userEvent.setup();
@@ -458,7 +499,7 @@ describe("conversation viewer", () => {
     );
     expect(textbox).toHaveValue("Hello?");
     expect(textbox).toHaveAttribute("aria-invalid", "true");
-    expect(textbox).toHaveAccessibleDescription("Could not send");
+    expect(textbox).toHaveAccessibleDescription(/^Could not send/);
     expect(getMessageItems()).toHaveLength(3);
   });
 

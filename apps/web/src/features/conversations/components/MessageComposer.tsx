@@ -1,4 +1,10 @@
-import { useEffect, useId, useRef, type SubmitEvent } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  type KeyboardEvent,
+  type SubmitEvent,
+} from "react";
 import { useFetcher } from "react-router";
 import type { SendMessageResult } from "../actions.ts";
 import FormError from "../../../shared/components/FormError.tsx";
@@ -23,6 +29,7 @@ function MessageComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const submittedContentRef = useRef<string | null>(null);
   const errorId = useId();
+  const hintId = useId();
   const isSending = fetcher.state !== "idle";
   const result = fetcher.data;
   const error = !isSending && result && !result.ok ? result.error : undefined;
@@ -49,6 +56,21 @@ function MessageComposer({
     submittedContentRef.current = textareaRef.current?.value ?? null;
   }
 
+  // Enter sends and Shift + Enter falls through to the default new line. Skip
+  // Enter while an IME is composing, where it confirms a character instead.
+  // requestSubmit() goes through handleSubmit, so its sending guard still applies.
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey ||
+      event.nativeEvent.isComposing
+    ) {
+      return;
+    }
+    event.preventDefault();
+    formRef.current?.requestSubmit();
+  }
+
   return (
     <fetcher.Form
       ref={formRef}
@@ -65,7 +87,8 @@ function MessageComposer({
           aria-label="Message"
           autoFocus={shouldAutoFocus}
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? errorId : undefined}
+          aria-describedby={error ? `${errorId} ${hintId}` : hintId}
+          onKeyDown={handleKeyDown}
           placeholder="Write a message…"
           rows={2}
           maxLength={MAX_MESSAGE_LENGTH}
@@ -79,6 +102,9 @@ function MessageComposer({
           Send
         </button>
       </div>
+      <p id={hintId} className="px-2 text-xs text-gray-500">
+        Enter to send · Shift + Enter for a new line
+      </p>
     </fetcher.Form>
   );
 }
