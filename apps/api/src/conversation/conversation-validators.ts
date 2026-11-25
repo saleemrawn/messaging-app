@@ -37,6 +37,7 @@ const optionalContentValidator = buildContentValidator().optional();
 const getConversationByIdValidators = [conversationIdValidator];
 const deleteConversationValidators = [conversationIdValidator];
 const addMessageReceiptsValidators = [conversationIdValidator];
+const unarchiveConversationValidators = [conversationIdValidator];
 
 const createConversationValidators = [
   optionalContentValidator,
@@ -55,4 +56,5 @@ export {
   createConversationValidators,
   addMessageToConversationValidators,
   addMessageReceiptsValidators,
+  unarchiveConversationValidators,
 };

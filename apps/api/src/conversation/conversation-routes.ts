@@ -6,15 +6,18 @@ import {
   createConversationValidators,
   addMessageToConversationValidators,
   addMessageReceiptsValidators,
+  unarchiveConversationValidators,
 } from "./conversation-validators.ts";
 import {
   getConversationsByUserAccountId,
   getUnreadCount,
+  getArchivedConversations,
   getConversationById,
   createConversation,
   deleteConversation,
   addMessageToConversation,
   addMessageReceipts,
+  unarchiveConversation,
 } from "./conversation-controllers.ts";
 import { requireAuth } from "../auth/require-auth.ts";
 
@@ -22,8 +25,9 @@ const router = Router();
 
 router.use(requireAuth);
 router.get("/", getConversationsByUserAccountId);
-// Before "/:id", whose integer validator would reject "unread-count".
+// Before "/:id", whose integer validator would reject these static segments.
 router.get("/unread-count", getUnreadCount);
+router.get("/archived", getArchivedConversations);
 router.get(
   "/:id",
   getConversationByIdValidators,
@@ -43,6 +47,13 @@ router.delete(
   deleteConversationValidators,
   handleValidationErrors,
   deleteConversation,
+);
+
+router.post(
+  "/:id/unarchive",
+  unarchiveConversationValidators,
+  handleValidationErrors,
+  unarchiveConversation,
 );
 
 router.post(

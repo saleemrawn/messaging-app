@@ -72,6 +72,9 @@ model UserConversation {
   // Kept out of this member's conversation list until the first message, so a
   // recipient doesn't see an empty conversation someone else started.
   isHidden       Boolean      @default(false)
+  // Set when this member deletes the conversation from their list, which moves
+  // it to their archive. Cleared by unarchiving or by a new message.
+  archivedAt     DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   deletedAt      DateTime?

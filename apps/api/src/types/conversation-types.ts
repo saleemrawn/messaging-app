@@ -74,7 +74,16 @@ interface DeleteConversationValidatedReq {
   id: Conversation["id"];
 }
 
+interface UnarchiveConversationReqParams extends ParamsDictionary {
+  id: string;
+}
+
+interface UnarchiveConversationValidatedReq {
+  id: Conversation["id"];
+}
+
 type GetConversationsByUserAccountIdResBody = ConversationSummary[];
+type GetArchivedConversationsResBody = ConversationSummary[];
 
 interface GetUnreadCountResBody {
   unreadCount: UserConversation["unreadCount"];
@@ -94,6 +103,7 @@ interface CreateConversationValidatedReq {
 
 type CreateConversationResBody = Pick<Conversation, "id">;
 type DeleteConversationResBody = Pick<Conversation, "id">;
+type UnarchiveConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
 type AddMessageReceiptsResBody = MessageReceipt[];
@@ -104,6 +114,7 @@ export type {
   ConversationSummary,
   ConversationDetail,
   GetConversationsByUserAccountIdResBody,
+  GetArchivedConversationsResBody,
   GetUnreadCountResBody,
   GetConversationByIdReqParams,
   GetConversationByIdValidatedReq,
@@ -113,6 +124,9 @@ export type {
   DeleteConversationReqParams,
   DeleteConversationResBody,
   DeleteConversationValidatedReq,
+  UnarchiveConversationReqParams,
+  UnarchiveConversationResBody,
+  UnarchiveConversationValidatedReq,
   CreateConversationReqBody,
   CreateConversationValidatedReq,
   CreateConversationResBody,

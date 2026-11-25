@@ -4,6 +4,7 @@ import type {
   AddMessageToConversationReqParams,
   AddMessageToConversationValidatedReq,
   GetConversationsByUserAccountIdResBody,
+  GetArchivedConversationsResBody,
   GetUnreadCountResBody,
   GetConversationByIdReqParams,
   GetConversationByIdValidatedReq,
@@ -13,6 +14,9 @@ import type {
   DeleteConversationReqParams,
   DeleteConversationResBody,
   DeleteConversationValidatedReq,
+  UnarchiveConversationReqParams,
+  UnarchiveConversationResBody,
+  UnarchiveConversationValidatedReq,
   CreateConversationReqBody,
   CreateConversationValidatedReq,
   CreateConversationResBody,
@@ -37,8 +41,25 @@ const getConversationsByUserAccountId = async (
   >,
 ) => {
   const userAccountId = getAuthenticatedUserAccountId(req);
-  const conversations =
-    await repository.getConversationsByUserAccountId(userAccountId);
+  const conversations = await repository.getConversationsByUserAccountId(
+    userAccountId,
+    { isArchived: false },
+  );
+
+  res.status(200).json({ success: true, data: conversations });
+};
+
+const getArchivedConversations = async (
+  req: Request,
+  res: Response<
+    ApiResponse<GetArchivedConversationsResBody, ValidationError[]>
+  >,
+) => {
+  const userAccountId = getAuthenticatedUserAccountId(req);
+  const conversations = await repository.getConversationsByUserAccountId(
+    userAccountId,
+    { isArchived: true },
+  );
 
   res.status(200).json({ success: true, data: conversations });
 };
@@ -117,6 +138,21 @@ const deleteConversation = async (
   res.status(200).json({ success: true, data: { id } });
 };
 
+const unarchiveConversation = async (
+  req: Request<UnarchiveConversationReqParams, object, object, object>,
+  res: Response<ApiResponse<UnarchiveConversationResBody, ValidationError[]>>,
+) => {
+  const { id }: UnarchiveConversationValidatedReq = matchedData(req);
+  const userAccountId = getAuthenticatedUserAccountId(req);
+
+  if (!(await repository.unarchiveConversation(id, userAccountId))) {
+    res.status(404).json(CONVERSATION_NOT_FOUND);
+    return;
+  }
+
+  res.status(200).json({ success: true, data: { id } });
+};
+
 const addMessageToConversation = async (
   req: Request<
     AddMessageToConversationReqParams,
@@ -169,10 +205,12 @@ const addMessageReceipts = async (
 
 export {
   getConversationsByUserAccountId,
+  getArchivedConversations,
   getUnreadCount,
   getConversationById,
   createConversation,
   deleteConversation,
   addMessageToConversation,
   addMessageReceipts,
+  unarchiveConversation,
 };

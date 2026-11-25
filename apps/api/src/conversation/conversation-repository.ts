@@ -24,16 +24,23 @@ interface FindOrCreateConversationResult {
 
 type AddMessageToConversationParams = MessageInput;
 
+interface ListConversationsOptions {
+  isArchived: boolean;
+}
+
 // Lists the caller's conversations newest first, each with the other
 // participant, the caller's own unread count and only the latest message.
-// Empty conversations someone else started stay hidden until a message arrives.
+// Either the active list or the archive, never both. Empty conversations
+// someone else started stay hidden from both until a message arrives.
 const getConversationsByUserAccountId = async (
   userAccountId: UserAccount["id"],
+  { isArchived }: ListConversationsOptions,
 ): Promise<ConversationSummary[]> => {
   const memberships = await prisma.userConversation.findMany({
     where: {
       userAccountId,
       isHidden: false,
+      archivedAt: isArchived ? { not: null } : null,
       deletedAt: null,
       conversation: { deletedAt: null },
     },
@@ -287,7 +294,7 @@ const findOrCreateConversation = async ({
     if (existing) {
       await tx.userConversation.updateMany({
         where: { conversationId: existing.id, userAccountId: senderId },
-        data: { isHidden: false },
+        data: { isHidden: false, archivedAt: null },
       });
       return { id: existing.id, isCreated: false };
     }
@@ -315,13 +322,13 @@ const findOrCreateConversation = async ({
   });
 };
 
-// Removes the conversation from the caller's list only; the other participant
-// keeps it. The next message from them reveals it again, history intact.
-// Returns false when the conversation doesn't exist, is deleted, or the caller
-// isn't a participant.
-const deleteConversation = async (
+// Updates the caller's own membership of a live conversation. Returns false
+// when the conversation doesn't exist, is deleted, or the caller isn't a
+// participant.
+const updateOwnMembership = async (
   conversationId: Conversation["id"],
   userAccountId: UserAccount["id"],
+  data: { archivedAt: Date | null; unreadCount?: number },
 ): Promise<boolean> => {
   const { count } = await prisma.userConversation.updateMany({
     where: {
@@ -330,10 +337,30 @@ const deleteConversation = async (
       deletedAt: null,
       conversation: { deletedAt: null },
     },
-    data: { isHidden: true, unreadCount: 0 },
+    data,
   });
   return count > 0;
 };
+
+// Moves the conversation from the caller's list to their archive only; the
+// other participant keeps it. The next message reveals it again, history
+// intact.
+const deleteConversation = (
+  conversationId: Conversation["id"],
+  userAccountId: UserAccount["id"],
+): Promise<boolean> =>
+  updateOwnMembership(conversationId, userAccountId, {
+    archivedAt: new Date(),
+    unreadCount: 0,
+  });
+
+// Moves the conversation from the caller's archive back to their list. A no-op
+// for one that isn't archived.
+const unarchiveConversation = (
+  conversationId: Conversation["id"],
+  userAccountId: UserAccount["id"],
+): Promise<boolean> =>
+  updateOwnMembership(conversationId, userAccountId, { archivedAt: null });
 
 const addMessageToConversation = async ({
   conversationId,
@@ -363,14 +390,17 @@ const addMessageToConversation = async ({
             data: {
               unreadCount: 0,
               isHidden: false,
+              archivedAt: null,
             },
           },
           {
             where: { userAccountId: recipientId },
             data: {
               unreadCount: { increment: 1 },
-              // The first message reveals a conversation started empty.
+              // A new message reveals a conversation started empty and brings
+              // one back out of the archive.
               isHidden: false,
+              archivedAt: null,
             },
           },
         ],
@@ -444,6 +474,7 @@ export {
   getConversationById,
   findOrCreateConversation,
   deleteConversation,
+  unarchiveConversation,
   addMessageToConversation,
   addMessageReceipts,
 };

@@ -106,11 +106,13 @@ describe("conversation route", () => {
     const routes: ["get" | "post" | "delete", string][] = [
       ["get", "/api/conversations"],
       ["get", "/api/conversations/unread-count"],
+      ["get", "/api/conversations/archived"],
       ["get", "/api/conversations/1"],
       ["post", "/api/conversations"],
       ["delete", "/api/conversations/1"],
       ["post", "/api/conversations/1/messages"],
       ["post", "/api/conversations/1/messages/receipts"],
+      ["post", "/api/conversations/1/unarchive"],
     ];
 
     test.each(routes)(
@@ -882,12 +884,12 @@ describe("conversation route", () => {
         where: { id: 1 },
         select: {
           deletedAt: true,
-          userConversations: { select: { isHidden: true } },
+          userConversations: { select: { archivedAt: true } },
         },
       });
       expect(conversation).toEqual({
         deletedAt: null,
-        userConversations: [{ isHidden: false }, { isHidden: false }],
+        userConversations: [{ archivedAt: null }, { archivedAt: null }],
       });
     });
 
@@ -930,8 +932,7 @@ describe("conversation route", () => {
 
       const res = await john.get("/api/conversations/1");
       expect(res.status).toBe(200);
-      const { messages } = (res.body as { data: { messages: unknown[] } })
-        .data;
+      const { messages } = (res.body as { data: { messages: unknown[] } }).data;
       expect(messages).toEqual([
         expect.objectContaining({ id: 1 }),
         expect.objectContaining({ id: 2 }),
@@ -974,6 +975,180 @@ describe("conversation route", () => {
 
       expect(res.status).toBe(400);
       expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: false,
+        errors: [
+          {
+            type: "field",
+            value: "abc",
+            msg: "Invalid conversation ID, expected number",
+            path: "id",
+            location: "params",
+          },
+        ],
+      });
+    });
+  });
+
+  describe("get archived conversations route", () => {
+    test("lists only the caller's archived conversations", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      await john.delete("/api/conversations/2").expect(200);
+      const res = await john.get("/api/conversations/archived");
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({
+        success: true,
+        data: [johnConversationList.data[0]],
+      });
+    });
+
+    test("doesn't list conversations the other participant archived", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const aisha = createAuthenticatedAgentAs(2);
+      await aisha.delete("/api/conversations/1").expect(200);
+
+      const john = createAuthenticatedAgentAs(1);
+      const res = await john.get("/api/conversations/archived");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: [] });
+    });
+
+    test("doesn't list an empty conversation someone else started", async () => {
+      // Jane (account 4) starts an empty conversation with John: it's hidden
+      // from John until its first message, but it isn't archived.
+      const jane = createAuthenticatedAgentAs(4);
+      await jane
+        .post("/api/conversations")
+        .send({ recipientId: 1 })
+        .expect(201);
+
+      const john = createAuthenticatedAgentAs(1);
+      const res = await john.get("/api/conversations/archived");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: [] });
+    });
+
+    test("returns an empty list when nothing is archived", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      const res = await john.get("/api/conversations/archived");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: [] });
+    });
+
+    test("starting a conversation with an archived participant unarchives it", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      await john.delete("/api/conversations/1").expect(200);
+      await john
+        .post("/api/conversations")
+        .send({ recipientId: 2 })
+        .expect(200);
+
+      const archived = await john.get("/api/conversations/archived");
+      expect(archived.body).toEqual({ success: true, data: [] });
+
+      const list = await john.get("/api/conversations");
+      expect(listedConversation(list.body, 1)).toBeDefined();
+    });
+  });
+
+  describe("unarchive conversation route", () => {
+    test("moves the conversation back to the caller's list", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      await john.delete("/api/conversations/1").expect(200);
+      const res = await john.post("/api/conversations/1/unarchive");
+
+      expect(res.status).toBe(200);
+      expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+
+      const list = await john.get("/api/conversations");
+      expect(list.body).toEqual(johnConversationList);
+
+      const archived = await john.get("/api/conversations/archived");
+      expect(archived.body).toEqual({ success: true, data: [] });
+    });
+
+    test("returns 404 and changes nothing when the caller isn't a participant", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      await john.delete("/api/conversations/1").expect(200);
+
+      const phillipe = createAuthenticatedAgentAs(3);
+      const res = await phillipe.post("/api/conversations/1/unarchive");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+
+      const membership = await prisma.userConversation.findUniqueOrThrow({
+        where: {
+          userAccountId_conversationId: { userAccountId: 1, conversationId: 1 },
+        },
+        select: { archivedAt: true },
+      });
+      expect(membership.archivedAt).toBeInstanceOf(Date);
+    });
+
+    test("returns 404 for a conversation that doesn't exist", async () => {
+      const john = createAuthenticatedAgentAs(1);
+      const res = await john.post("/api/conversations/999/unarchive");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+    });
+
+    test("is a no-op for a conversation that isn't archived", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      const res = await john.post("/api/conversations/1/unarchive");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+
+      const list = await john.get("/api/conversations");
+      expect(list.body).toEqual(johnConversationList);
+    });
+
+    test("returns validation error for conversation ID type", async () => {
+      const john = createAuthenticatedAgentAs(1);
+      const res = await john.post("/api/conversations/abc/unarchive");
+
+      expect(res.status).toBe(400);
       expect(res.body).toEqual({
         success: false,
         errors: [
