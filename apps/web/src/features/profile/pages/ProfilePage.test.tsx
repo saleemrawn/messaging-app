@@ -195,6 +195,113 @@ describe("profile page", () => {
     expect(within(page).getByRole("button", { name: "Save" })).toBeEnabled();
   });
 
+  test.each([
+    ["currentPassword", "Current password is incorrect"],
+    ["newPassword", "Passwords must at least 8 characters long"],
+    ["confirmNewPassword", "Passwords do not match"],
+  ])(
+    "an error on %s clears every password field and nothing else",
+    async (path, msg) => {
+      mockCurrentUser();
+      server.use(
+        http.put(`${API_URL}/users/1`, () =>
+          HttpResponse.json(
+            { success: false, errors: [{ type: "field", path, msg }] },
+            { status: 400 },
+          ),
+        ),
+      );
+      const { user, page } = await openEditForm();
+
+      await user.clear(within(page).getByLabelText("First name"));
+      await user.type(within(page).getByLabelText("First name"), "Johnny");
+      await user.type(
+        within(page).getByLabelText("Current password"),
+        "Testpassword01!",
+      );
+      await user.type(
+        within(page).getByLabelText("New password"),
+        "Newpass02!",
+      );
+      await user.type(
+        within(page).getByLabelText("Confirm new password"),
+        "Newpass02!",
+      );
+      await user.click(within(page).getByRole("button", { name: "Save" }));
+
+      await within(page).findByText(msg);
+      expect(within(page).getByLabelText("Current password")).toHaveValue("");
+      expect(within(page).getByLabelText("New password")).toHaveValue("");
+      expect(within(page).getByLabelText("Confirm new password")).toHaveValue(
+        "",
+      );
+      expect(within(page).getByLabelText("First name")).toHaveValue("Johnny");
+      expect(within(page).getByLabelText("Email")).toHaveValue(
+        "john.doe01@email.com",
+      );
+    },
+  );
+
+  test("an error on a non-password field keeps every field", async () => {
+    mockCurrentUser();
+    server.use(
+      http.put(`${API_URL}/users/1`, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            errors: [
+              {
+                type: "field",
+                path: "email",
+                msg: "Email must be a valid format",
+              },
+            ],
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+    const { user, page } = await openEditForm();
+
+    await user.type(
+      within(page).getByLabelText("Current password"),
+      "Testpassword01!",
+    );
+    await user.click(within(page).getByRole("button", { name: "Save" }));
+
+    await within(page).findByText("Email must be a valid format");
+    expect(within(page).getByLabelText("Email")).toHaveValue(
+      "john.doe01@email.com",
+    );
+    expect(within(page).getByLabelText("Current password")).toHaveValue(
+      "Testpassword01!",
+    );
+  });
+
+  test("keeps the fields when the error is not about a field", async () => {
+    mockCurrentUser();
+    server.use(
+      http.put(`${API_URL}/users/1`, () =>
+        HttpResponse.json(
+          { success: false, message: "Conflict" },
+          { status: 409 },
+        ),
+      ),
+    );
+    const { user, page } = await openEditForm();
+
+    await user.type(within(page).getByLabelText("Current password"), "secret");
+    await user.click(within(page).getByRole("button", { name: "Save" }));
+
+    await within(page).findByText("That username or email is already taken");
+    expect(within(page).getByLabelText("Email")).toHaveValue(
+      "john.doe01@email.com",
+    );
+    expect(within(page).getByLabelText("Current password")).toHaveValue(
+      "secret",
+    );
+  });
+
   test("shows a message when the email is already taken", async () => {
     mockCurrentUser();
     server.use(

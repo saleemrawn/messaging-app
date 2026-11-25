@@ -17,6 +17,23 @@ interface Props {
 }
 
 const NO_ERRORS: ParsedApiError = { fieldErrors: {} };
+const PASSWORD_FIELDS = [
+  "currentPassword",
+  "newPassword",
+  "confirmNewPassword",
+] as const;
+
+function hasPasswordError({ fieldErrors }: ParsedApiError): boolean {
+  return PASSWORD_FIELDS.some((name) => fieldErrors[name] !== undefined);
+}
+
+// The inputs are uncontrolled, so the password fields are cleared on the DOM.
+function clearPasswordFields(form: HTMLFormElement) {
+  for (const name of PASSWORD_FIELDS) {
+    const field = form.elements.namedItem(name);
+    if (field instanceof HTMLInputElement) field.value = "";
+  }
+}
 
 function EditProfileForm({ user, onCancel, onSaved }: Props) {
   const { revalidate } = useRevalidator();
@@ -26,7 +43,9 @@ function EditProfileForm({ user, onCancel, onSaved }: Props) {
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    // Kept for after the await: React clears event.currentTarget by then.
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     setIsSubmitting(true);
     setError(NO_ERRORS);
@@ -41,7 +60,11 @@ function EditProfileForm({ user, onCancel, onSaved }: Props) {
         confirmNewPassword: getString(formData, "confirmNewPassword"),
       });
     } catch (err: unknown) {
-      setError(parseApiError(err));
+      const parsedError = parseApiError(err);
+      // The password fields go together, so a problem with any of them means
+      // retyping all three.
+      if (hasPasswordError(parsedError)) clearPasswordFields(form);
+      setError(parsedError);
       setIsSubmitting(false);
       return;
     }
