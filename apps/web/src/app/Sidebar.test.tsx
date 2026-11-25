@@ -132,7 +132,7 @@ describe("sidebar navigation", () => {
     await user.click(await screen.findByRole("link", { name: /john doe/i }));
 
     expect(
-      await screen.findByRole("heading", { name: /^profile$/i }),
+      await screen.findByRole("region", { name: /^profile$/i }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/profile");
     expect(screen.getByRole("link", { name: /john doe/i })).toHaveAttribute(

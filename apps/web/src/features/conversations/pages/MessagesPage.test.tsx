@@ -333,7 +333,7 @@ describe("conversation viewer", () => {
     await user.click(screen.getByRole("link", { name: /my account/i }));
 
     expect(
-      await screen.findByRole("heading", { name: /^profile$/i }),
+      await screen.findByRole("region", { name: /^profile$/i }),
     ).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: /main/i });
     expect(within(nav).queryByText(/unread/i)).not.toBeInTheDocument();
