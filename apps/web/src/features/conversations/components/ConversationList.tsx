@@ -130,7 +130,7 @@ function ConversationList({
         id={panelId}
         role="tabpanel"
         aria-labelledby={tabId(filter)}
-        className="min-h-0 flex-1 overflow-y-auto"
+        className="relative min-h-0 flex-1 overflow-y-auto"
       >
         {visible.length === 0 ? (
           <p className="px-4 py-8 text-center text-gray-500">{emptyMessage}</p>
