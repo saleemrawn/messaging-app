@@ -860,10 +860,108 @@ describe("conversation route", () => {
 
       expect(res.status).toBe(200);
       expect(res.type).toBe("application/json");
+      expect(res.body).toEqual({ success: true, data: { id: 1 } });
+    });
+
+    test("returns 404 and changes nothing when the caller isn't a participant", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      // Phillipe (account 3) isn't part of conversation 1 (John ↔ Aisha)
+      const phillipe = createAuthenticatedAgentAs(3);
+      const res = await phillipe.delete("/api/conversations/1");
+
+      expect(res.status).toBe(404);
       expect(res.body).toEqual({
-        success: true,
-        data: { id: 1, deletedAt: isoDateString() },
+        success: false,
+        message: "Conversation not found",
       });
+
+      const conversation = await prisma.conversation.findUniqueOrThrow({
+        where: { id: 1 },
+        select: {
+          deletedAt: true,
+          userConversations: { select: { isHidden: true } },
+        },
+      });
+      expect(conversation).toEqual({
+        deletedAt: null,
+        userConversations: [{ isHidden: false }, { isHidden: false }],
+      });
+    });
+
+    test("hides the conversation only for the caller", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      await john.delete("/api/conversations/1").expect(200);
+
+      const johnList = await john.get("/api/conversations");
+      expect(listedConversation(johnList.body, 1)).toBeUndefined();
+
+      const aisha = createAuthenticatedAgentAs(2);
+      const aishaList = await aisha.get("/api/conversations");
+      expect(aishaList.body).toEqual(aishaConversationList);
+      await aisha.get("/api/conversations/1").expect(200);
+    });
+
+    test("a new message from the other participant brings it back with its history", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await populateMessage();
+
+      const john = createAuthenticatedAgentAs(1);
+      await john.delete("/api/conversations/1").expect(200);
+
+      const aisha = createAuthenticatedAgentAs(2);
+      await aisha
+        .post("/api/conversations/1/messages")
+        .send({ content: "Are you still there?", recipientId: 1 })
+        .expect(201);
+
+      const johnList = await john.get("/api/conversations");
+      expect(listedConversation(johnList.body, 1)).toMatchObject({
+        unreadCount: 1,
+        latestMessage: { content: "Are you still there?", senderId: 2 },
+      });
+
+      const res = await john.get("/api/conversations/1");
+      expect(res.status).toBe(200);
+      const { messages } = (res.body as { data: { messages: unknown[] } })
+        .data;
+      expect(messages).toEqual([
+        expect.objectContaining({ id: 1 }),
+        expect.objectContaining({ id: 2 }),
+        expect.objectContaining({ content: "Are you still there?" }),
+      ]);
+    });
+
+    test("returns 404 for a conversation that doesn't exist", async () => {
+      const agent = createAuthenticatedAgentAs(1);
+      const res = await agent.delete("/api/conversations/999");
+
+      expect(res.status).toBe(404);
+      expect(res.body).toEqual({
+        success: false,
+        message: "Conversation not found",
+      });
+    });
+
+    test("returns 404 for a soft-deleted conversation", async () => {
+      await populateConversation();
+      await populateUserConversation();
+      await prisma.conversation.update({
+        where: { id: 1 },
+        data: { deletedAt: new Date() },
+      });
+
+      const agent = createAuthenticatedAgentAs(1);
+      const res = await agent.delete("/api/conversations/1");
+
+      expect(res.status).toBe(404);
     });
 
     test("returns validation error for conversation ID type", async () => {

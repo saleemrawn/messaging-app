@@ -107,8 +107,14 @@ const deleteConversation = async (
   res: Response<ApiResponse<DeleteConversationResBody, ValidationError[]>>,
 ) => {
   const { id }: DeleteConversationValidatedReq = matchedData(req);
-  const conversation = await repository.deleteConversation(id);
-  res.status(200).json({ success: true, data: conversation });
+  const userAccountId = getAuthenticatedUserAccountId(req);
+
+  if (!(await repository.deleteConversation(id, userAccountId))) {
+    res.status(404).json(CONVERSATION_NOT_FOUND);
+    return;
+  }
+
+  res.status(200).json({ success: true, data: { id } });
 };
 
 const addMessageToConversation = async (

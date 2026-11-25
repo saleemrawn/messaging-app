@@ -315,13 +315,24 @@ const findOrCreateConversation = async ({
   });
 };
 
-const deleteConversation = async (id: Conversation["id"]) => {
-  const conversation = await prisma.conversation.update({
-    where: { id },
-    data: { deletedAt: new Date() },
-    select: { id: true, deletedAt: true },
+// Removes the conversation from the caller's list only; the other participant
+// keeps it. The next message from them reveals it again, history intact.
+// Returns false when the conversation doesn't exist, is deleted, or the caller
+// isn't a participant.
+const deleteConversation = async (
+  conversationId: Conversation["id"],
+  userAccountId: UserAccount["id"],
+): Promise<boolean> => {
+  const { count } = await prisma.userConversation.updateMany({
+    where: {
+      conversationId,
+      userAccountId,
+      deletedAt: null,
+      conversation: { deletedAt: null },
+    },
+    data: { isHidden: true, unreadCount: 0 },
   });
-  return conversation;
+  return count > 0;
 };
 
 const addMessageToConversation = async ({

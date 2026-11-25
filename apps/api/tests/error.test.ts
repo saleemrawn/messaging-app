@@ -1,8 +1,6 @@
 import {
-  populateConversation,
   populateUser,
   populateUserAccount,
-  populateUserConversation,
   resetDbTables,
 } from "./helpers/database.ts";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -70,13 +68,15 @@ describe("error middleware", () => {
 
   describe("record not found errors (P2025)", () => {
     test("returns resource not found error when Prisma cannot find the record", async () => {
-      await populateConversation();
-      await populateUserConversation();
+      vi.spyOn(userRepository, "getUsers").mockRejectedValueOnce(
+        new PrismaClientKnownRequestError("Record not found", {
+          code: "P2025",
+          clientVersion: "test",
+        }),
+      );
 
-      // deleteConversation updates by ID with no existence check, so a
-      // missing conversation reaches the middleware as a Prisma P2025 error
       const agent = createAuthenticatedAgentAs(1);
-      const res = await agent.delete("/api/conversations/9999");
+      const res = await agent.get("/api/users");
 
       expect(res.status).toBe(404);
       expect(res.type).toBe("application/json");

@@ -93,7 +93,7 @@ interface CreateConversationValidatedReq {
 }
 
 type CreateConversationResBody = Pick<Conversation, "id">;
-type DeleteConversationResBody = Pick<Conversation, "id" | "deletedAt">;
+type DeleteConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationResBody = Pick<Conversation, "id">;
 type AddMessageToConversationReqBody = Omit<MessageInput, "conversationId">;
 type AddMessageReceiptsResBody = MessageReceipt[];
