@@ -3,25 +3,13 @@ import { conversationPath } from "../paths.ts";
 import type { ConversationSummary } from "../types.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import { formatConversationTimestamp } from "../utils/format-conversation-timestamp.ts";
+import { getMessagePreview } from "../utils/message-preview.ts";
 import UnreadBadge from "./UnreadBadge.tsx";
 import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 
 interface ConversationListItemProps {
   conversation: ConversationSummary;
   currentUserId: number;
-}
-
-const EMPTY_PREVIEW = "No messages yet";
-
-function getMessagePreview(
-  { latestMessage, recipient }: ConversationSummary,
-  currentUserId: number,
-): string {
-  if (!latestMessage) return EMPTY_PREVIEW;
-
-  const author =
-    latestMessage.senderId === currentUserId ? "You" : recipient.firstName;
-  return `${author}: ${latestMessage.content}`;
 }
 
 function rowClassName({ isActive }: { isActive: boolean }): string {

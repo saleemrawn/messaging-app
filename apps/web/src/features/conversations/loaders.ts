@@ -8,6 +8,7 @@ import {
 import { isUnauthorizedError } from "../../shared/api/api-errors.ts";
 import {
   findRecipientByEmail,
+  getArchivedConversations,
   getConversation,
   getConversations,
   getUnreadCount,
@@ -117,6 +118,16 @@ async function recipientLookupLoader({
 }
 
 // Runs in parallel with the layout's auth check, so a 401 redirects too.
+async function archivePageLoader(): Promise<ConversationSummary[] | Response> {
+  try {
+    return await getArchivedConversations();
+  } catch (error: unknown) {
+    if (isUnauthorizedError(error)) return redirect("/login");
+    throw error;
+  }
+}
+
+// Runs in parallel with the layout's auth check, so a 401 redirects too.
 async function unreadCountLoader(): Promise<number | Response> {
   try {
     return await getUnreadCount();
@@ -143,6 +154,7 @@ export {
   MESSAGES_ROUTE_ID,
   UNREAD_COUNT_ROUTE_ID,
   messagesPageLoader,
+  archivePageLoader,
   recipientLookupLoader,
   unreadCountLoader,
   shouldRevalidateUnreadCount,

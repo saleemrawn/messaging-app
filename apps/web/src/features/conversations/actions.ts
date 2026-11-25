@@ -3,15 +3,22 @@ import {
   isUnauthorizedError,
   parseApiError,
 } from "../../shared/api/api-errors.ts";
-import { createConversation, sendMessage } from "./conversation-service.ts";
+import {
+  createConversation,
+  sendMessage,
+  unarchiveConversation,
+} from "./conversation-service.ts";
 import { conversationPath } from "./paths.ts";
 
 const EMPTY_MESSAGE_ERROR = "Message can't be empty";
 const SEND_FAILED_ERROR = "Couldn't send your message. Please try again.";
 const CREATE_FAILED_ERROR =
   "Couldn't start the conversation. Please try again.";
+const UNARCHIVE_FAILED_ERROR =
+  "Couldn't unarchive the conversation. Please try again.";
 
 type SendMessageResult = { ok: true } | { ok: false; error: string };
+type UnarchiveConversationResult = SendMessageResult;
 // Success redirects to the conversation, so only failures carry data.
 interface CreateConversationResult {
   ok: false;
@@ -80,5 +87,34 @@ async function createConversationAction({
   }
 }
 
-export { sendMessageAction, createConversationAction };
-export type { SendMessageResult, CreateConversationResult };
+// Moves an archived conversation back to the Messages list. The router
+// revalidates every loader afterwards, which drops the row from the archive and
+// refreshes the sidebar's unread total.
+async function unarchiveConversationAction({
+  request,
+}: ActionFunctionArgs): Promise<UnarchiveConversationResult | Response> {
+  const formData = await request.formData();
+  const conversationId = Number(formString(formData, "conversationId"));
+  if (!isPositiveInteger(conversationId)) {
+    return { ok: false, error: UNARCHIVE_FAILED_ERROR };
+  }
+
+  try {
+    await unarchiveConversation(conversationId);
+    return { ok: true };
+  } catch (error: unknown) {
+    if (isUnauthorizedError(error)) return redirect("/login");
+    return { ok: false, error: UNARCHIVE_FAILED_ERROR };
+  }
+}
+
+export {
+  sendMessageAction,
+  createConversationAction,
+  unarchiveConversationAction,
+};
+export type {
+  SendMessageResult,
+  CreateConversationResult,
+  UnarchiveConversationResult,
+};

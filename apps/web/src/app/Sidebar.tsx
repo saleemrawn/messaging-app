@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../features/auth/auth-service.ts";
-import { CONVERSATIONS_PATH } from "../features/conversations/paths.ts";
+import {
+  ARCHIVE_PATH,
+  CONVERSATIONS_PATH,
+} from "../features/conversations/paths.ts";
 import { useUnreadTotal } from "../features/conversations/use-unread-total.ts";
 import UnreadBadge from "../features/conversations/components/UnreadBadge.tsx";
 import FormError from "../shared/components/FormError.tsx";
@@ -10,6 +13,7 @@ const LOGOUT_ERROR = "Couldn't log out. Please try again.";
 
 const NAV_ITEMS = [
   { to: CONVERSATIONS_PATH, label: "Messages" },
+  { to: ARCHIVE_PATH, label: "Archive" },
   { to: "/profile", label: "Profile" },
 ] as const;
 

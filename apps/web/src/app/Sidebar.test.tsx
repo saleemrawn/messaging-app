@@ -53,6 +53,43 @@ describe("sidebar navigation", () => {
     ).toBeInTheDocument();
   });
 
+  test("lists Archive directly under Messages", async () => {
+    mockSession();
+
+    renderRoute("/");
+
+    const nav = await screen.findByRole("navigation", { name: /main/i });
+    const labels = within(nav)
+      .getAllByRole("link")
+      .map((link) => link.textContent);
+    expect(labels).toEqual(["Messages", "Archive", "Profile"]);
+  });
+
+  test("navigates to the archive page and marks only Archive as active", async () => {
+    mockSession();
+    server.use(
+      http.get(`${API_URL}/conversations/archived`, () =>
+        HttpResponse.json({ success: true, data: [] }),
+      ),
+    );
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+
+    await user.click(await screen.findByRole("link", { name: /archive/i }));
+
+    expect(
+      await screen.findByRole("heading", { name: /^archive$/i }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/archive");
+    expect(screen.getByRole("link", { name: /archive/i })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(
+      screen.getByRole("link", { name: /messages/i }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
   test("navigates to the profile page and marks Profile as active", async () => {
     mockSession();
     const user = userEvent.setup();

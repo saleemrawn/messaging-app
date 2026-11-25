@@ -15,6 +15,21 @@ async function getConversations(): Promise<ConversationSummary[]> {
   return res.data.success ? (res.data.data ?? []) : [];
 }
 
+// The caller's archived conversations, newest first.
+async function getArchivedConversations(): Promise<ConversationSummary[]> {
+  const res = await api.get<ApiResponse<ConversationSummary[]>>(
+    "/conversations/archived",
+  );
+  return res.data.success ? (res.data.data ?? []) : [];
+}
+
+// Moves the conversation from the caller's archive back to their list.
+async function unarchiveConversation(id: number): Promise<void> {
+  await api.post<ApiResponse<unknown>>(
+    `/conversations/${String(id)}/unarchive`,
+  );
+}
+
 // Total unread messages across all of the caller's conversations.
 async function getUnreadCount(): Promise<number> {
   const res = await api.get<ApiResponse<{ unreadCount: number }>>(
@@ -78,6 +93,8 @@ export {
   findRecipientByEmail,
   createConversation,
   getConversations,
+  getArchivedConversations,
+  unarchiveConversation,
   getUnreadCount,
   getConversation,
   markConversationRead,

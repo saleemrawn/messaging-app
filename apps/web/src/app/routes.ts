@@ -7,6 +7,7 @@ import {
 import {
   MESSAGES_ROUTE_ID,
   UNREAD_COUNT_ROUTE_ID,
+  archivePageLoader,
   messagesPageLoader,
   recipientLookupLoader,
   shouldRevalidateUnreadCount,
@@ -15,14 +16,17 @@ import {
 import {
   createConversationAction,
   sendMessageAction,
+  unarchiveConversationAction,
 } from "../features/conversations/actions.ts";
 import {
+  ARCHIVE_PATH,
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
   NEW_CONVERSATION_PATH,
 } from "../features/conversations/paths.ts";
 import AppLayout from "./AppLayout.tsx";
 import MessagesPage from "../features/conversations/pages/MessagesPage.tsx";
+import ArchivePage from "../features/conversations/pages/ArchivePage.tsx";
 import LoginPage from "../features/auth/pages/LoginPage.tsx";
 import ProfilePage from "../features/profile/pages/ProfilePage.tsx";
 import ErrorPage from "./ErrorPage.tsx";
@@ -58,6 +62,12 @@ const routes: RouteObject[] = [
                 loader: messagesPageLoader,
                 action: sendMessageAction,
                 Component: MessagesPage,
+              },
+              {
+                path: ARCHIVE_PATH,
+                loader: archivePageLoader,
+                action: unarchiveConversationAction,
+                Component: ArchivePage,
               },
               { path: "/profile", Component: ProfilePage },
             ],
