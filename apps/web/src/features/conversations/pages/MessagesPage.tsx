@@ -11,7 +11,7 @@ function MessagesPage() {
   const currentUser = useCurrentUser();
 
   return (
-    <div className="flex h-dvh">
+    <div className="flex h-full w-full">
       <ConversationList
         conversations={conversations}
         currentUserId={currentUser.id}

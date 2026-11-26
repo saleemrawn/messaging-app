@@ -16,7 +16,7 @@ function ProfilePage() {
   return (
     <section
       aria-label="Profile"
-      className="relative flex h-dvh w-full max-w-2xl flex-col items-center gap-2 overflow-y-auto border-r border-gray-200 bg-white px-6 py-12 text-center"
+      className="relative flex h-full w-full max-w-2xl flex-col items-center gap-2 overflow-y-auto border-r border-gray-200 bg-white px-6 py-12 text-center"
     >
       {!isEditing && (
         <button

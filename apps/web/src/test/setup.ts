@@ -3,6 +3,9 @@ import { afterAll, afterEach, beforeAll } from "vitest";
 import { cleanup } from "@testing-library/react";
 import { server } from "./server.ts";
 import { axios } from "../shared/api/axios.ts";
+import { installMatchMedia, resetMatchMedia } from "./media-query.ts";
+
+installMatchMedia();
 
 // jsdom's XMLHttpRequest enforces CORS, which blocks credentialed requests to
 // the mocked cross-origin API. Node's fetch doesn't, and MSW intercepts both.
@@ -39,6 +42,7 @@ beforeAll(() => {
 afterEach(() => {
   cleanup();
   server.resetHandlers();
+  resetMatchMedia();
 });
 
 afterAll(() => {

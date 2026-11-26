@@ -1,7 +1,11 @@
 const CONVERSATIONS_PATH = "/conversations";
 
-// Route pattern of the messages page; no id selects the newest conversation.
-const MESSAGES_ROUTE_PATH = `${CONVERSATIONS_PATH}/:conversationId?`;
+// The messages page with a conversation open.
+const CONVERSATION_PATH = `${CONVERSATIONS_PATH}/:conversationId`;
+
+// Route pattern of the messages page. With no id, split view selects the
+// newest conversation and single-column view shows the list.
+const MESSAGES_ROUTE_PATH = `${CONVERSATION_PATH}?`;
 
 // Resource route: its loader looks up recipients, its action starts a
 // conversation. The static segment outranks MESSAGES_ROUTE_PATH's param.
@@ -39,6 +43,7 @@ export {
   ADD_RECIPIENT_CONTACT_PATH,
   ARCHIVE_CONVERSATION_PATH,
   ARCHIVE_PATH,
+  CONVERSATION_PATH,
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
   NEW_CONVERSATION_CONTACTS_PATH,

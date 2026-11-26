@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router";
 import { logout } from "../features/auth/auth-service.ts";
 import LogoutConfirmDialog from "../features/auth/components/LogoutConfirmDialog.tsx";
@@ -35,7 +35,13 @@ function accountLinkClassName({ isActive }: { isActive: boolean }): string {
   return isActive ? `${base} bg-blue-50` : `${base} hover:bg-gray-100`;
 }
 
-function Sidebar() {
+interface SidebarProps {
+  // Shown beside the logo, e.g. the drawer's close button.
+  headerAction?: ReactNode;
+}
+
+// Fills whatever holds it: a fixed column on desktop, the drawer below it.
+function Sidebar({ headerAction }: SidebarProps) {
   const navigate = useNavigate();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -58,8 +64,11 @@ function Sidebar() {
   }
 
   return (
-    <aside className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r border-gray-200 bg-white p-4">
-      <p className="mb-8 px-3 text-xl font-semibold">Messenger</p>
+    <aside className="flex h-full flex-col overflow-y-auto bg-white p-4">
+      <div className="mb-8 flex items-center justify-between gap-2">
+        <p className="px-3 text-xl font-semibold">Messenger</p>
+        {headerAction}
+      </div>
       <nav aria-label="Main">
         <ul className="flex flex-col gap-1">
           {NAV_ITEMS.map(({ to, label }) => (

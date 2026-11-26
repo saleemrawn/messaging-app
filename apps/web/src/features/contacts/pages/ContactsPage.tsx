@@ -28,7 +28,7 @@ function ContactsPage() {
   return (
     <section
       aria-labelledby={headingId}
-      className="flex h-dvh w-full max-w-2xl flex-col border-r border-gray-200 bg-white"
+      className="flex h-full w-full max-w-2xl flex-col border-r border-gray-200 bg-white"
     >
       <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4">
         <h1 id={headingId} className="text-2xl font-semibold">
