@@ -1,9 +1,33 @@
-import { describe, expect, test } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { fireEvent, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { API_URL, server } from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
+
+// jsdom can't decode images or draw on a canvas, so the cropper reports a
+// fixed crop area as soon as it mounts and cropping returns a stub image.
+vi.mock("react-easy-crop", async () => {
+  const { useEffect } = await import("react");
+  const area = { x: 0, y: 0, width: 400, height: 400 };
+  interface FakeCropperProps {
+    onCropComplete?: (croppedArea: typeof area, pixels: typeof area) => void;
+  }
+  function FakeCropper({ onCropComplete }: FakeCropperProps) {
+    useEffect(() => {
+      onCropComplete?.(area, area);
+    }, [onCropComplete]);
+    return <div data-testid="cropper" />;
+  }
+  return { default: FakeCropper };
+});
+
+vi.mock("../utils/crop-image.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../utils/crop-image.ts")>()),
+  cropImage: vi.fn(() =>
+    Promise.resolve(new Blob(["cropped"], { type: "image/png" })),
+  ),
+}));
 
 const currentUser = {
   id: 1,
@@ -11,6 +35,7 @@ const currentUser = {
   firstName: "John",
   lastName: "Doe",
   email: "john.doe01@email.com",
+  avatarUrl: null as string | null,
 };
 
 type User = typeof currentUser;
@@ -320,5 +345,248 @@ describe("profile page", () => {
       await within(page).findByText("That username or email is already taken"),
     ).toBeInTheDocument();
     expect(within(page).getByLabelText("First name")).toBeInTheDocument();
+  });
+});
+
+describe("profile photo", () => {
+  const UPLOADED_URL = "/avatars/user-1-0123456789abcdef.png";
+  const originalCreateObjectURL = URL.createObjectURL.bind(URL);
+  const originalRevokeObjectURL = URL.revokeObjectURL.bind(URL);
+
+  beforeAll(() => {
+    URL.createObjectURL = vi.fn(() => "blob:preview");
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterAll(() => {
+    URL.createObjectURL = originalCreateObjectURL;
+    URL.revokeObjectURL = originalRevokeObjectURL;
+  });
+
+  function makeFile(name: string, type: string, size = 1024): File {
+    return new File([new Uint8Array(size)], name, { type });
+  }
+
+  // Saves like the API does: /auth/me returns the new avatar afterwards.
+  // Returns the raw multipart bodies (undici's formData() parser rejects
+  // jsdom's File, so the parts are checked as text).
+  function mockAvatarUpload(): string[] {
+    let user = currentUser;
+    const uploads: string[] = [];
+    mockCurrentUser(() => user);
+    server.use(
+      http.put(`${API_URL}/users/1/avatar`, async ({ request }) => {
+        uploads.push(await request.text());
+        user = { ...user, avatarUrl: UPLOADED_URL };
+        return HttpResponse.json({ success: true, data: user });
+      }),
+    );
+    return uploads;
+  }
+
+  async function openPhotoDialog(options?: { applyAccept: boolean }) {
+    const user = userEvent.setup(options);
+    renderRoute("/profile");
+    const page = await screen.findByRole("region", { name: /^profile$/i });
+    await user.click(
+      within(page).getByRole("button", { name: /edit profile/i }),
+    );
+    await user.click(
+      within(page).getByRole("button", { name: "Change profile photo" }),
+    );
+    const dialog = screen.getByRole("dialog", { name: "Profile photo" });
+    return { user, page, dialog };
+  }
+
+  // The avatar is decorative (aria-hidden), so the image has no role to query.
+  function avatarImage(page: HTMLElement) {
+    return page.querySelector("img");
+  }
+
+  test("the pencil button only shows while editing", async () => {
+    mockCurrentUser();
+    const user = userEvent.setup();
+    renderRoute("/profile");
+    const page = await screen.findByRole("region", { name: /^profile$/i });
+
+    expect(
+      within(page).queryByRole("button", { name: "Change profile photo" }),
+    ).not.toBeInTheDocument();
+
+    await user.click(
+      within(page).getByRole("button", { name: /edit profile/i }),
+    );
+
+    expect(
+      within(page).getByRole("button", { name: "Change profile photo" }),
+    ).toBeInTheDocument();
+  });
+
+  test("shows the user's photo on the profile", async () => {
+    mockCurrentUser(() => ({ ...currentUser, avatarUrl: UPLOADED_URL }));
+
+    renderRoute("/profile");
+
+    const page = await screen.findByRole("region", { name: /^profile$/i });
+    expect(avatarImage(page)).toHaveAttribute(
+      "src",
+      `${API_URL}${UPLOADED_URL}`,
+    );
+  });
+
+  test("the uploader explains the accepted files", async () => {
+    mockCurrentUser();
+
+    const { dialog } = await openPhotoDialog();
+
+    expect(
+      within(dialog).getByText(
+        "JPG or PNG, up to 4 MB. 320 × 320 px recommended.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("button", { name: "Remove photo" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("choosing, cropping and saving a photo uploads it", async () => {
+    const uploads = mockAvatarUpload();
+    const { user, page, dialog } = await openPhotoDialog();
+
+    await user.upload(
+      within(dialog).getByLabelText("Choose a file"),
+      makeFile("me.png", "image/png"),
+    );
+    expect(within(dialog).getByTestId("cropper")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    await vi.waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(uploads).toHaveLength(1);
+    expect(uploads[0]).toContain(
+      'Content-Disposition: form-data; name="avatar"; filename="avatar.png"',
+    );
+    expect(uploads[0]).toContain("Content-Type: image/png");
+    expect(uploads[0]).toContain("cropped");
+    expect(avatarImage(page)).toHaveAttribute(
+      "src",
+      `${API_URL}${UPLOADED_URL}`,
+    );
+  });
+
+  test("a dropped photo opens the cropper", async () => {
+    mockCurrentUser();
+    const { dialog } = await openPhotoDialog();
+
+    // jsdom has no DataTransfer, so stand in a one-file FileList.
+    const file = makeFile("me.jpg", "image/jpeg");
+    const files = { 0: file, length: 1, item: () => file };
+
+    fireEvent.drop(within(dialog).getByTestId("avatar-dropzone"), {
+      dataTransfer: { files, types: ["Files"] },
+    });
+
+    expect(await within(dialog).findByTestId("cropper")).toBeInTheDocument();
+  });
+
+  test("rejects a file that isn't a JPG or PNG", async () => {
+    mockCurrentUser();
+    const { user, dialog } = await openPhotoDialog({ applyAccept: false });
+
+    await user.upload(
+      within(dialog).getByLabelText("Choose a file"),
+      makeFile("animation.gif", "image/gif"),
+    );
+
+    expect(
+      within(dialog).getByText("Image must be a JPG or PNG file"),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByTestId("cropper")).not.toBeInTheDocument();
+  });
+
+  test("rejects a file over 4 MB", async () => {
+    mockCurrentUser();
+    const { user, dialog } = await openPhotoDialog();
+
+    await user.upload(
+      within(dialog).getByLabelText("Choose a file"),
+      makeFile("huge.jpg", "image/jpeg", 4 * 1024 * 1024 + 1),
+    );
+
+    expect(
+      within(dialog).getByText("Image must be 4 MB or smaller"),
+    ).toBeInTheDocument();
+  });
+
+  test("Choose another goes back to picking a file", async () => {
+    mockCurrentUser();
+    const { user, dialog } = await openPhotoDialog();
+    await user.upload(
+      within(dialog).getByLabelText("Choose a file"),
+      makeFile("me.png", "image/png"),
+    );
+
+    await user.click(
+      within(dialog).getByRole("button", { name: "Choose another" }),
+    );
+
+    expect(within(dialog).queryByTestId("cropper")).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText("Choose a file")).toBeInTheDocument();
+  });
+
+  test("shows the server's error and keeps the cropper open", async () => {
+    mockCurrentUser();
+    server.use(
+      http.put(`${API_URL}/users/1/avatar`, () =>
+        HttpResponse.json(
+          { success: false, message: "Image must be square (1:1)" },
+          { status: 400 },
+        ),
+      ),
+    );
+    const { user, dialog } = await openPhotoDialog();
+    await user.upload(
+      within(dialog).getByLabelText("Choose a file"),
+      makeFile("me.png", "image/png"),
+    );
+
+    await user.click(within(dialog).getByRole("button", { name: "Save" }));
+
+    expect(
+      await within(dialog).findByText("Image must be square (1:1)"),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByTestId("cropper")).toBeInTheDocument();
+  });
+
+  test("Remove photo clears it and shows initials again", async () => {
+    let user: User = { ...currentUser, avatarUrl: UPLOADED_URL };
+    mockCurrentUser(() => user);
+    server.use(
+      http.delete(`${API_URL}/users/1/avatar`, () => {
+        user = { ...user, avatarUrl: null };
+        return HttpResponse.json({ success: true, data: user });
+      }),
+    );
+    const { user: actor, page, dialog } = await openPhotoDialog();
+
+    await actor.click(
+      within(dialog).getByRole("button", { name: "Remove photo" }),
+    );
+
+    await vi.waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(avatarImage(page)).toBeNull();
+    expect(within(page).getByText("JD")).toBeInTheDocument();
+  });
+
+  test("Cancel closes the uploader without changes", async () => {
+    mockCurrentUser();
+    const { user, dialog } = await openPhotoDialog();
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

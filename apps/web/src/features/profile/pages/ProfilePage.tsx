@@ -3,6 +3,7 @@ import { useCurrentUser } from "../../auth/use-current-user.ts";
 import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import EditProfileForm from "../components/EditProfileForm.tsx";
+import EditableAvatar from "../components/EditableAvatar.tsx";
 
 function ProfilePage() {
   const user = useCurrentUser();
@@ -29,11 +30,16 @@ function ProfilePage() {
           Edit
         </button>
       )}
-      <UserAvatar
-        firstName={user.firstName}
-        lastName={user.lastName}
-        size="lg"
-      />
+      {isEditing ? (
+        <EditableAvatar user={user} />
+      ) : (
+        <UserAvatar
+          firstName={user.firstName}
+          lastName={user.lastName}
+          avatarUrl={user.avatarUrl}
+          size="xl"
+        />
+      )}
       {isEditing ? (
         <EditProfileForm
           user={user}
