@@ -7,6 +7,7 @@ import {
   buildPairs,
   buildSeed,
   buildUsers,
+  seedAvatarBaseName,
   type SeedConversation,
 } from "../prisma/seed-data.ts";
 
@@ -177,5 +178,13 @@ describe("seed data builders", () => {
       expect(read.unreadCounts[0]).toBe(0);
       expect(read.unreadCounts[1]).toBe(0);
     }
+  });
+});
+
+describe("seedAvatarBaseName", () => {
+  test("numbers seed photos from 01 by user index", () => {
+    expect(seedAvatarBaseName(0)).toBe("seed-01");
+    expect(seedAvatarBaseName(8)).toBe("seed-09");
+    expect(seedAvatarBaseName(20)).toBe("seed-21");
   });
 });

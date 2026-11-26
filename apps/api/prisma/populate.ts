@@ -1,10 +1,19 @@
+import { access, readdir, rm } from "node:fs/promises";
+import path from "node:path";
 import bcrypt from "bcrypt";
 import { faker } from "@faker-js/faker";
 import { prisma } from "../src/lib/prisma.ts";
 import type { Prisma } from "../generated/prisma/client.ts";
+import { getAvatarStorageDir } from "../src/avatar/avatar-storage.ts";
+import {
+  AVATAR_KEY_PREFIX,
+  isUploadKey,
+  seedAvatarKey,
+} from "../src/avatar/avatar-keys.ts";
 import {
   SEED_PASSWORD,
   buildSeed,
+  seedAvatarBaseName,
   type SeedConversation,
   type SeedUser,
 } from "./seed-data.ts";
@@ -16,19 +25,83 @@ const USER_COUNT = 21;
 const FAKER_SEED = 2026;
 const BCRYPT_ROUNDS = 10;
 const TRANSACTION_TIMEOUT_MS = 30_000;
+const SEED_AVATAR_EXTENSIONS = ["jpg", "jpeg", "png"] as const;
 
 type Tx = Prisma.TransactionClient;
 
-async function createAccounts(tx: Tx, users: SeedUser[]): Promise<number[]> {
+function getAvatarsDir(): string {
+  return path.join(getAvatarStorageDir(), AVATAR_KEY_PREFIX);
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch (_err: unknown) {
+    return false;
+  }
+}
+
+// The key of user `index`'s seed photo, trying each accepted extension, or
+// null when no file was supplied.
+async function findSeedAvatarKey(index: number): Promise<string | null> {
+  const baseName = seedAvatarBaseName(index);
+  for (const extension of SEED_AVATAR_EXTENSIONS) {
+    const fileName = `${baseName}.${extension}`;
+    if (await fileExists(path.join(getAvatarsDir(), fileName))) {
+      return seedAvatarKey(fileName);
+    }
+  }
+  return null;
+}
+
+async function resolveSeedAvatarKeys(
+  count: number,
+): Promise<(string | null)[]> {
+  const keys = await Promise.all(
+    Array.from({ length: count }, (_, index) => findSeedAvatarKey(index)),
+  );
+
+  const missing = keys.flatMap((key, index) =>
+    key ? [] : [seedAvatarBaseName(index)],
+  );
+  if (missing.length > 0) {
+    console.warn(
+      `No seed photo for ${missing.join(", ")} in ${getAvatarsDir()} ` +
+        `(expected .${SEED_AVATAR_EXTENSIONS.join("/.")}); those users show initials.`,
+    );
+  }
+
+  return keys;
+}
+
+// Account ids restart on every seed, so earlier uploads would belong to
+// nobody (or, worse, look like someone else's). Seed photos are kept.
+async function deleteUploadedAvatars(): Promise<void> {
+  const fileNames = await readdir(getAvatarsDir()).catch(() => []);
+  await Promise.all(
+    fileNames
+      .filter((fileName) => isUploadKey(`${AVATAR_KEY_PREFIX}${fileName}`))
+      .map((fileName) => rm(path.join(getAvatarsDir(), fileName))),
+  );
+}
+
+async function createAccounts(
+  tx: Tx,
+  users: SeedUser[],
+  avatarKeys: (string | null)[],
+): Promise<number[]> {
   const password = await bcrypt.hash(SEED_PASSWORD, BCRYPT_ROUNDS);
   const accountIds: number[] = [];
 
-  for (const { firstName, lastName, email, username } of users) {
+  for (const [index, user] of users.entries()) {
+    const { firstName, lastName, email, username } = user;
+    const avatarKey = avatarKeys[index] ?? null;
     const account = await tx.userAccount.create({
       data: {
         username,
         password,
-        user: { create: { firstName, lastName, email } },
+        user: { create: { firstName, lastName, email, avatarKey } },
       },
       select: { id: true },
     });
@@ -94,10 +167,15 @@ async function createConversation(
   }
 }
 
-function printLogins(users: SeedUser[], conversations: SeedConversation[]) {
+function printLogins(
+  users: SeedUser[],
+  conversations: SeedConversation[],
+  avatarKeys: (string | null)[],
+) {
   const rows = users.map(({ username, firstName, lastName }, index) => ({
     username,
     name: `${firstName} ${lastName}`,
+    avatar: avatarKeys[index]?.slice(AVATAR_KEY_PREFIX.length) ?? "(initials)",
     unread: conversations.reduce(
       (total, { unreadCounts }) => total + (unreadCounts[index] ?? 0),
       0,
@@ -118,6 +196,7 @@ async function main() {
 
   faker.seed(FAKER_SEED);
   const { users, conversations } = buildSeed(USER_COUNT, new Date());
+  const avatarKeys = await resolveSeedAvatarKeys(users.length);
 
   await prisma.$transaction(
     async (tx) => {
@@ -126,7 +205,7 @@ async function main() {
         RESTART IDENTITY CASCADE
       `;
 
-      const accountIds = await createAccounts(tx, users);
+      const accountIds = await createAccounts(tx, users, avatarKeys);
       for (const conversation of conversations) {
         await createConversation(tx, conversation, accountIds);
       }
@@ -134,7 +213,8 @@ async function main() {
     { timeout: TRANSACTION_TIMEOUT_MS },
   );
 
-  printLogins(users, conversations);
+  await deleteUploadedAvatars();
+  printLogins(users, conversations, avatarKeys);
 }
 
 main()

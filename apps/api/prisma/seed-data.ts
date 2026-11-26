@@ -228,6 +228,12 @@ function buildSeed(userCount: number, now: Date): Seed {
   };
 }
 
+// Seed photos are supplied as files named seed-01.jpg, seed-02.png, … in the
+// avatars folder; user index 0 gets seed-01.
+function seedAvatarBaseName(userIndex: number): string {
+  return `seed-${String(userIndex + 1).padStart(2, "0")}`;
+}
+
 export {
   SEED_PASSWORD,
   UNREAD_PER_USER,
@@ -237,5 +243,6 @@ export {
   buildAnchors,
   buildConversation,
   buildSeed,
+  seedAvatarBaseName,
 };
 export type { Pair, Seed, SeedUser, SeedMessage, SeedConversation };
