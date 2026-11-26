@@ -200,7 +200,9 @@ const getConversationById = async (
           userAccount: {
             select: {
               id: true,
-              user: { select: { firstName: true, lastName: true } },
+              user: {
+                select: { firstName: true, lastName: true, email: true },
+              },
             },
           },
         },
@@ -222,7 +224,12 @@ interface ConversationWithMessages {
     userAccountId: number;
     messageReceipts: { userAccountId: number; readAt: Date }[];
   }[];
-  userConversations: ConversationMembership["conversation"]["userConversations"];
+  userConversations: {
+    userAccount: {
+      id: number;
+      user: { firstName: string; lastName: string; email: string };
+    };
+  }[];
 }
 
 const toConversationDetail = ({
@@ -246,6 +253,7 @@ const toConversationDetail = ({
       id: userAccount.id,
       firstName: userAccount.user.firstName,
       lastName: userAccount.user.lastName,
+      email: userAccount.user.email,
     },
     messages: messages.map((message) => ({
       id: message.id,

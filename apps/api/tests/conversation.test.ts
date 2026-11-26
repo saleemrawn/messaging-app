@@ -28,7 +28,12 @@ const helloConversationFromJohn = (readAt: unknown) => ({
   data: {
     id: 1,
     updatedAt: isoDateString(),
-    recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+    recipient: {
+      id: 2,
+      firstName: "Aisha",
+      lastName: "Doe",
+      email: "aisha.doe01@email.com",
+    },
     messages: [
       {
         id: 1,
@@ -344,7 +349,12 @@ describe("conversation route", () => {
         data: {
           id: 1,
           updatedAt: "2026-01-01T20:10:00.000Z",
-          recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+          recipient: {
+            id: 2,
+            firstName: "Aisha",
+            lastName: "Doe",
+            email: "aisha.doe01@email.com",
+          },
           messages: [
             {
               id: 1,
@@ -374,7 +384,14 @@ describe("conversation route", () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toMatchObject({
-        data: { recipient: { id: 1, firstName: "John", lastName: "Doe" } },
+        data: {
+          recipient: {
+            id: 1,
+            firstName: "John",
+            lastName: "Doe",
+            email: "john.doe01@email.com",
+          },
+        },
       });
     });
 
@@ -530,7 +547,12 @@ describe("conversation route", () => {
         data: {
           id: 1,
           updatedAt: isoDateString(),
-          recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+          recipient: {
+            id: 2,
+            firstName: "Aisha",
+            lastName: "Doe",
+            email: "aisha.doe01@email.com",
+          },
           messages: [],
         },
       });
@@ -707,7 +729,12 @@ describe("conversation route", () => {
         data: {
           id: 1,
           updatedAt: isoDateString(),
-          recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+          recipient: {
+            id: 2,
+            firstName: "Aisha",
+            lastName: "Doe",
+            email: "aisha.doe01@email.com",
+          },
           messages: [
             {
               id: 1,

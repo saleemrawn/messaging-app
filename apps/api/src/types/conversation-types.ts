@@ -39,7 +39,7 @@ interface ConversationSummary {
 interface ConversationDetail {
   id: Conversation["id"];
   updatedAt: Conversation["updatedAt"];
-  recipient: ConversationSummary["recipient"];
+  recipient: ConversationSummary["recipient"] & { email: User["email"] };
   messages: {
     id: Message["id"];
     content: Message["content"];
