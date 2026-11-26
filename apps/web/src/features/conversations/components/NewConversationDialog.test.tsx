@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { API_URL, server, unreadCountHandler } from "../../../test/server.ts";
@@ -37,11 +37,27 @@ const PAST_DEBOUNCE_MS = 500;
 
 interface MockApiOptions {
   createStatus?: number;
+  contacts?: Recipient[];
+  contactsStatus?: number;
+}
+
+function makeContacts(count: number): Recipient[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: 10 + index,
+    firstName: "Contact",
+    lastName: String(index + 1),
+    email: `contact${String(index + 1)}@email.com`,
+  }));
 }
 
 // An in-memory backend with one conversation (with Aisha). Lookup knows Aisha
 // and Jane; creating a conversation prepends an empty one, like the real API.
-function mockApi({ createStatus = 201 }: MockApiOptions = {}) {
+// The saved contacts list is empty unless given.
+function mockApi({
+  createStatus = 201,
+  contacts = [],
+  contactsStatus = 200,
+}: MockApiOptions = {}) {
   let details: ConversationDetail[] = [
     {
       id: 1,
@@ -100,6 +116,14 @@ function mockApi({ createStatus = 201 }: MockApiOptions = {}) {
     http.post(`${API_URL}/conversations/:id/messages/receipts`, () =>
       HttpResponse.json({ success: true, data: [] }, { status: 201 }),
     ),
+    http.get(`${API_URL}/contacts`, () =>
+      contactsStatus === 200
+        ? HttpResponse.json({ success: true, data: contacts })
+        : HttpResponse.json(
+            { success: false, message: "Something broke" },
+            { status: contactsStatus },
+          ),
+    ),
     http.get(`${API_URL}/users/lookup`, ({ request }) => {
       const email = new URL(request.url).searchParams.get("email") ?? "";
       lookupEmails.push(email);
@@ -157,6 +181,33 @@ function getEmailInput(dialog: HTMLElement) {
   return within(dialog).getByLabelText("To");
 }
 
+async function findContactsSection(dialog: HTMLElement) {
+  return within(dialog).findByRole("region", { name: "Contacts" });
+}
+
+interface ScrollMetrics {
+  scrollTop: number;
+  clientHeight: number;
+  scrollHeight: number;
+}
+
+// jsdom has no layout, so scroll metrics are set by hand.
+function scrollTo(
+  element: HTMLElement,
+  { scrollTop, clientHeight, scrollHeight }: ScrollMetrics,
+) {
+  Object.defineProperty(element, "clientHeight", {
+    configurable: true,
+    value: clientHeight,
+  });
+  Object.defineProperty(element, "scrollHeight", {
+    configurable: true,
+    value: scrollHeight,
+  });
+  element.scrollTop = scrollTop;
+  fireEvent.scroll(element);
+}
+
 describe("new conversation dialog", () => {
   test("opens from the add button with the email field focused", async () => {
     mockApi();
@@ -212,7 +263,9 @@ describe("new conversation dialog", () => {
     expect(
       await within(dialog).findByText("No user found with that email address"),
     ).toBeInTheDocument();
-    expect(within(dialog).queryByRole("list")).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole("list", { name: "Search results" }),
+    ).not.toBeInTheDocument();
   });
 
   test("says when the email is the user's own, without looking it up", async () => {
@@ -310,5 +363,184 @@ describe("new conversation dialog", () => {
     );
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/conversations/1");
+  });
+});
+
+describe("new conversation dialog contacts", () => {
+  test("lists the saved contacts under the email field", async () => {
+    mockApi({ contacts: [aisha, jane] });
+    const { dialog } = await openDialog();
+
+    const section = await findContactsSection(dialog);
+    const options = await within(section).findAllByRole("button");
+
+    expect(options).toHaveLength(2);
+    expect(options[0]).toHaveAccessibleName(
+      /aisha khan.*aisha\.khan@email\.com.*open conversation/i,
+    );
+    expect(options[1]).toHaveAccessibleName(
+      /jane smith.*jane\.smith@email\.com.*start conversation/i,
+    );
+    expect(
+      getEmailInput(dialog).compareDocumentPosition(section) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  test("opens the existing conversation with a contact", async () => {
+    const { createBodies } = mockApi({ contacts: [aisha, jane] });
+    const { user, dialog, router } = await openDialog();
+    const { key: keyBefore } = router.state.location;
+
+    const section = await findContactsSection(dialog);
+    await user.click(
+      await within(section).findByRole("button", { name: /aisha khan/i }),
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    });
+    expect(router.state.location.pathname).toBe("/conversations/1");
+    expect(router.state.location.key).not.toBe(keyBefore);
+    expect(createBodies).toEqual([]);
+  });
+
+  test("starts a conversation with a contact who has none", async () => {
+    const { createBodies } = mockApi({ contacts: [aisha, jane] });
+    const { user, dialog, router } = await openDialog();
+
+    const section = await findContactsSection(dialog);
+    await user.click(
+      await within(section).findByRole("button", { name: /jane smith/i }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Jane Smith" }),
+    ).toBeInTheDocument();
+    expect(createBodies).toEqual([{ recipientId: 4 }]);
+    expect(router.state.location.pathname).toBe("/conversations/3");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  test("narrows the list to a searched contact instead of listing them twice", async () => {
+    const { createBodies } = mockApi({ contacts: [aisha, jane] });
+    const { user, dialog, router } = await openDialog();
+    const section = await findContactsSection(dialog);
+    await within(section).findByRole("button", { name: /aisha khan/i });
+
+    await user.type(getEmailInput(dialog), "jane.smith@email.com");
+
+    await waitFor(() => {
+      expect(within(section).getAllByRole("button")).toHaveLength(1);
+    });
+    expect(within(section).getByRole("button")).toHaveAccessibleName(
+      /jane smith.*start conversation/i,
+    );
+    expect(
+      within(dialog).queryByRole("list", { name: "Search results" }),
+    ).not.toBeInTheDocument();
+
+    await user.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/conversations/3");
+    });
+    expect(createBodies).toEqual([{ recipientId: 4 }]);
+  });
+
+  test("keeps a searched user who isn't a contact as a separate result", async () => {
+    mockApi({ contacts: [aisha] });
+    const { user, dialog } = await openDialog();
+    const section = await findContactsSection(dialog);
+    await within(section).findByRole("button", { name: /aisha khan/i });
+
+    await user.type(getEmailInput(dialog), "jane.smith@email.com");
+
+    const results = await within(dialog).findByRole("list", {
+      name: "Search results",
+    });
+    expect(
+      within(results).getByRole("button", { name: /jane smith/i }),
+    ).toBeInTheDocument();
+    const contactButtons = within(section).getAllByRole("button");
+    expect(contactButtons).toHaveLength(1);
+    expect(contactButtons[0]).toHaveAccessibleName(/aisha khan/i);
+  });
+
+  test("restores the full list when the search is cleared", async () => {
+    mockApi({ contacts: [aisha, jane] });
+    const { user, dialog } = await openDialog();
+    const section = await findContactsSection(dialog);
+    await within(section).findByRole("button", { name: /aisha khan/i });
+    await user.type(getEmailInput(dialog), "jane.smith@email.com");
+    await waitFor(() => {
+      expect(within(section).getAllByRole("button")).toHaveLength(1);
+    });
+
+    await user.clear(getEmailInput(dialog));
+
+    expect(within(section).getAllByRole("button")).toHaveLength(2);
+  });
+
+  test("says when there are no saved contacts", async () => {
+    mockApi({ contacts: [] });
+    const { dialog } = await openDialog();
+
+    const section = await findContactsSection(dialog);
+
+    expect(
+      await within(section).findByText("No saved contacts yet"),
+    ).toBeInTheDocument();
+  });
+
+  test("says when the contacts can't be loaded and still searches by email", async () => {
+    mockApi({ contactsStatus: 500 });
+    const { user, dialog } = await openDialog();
+
+    const section = await findContactsSection(dialog);
+    expect(
+      await within(section).findByText("Couldn't load your contacts"),
+    ).toBeInTheDocument();
+
+    await user.type(getEmailInput(dialog), "jane.smith@email.com");
+    expect(
+      await within(dialog).findByRole("button", { name: /jane smith/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  test("doesn't fade the list when every contact fits", async () => {
+    mockApi({ contacts: makeContacts(5) });
+    const { dialog } = await openDialog();
+
+    const section = await findContactsSection(dialog);
+    await within(section).findAllByRole("button");
+
+    expect(
+      within(section).queryByTestId("contacts-scroll-fade"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("fades the bottom of a longer list until it is scrolled to the end", async () => {
+    mockApi({ contacts: makeContacts(6) });
+    const { dialog } = await openDialog();
+
+    const section = await findContactsSection(dialog);
+    const list = await within(section).findByRole("list", {
+      name: "Contacts",
+    });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(6);
+    expect(
+      within(section).getByTestId("contacts-scroll-fade"),
+    ).toBeInTheDocument();
+
+    scrollTo(list, { scrollTop: 40, clientHeight: 320, scrollHeight: 384 });
+    expect(
+      within(section).getByTestId("contacts-scroll-fade"),
+    ).toBeInTheDocument();
+
+    scrollTo(list, { scrollTop: 64, clientHeight: 320, scrollHeight: 384 });
+    expect(
+      within(section).queryByTestId("contacts-scroll-fade"),
+    ).not.toBeInTheDocument();
   });
 });

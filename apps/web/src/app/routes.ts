@@ -8,6 +8,7 @@ import {
   MESSAGES_ROUTE_ID,
   UNREAD_COUNT_ROUTE_ID,
   archivePageLoader,
+  conversationContactsLoader,
   messagesPageLoader,
   recipientLookupLoader,
   shouldRevalidateUnreadCount,
@@ -24,6 +25,7 @@ import {
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
+  NEW_CONVERSATION_CONTACTS_PATH,
   NEW_CONVERSATION_PATH,
 } from "../features/conversations/paths.ts";
 import {
@@ -69,6 +71,13 @@ const routes: RouteObject[] = [
                 loader: recipientLookupLoader,
                 action: createConversationAction,
                 // A lookup doesn't depend on any action; don't redo it after one.
+                shouldRevalidate: () => false,
+              },
+              {
+                // Resource route for the new conversation dialog's contacts.
+                path: NEW_CONVERSATION_CONTACTS_PATH,
+                loader: conversationContactsLoader,
+                // Loaded once per dialog; a failed create mustn't reload it.
                 shouldRevalidate: () => false,
               },
               {

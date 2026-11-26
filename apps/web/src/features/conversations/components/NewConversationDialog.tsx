@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useId,
   useLayoutEffect,
   useRef,
@@ -7,17 +8,29 @@ import {
 } from "react";
 import { useFetcher, useNavigate } from "react-router";
 import type { CreateConversationResult } from "../actions.ts";
-import { NEW_CONVERSATION_PATH, conversationPath } from "../paths.ts";
+import type { ContactListResult } from "../loaders.ts";
+import {
+  NEW_CONVERSATION_CONTACTS_PATH,
+  NEW_CONVERSATION_PATH,
+  conversationPath,
+} from "../paths.ts";
 import type { ConversationSummary, Recipient } from "../types.ts";
 import { useEmailLookup } from "../../users/use-email-lookup.ts";
 import FormError from "../../../shared/components/FormError.tsx";
 import RecipientOption from "./RecipientOption.tsx";
+import SavedContactList from "./SavedContactList.tsx";
 
 interface NewConversationDialogProps {
   conversations: ConversationSummary[];
   // Called once the dialog has closed itself (close button, Escape, backdrop).
   // Navigating to a conversation unmounts it without calling this.
   onClose: () => void;
+}
+
+// The recipient a create submission is for, while it is in flight.
+function getPendingRecipientId(formData: FormData | undefined): number | null {
+  const value = formData?.get("recipientId");
+  return typeof value === "string" ? Number(value) : null;
 }
 
 function NewConversationDialog({
@@ -31,6 +44,7 @@ function NewConversationDialog({
   const statusId = useId();
   const navigate = useNavigate();
   const createFetcher = useFetcher<CreateConversationResult>();
+  const contactsFetcher = useFetcher<ContactListResult>();
   const {
     inputValue,
     setInputValue,
@@ -39,11 +53,26 @@ function NewConversationDialog({
     isStatusError,
   } = useEmailLookup(NEW_CONVERSATION_PATH);
 
-  const existingConversation = recipient
-    ? conversations.find(({ recipient: { id } }) => id === recipient.id)
-    : undefined;
   const isCreating = createFetcher.state !== "idle";
   const createError = isCreating ? undefined : createFetcher.data?.error;
+  const pendingRecipientId = isCreating
+    ? getPendingRecipientId(createFetcher.formData)
+    : null;
+  const contactsResult = contactsFetcher.data;
+  // The search match, when they're already a saved contact. They're shown by
+  // narrowing the contacts list to them rather than listed a second time.
+  const matchingContact =
+    recipient && contactsResult?.ok
+      ? contactsResult.contacts.find(({ id }) => id === recipient.id)
+      : undefined;
+  const visibleContacts: ContactListResult | undefined = matchingContact
+    ? { ok: true, contacts: [matchingContact] }
+    : contactsResult;
+  const { load: loadContacts } = contactsFetcher;
+
+  useEffect(() => {
+    void loadContacts(NEW_CONVERSATION_CONTACTS_PATH);
+  }, [loadContacts]);
 
   // showModal() gives focus containment, an inert page behind and Escape.
   // React's autoFocus doesn't set the attribute showModal() looks for, so the
@@ -64,8 +93,17 @@ function NewConversationDialog({
     if (event.target === dialogRef.current) closeDialog();
   }
 
+  function findConversation(recipientId: number) {
+    return conversations.find(({ recipient: { id } }) => id === recipientId);
+  }
+
+  function hasConversation(recipientId: number): boolean {
+    return findConversation(recipientId) !== undefined;
+  }
+
   function selectRecipient(selected: Recipient) {
     if (isCreating) return;
+    const existingConversation = findConversation(selected.id);
     if (existingConversation) {
       void navigate(conversationPath(existingConversation.id));
       return;
@@ -142,16 +180,23 @@ function NewConversationDialog({
           </p>
         </form>
 
-        {recipient && (
+        {recipient && !matchingContact && (
           <ul aria-label="Search results">
             <RecipientOption
               recipient={recipient}
-              hasConversation={existingConversation !== undefined}
-              isPending={isCreating}
+              hasConversation={hasConversation(recipient.id)}
+              isPending={pendingRecipientId === recipient.id}
               onSelect={selectRecipient}
             />
           </ul>
         )}
+
+        <SavedContactList
+          result={visibleContacts}
+          hasConversation={hasConversation}
+          pendingRecipientId={pendingRecipientId}
+          onSelect={selectRecipient}
+        />
 
         <FormError message={createError} />
       </div>

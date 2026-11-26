@@ -20,12 +20,17 @@ import {
 } from "./paths.ts";
 import type { ConversationDetail, ConversationSummary } from "./types.ts";
 import { lookUpUser, type UserLookupResult } from "../users/lookup.ts";
+import { getContacts } from "../contacts/contacts-service.ts";
+import type { Contact } from "../contacts/types.ts";
 
 const HTTP_NOT_FOUND = 404;
 
 // Route ids whose loader data feeds the sidebar's unread total.
 const MESSAGES_ROUTE_ID = "messages";
 const UNREAD_COUNT_ROUTE_ID = "unread-count";
+
+// A failure carries no detail: the dialog only says the list couldn't load.
+type ContactListResult = { ok: true; contacts: Contact[] } | { ok: false };
 
 interface MessagesPageData {
   conversations: ConversationSummary[];
@@ -88,6 +93,19 @@ function recipientLookupLoader({
   return lookUpUser(request, CONVERSATIONS_PATH);
 }
 
+// Loaded by the new conversation dialog's contacts fetcher. Failures become a
+// result the dialog can show rather than reaching the error page.
+async function conversationContactsLoader(): Promise<
+  ContactListResult | Response
+> {
+  try {
+    return { ok: true, contacts: await getContacts() };
+  } catch (error: unknown) {
+    if (isUnauthorizedError(error)) return redirect("/login");
+    return { ok: false };
+  }
+}
+
 // Runs in parallel with the layout's auth check, so a 401 redirects too.
 async function archivePageLoader(): Promise<ConversationSummary[] | Response> {
   try {
@@ -127,7 +145,8 @@ export {
   messagesPageLoader,
   archivePageLoader,
   recipientLookupLoader,
+  conversationContactsLoader,
   unreadCountLoader,
   shouldRevalidateUnreadCount,
 };
-export type { MessagesPageData };
+export type { ContactListResult, MessagesPageData };

@@ -33,7 +33,7 @@ function RecipientOption({
         onClick={() => {
           if (!isPending) onSelect(recipient);
         }}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-blue-600 aria-disabled:opacity-60"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 aria-disabled:opacity-60"
       >
         <UserAvatar
           firstName={recipient.firstName}

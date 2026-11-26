@@ -7,6 +7,10 @@ const MESSAGES_ROUTE_PATH = `${CONVERSATIONS_PATH}/:conversationId?`;
 // conversation. The static segment outranks MESSAGES_ROUTE_PATH's param.
 const NEW_CONVERSATION_PATH = `${CONVERSATIONS_PATH}/new`;
 
+// Resource route whose loader lists the caller's saved contacts for the new
+// conversation dialog. Two segments deep, so it never matches the page route.
+const NEW_CONVERSATION_CONTACTS_PATH = `${NEW_CONVERSATION_PATH}/contacts`;
+
 // Resource route whose action archives the conversation. One segment deeper
 // than MESSAGES_ROUTE_PATH, so the two never match the same URL.
 const ARCHIVE_CONVERSATION_PATH = `${CONVERSATIONS_PATH}/:conversationId/archive`;
@@ -28,6 +32,7 @@ export {
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
+  NEW_CONVERSATION_CONTACTS_PATH,
   NEW_CONVERSATION_PATH,
   archiveConversationPath,
   conversationPath,
