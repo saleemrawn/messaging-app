@@ -68,7 +68,7 @@ function Sidebar({ headerAction }: SidebarProps) {
   return (
     <aside className="flex h-full flex-col overflow-y-auto bg-sidebar px-3.5 pt-6 pb-4">
       <div className="mb-10 flex items-center justify-between gap-2">
-        <p className="px-2.5 font-serif text-[25px] text-ink">Messenger</p>
+        <p className="px-2.5 font-serif text-[25px] text-ink">messgr.</p>
         {headerAction}
       </div>
       <nav aria-label="Main">

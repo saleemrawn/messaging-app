@@ -38,7 +38,7 @@ describe("app layout below desktop", () => {
     const menuButton = await screen.findByRole("button", { name: "Open menu" });
     const topBar = screen.getByRole("banner");
     expect(topBar).toContainElement(menuButton);
-    const logo = within(topBar).getByText("Messenger");
+    const logo = within(topBar).getByText("messgr.");
     expect(
       menuButton.compareDocumentPosition(logo) &
         Node.DOCUMENT_POSITION_FOLLOWING,

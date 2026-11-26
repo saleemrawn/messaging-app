@@ -26,7 +26,7 @@ function MobileTopBar({
       >
         <Menu aria-hidden="true" strokeWidth={1.5} />
       </button>
-      <p className="font-serif text-xl text-ink">Messenger</p>
+      <p className="font-serif text-xl text-ink">messgr.</p>
     </header>
   );
 }

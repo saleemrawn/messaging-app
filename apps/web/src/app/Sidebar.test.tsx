@@ -48,7 +48,7 @@ describe("sidebar navigation", () => {
     renderRoute("/");
 
     const sidebar = await screen.findByRole("complementary");
-    expect(within(sidebar).getByText("Messenger")).toBeInTheDocument();
+    expect(within(sidebar).getByText("messgr.")).toBeInTheDocument();
     const nav = within(sidebar).getByRole("navigation", { name: /main/i });
     expect(within(nav).getByRole("link", { name: /messages/i })).toHaveAttribute(
       "aria-current",
