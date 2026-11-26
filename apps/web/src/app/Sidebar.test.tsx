@@ -87,7 +87,7 @@ describe("sidebar navigation", () => {
     ).toBeTruthy();
   });
 
-  test("lists Archive directly under Messages", async () => {
+  test("lists Contacts between Messages and Archive", async () => {
     mockSession();
 
     renderRoute("/");
@@ -96,7 +96,7 @@ describe("sidebar navigation", () => {
     const labels = within(nav)
       .getAllByRole("link")
       .map((link) => link.textContent);
-    expect(labels).toEqual(["Messages", "Archive"]);
+    expect(labels).toEqual(["Messages", "Contacts", "Archive"]);
   });
 
   test("navigates to the archive page and marks only Archive as active", async () => {

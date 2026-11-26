@@ -26,9 +26,22 @@ import {
   MESSAGES_ROUTE_PATH,
   NEW_CONVERSATION_PATH,
 } from "../features/conversations/paths.ts";
+import {
+  contactLookupLoader,
+  contactsPageLoader,
+} from "../features/contacts/loaders.ts";
+import {
+  addContactAction,
+  removeContactAction,
+} from "../features/contacts/actions.ts";
+import {
+  ADD_CONTACT_PATH,
+  CONTACTS_PATH,
+} from "../features/contacts/paths.ts";
 import AppLayout from "./AppLayout.tsx";
 import MessagesPage from "../features/conversations/pages/MessagesPage.tsx";
 import ArchivePage from "../features/conversations/pages/ArchivePage.tsx";
+import ContactsPage from "../features/contacts/pages/ContactsPage.tsx";
 import LoginPage from "../features/auth/pages/LoginPage.tsx";
 import ProfilePage from "../features/profile/pages/ProfilePage.tsx";
 import ErrorPage from "./ErrorPage.tsx";
@@ -69,6 +82,20 @@ const routes: RouteObject[] = [
                 loader: messagesPageLoader,
                 action: sendMessageAction,
                 Component: MessagesPage,
+              },
+              {
+                // Resource route for the add contact dialog's fetchers.
+                path: ADD_CONTACT_PATH,
+                loader: contactLookupLoader,
+                action: addContactAction,
+                // A lookup doesn't depend on any action; don't redo it after one.
+                shouldRevalidate: () => false,
+              },
+              {
+                path: CONTACTS_PATH,
+                loader: contactsPageLoader,
+                action: removeContactAction,
+                Component: ContactsPage,
               },
               {
                 path: ARCHIVE_PATH,

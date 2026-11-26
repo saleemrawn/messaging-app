@@ -8,6 +8,7 @@ import {
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
 } from "../features/conversations/paths.ts";
+import { CONTACTS_PATH } from "../features/contacts/paths.ts";
 import { useUnreadTotal } from "../features/conversations/use-unread-total.ts";
 import UnreadBadge from "../features/conversations/components/UnreadBadge.tsx";
 import FormError from "../shared/components/FormError.tsx";
@@ -17,6 +18,7 @@ const LOGOUT_ERROR = "Couldn't log out. Please try again.";
 
 const NAV_ITEMS = [
   { to: CONVERSATIONS_PATH, label: "Messages" },
+  { to: CONTACTS_PATH, label: "Contacts" },
   { to: ARCHIVE_PATH, label: "Archive" },
 ] as const;
 
