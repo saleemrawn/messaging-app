@@ -83,7 +83,7 @@ describe("add contact dialog", () => {
     await user.type(getEmailInput(dialog), "jane.smith@email.com");
     await user.click(
       await within(dialog).findByRole("button", {
-        name: /jane smith.*jane\.smith@email\.com.*add contact/i,
+        name: /jane smith.*jane\.smith@email\.com.*add$/i,
       }),
     );
 
@@ -118,7 +118,7 @@ describe("add contact dialog", () => {
 
     await user.type(getEmailInput(dialog), "aisha.khan@email.com");
     const option = await within(dialog).findByRole("button", {
-      name: /aisha khan.*already a contact/i,
+      name: /aisha khan.*added$/i,
     });
     expect(option).toHaveAttribute("aria-disabled", "true");
     await user.click(option);

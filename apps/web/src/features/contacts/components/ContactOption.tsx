@@ -10,8 +10,8 @@ interface ContactOptionProps {
 }
 
 function getActionLabel(isContact: boolean, isPending: boolean): string {
-  if (isContact) return "Already a contact";
-  return isPending ? "Adding…" : "Add contact";
+  if (isContact) return "Added";
+  return isPending ? "Adding…" : "Add";
 }
 
 // A found user as one button whose text (name, email, action) is its
