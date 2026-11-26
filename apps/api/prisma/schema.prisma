@@ -29,6 +29,8 @@ model UserAccount {
   messages          Message[]
   userConversations UserConversation[]
   messageReceipts   MessageReceipt[]
+  contacts          Contact[]          @relation("ContactOwner")
+  contactOf         Contact[]          @relation("ContactTarget")
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   deletedAt         DateTime?
@@ -93,4 +95,19 @@ model MessageReceipt {
 
   @@unique([messageId, userAccountId])
   @@map("message_receipts")
+}
+
+// One-way: a row puts contactAccount in userAccount's list only.
+model Contact {
+  id               Int         @id @default(autoincrement())
+  userAccount      UserAccount @relation("ContactOwner", fields: [userAccountId], references: [id])
+  userAccountId    Int
+  contactAccount   UserAccount @relation("ContactTarget", fields: [contactAccountId], references: [id])
+  contactAccountId Int
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+
+  @@unique([userAccountId, contactAccountId])
+  @@map("contacts")
 }

@@ -7,7 +7,7 @@ async function resetDbTables() {
   }
 
   await prisma.$executeRaw`
-        TRUNCATE TABLE "users", "user_accounts", "conversations", "user_conversations", "messages", "message_receipts"
+        TRUNCATE TABLE "users", "user_accounts", "conversations", "user_conversations", "messages", "message_receipts", "contacts"
         RESTART IDENTITY CASCADE
       `;
 }

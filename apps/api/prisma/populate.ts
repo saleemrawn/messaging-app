@@ -122,7 +122,7 @@ async function main() {
   await prisma.$transaction(
     async (tx) => {
       await tx.$executeRaw`
-        TRUNCATE TABLE "users", "user_accounts", "conversations", "user_conversations", "messages", "message_receipts"
+        TRUNCATE TABLE "users", "user_accounts", "conversations", "user_conversations", "messages", "message_receipts", "contacts"
         RESTART IDENTITY CASCADE
       `;
 
