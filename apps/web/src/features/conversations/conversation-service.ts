@@ -4,7 +4,6 @@ import type {
   ConversationDetail,
   ConversationSummary,
   NewMessage,
-  Recipient,
 } from "./types.ts";
 
 // The caller's conversations, newest first, as ordered by the API.
@@ -70,18 +69,6 @@ async function sendMessage(id: number, message: NewMessage): Promise<void> {
   );
 }
 
-// The user with this exact email address. Rejects with a 404 when there is no
-// such user, or when it's the caller's own address.
-async function findRecipientByEmail(email: string): Promise<Recipient> {
-  const res = await api.get<ApiResponse<Recipient>>("/users/lookup", {
-    params: { email },
-  });
-  if (!res.data.success || !res.data.data) {
-    throw new Error("Recipient lookup returned no user");
-  }
-  return res.data.data;
-}
-
 // Starts a conversation with the recipient, or returns the one the caller
 // already has with them. Resolves to its id.
 async function createConversation(recipientId: number): Promise<number> {
@@ -96,7 +83,6 @@ async function createConversation(recipientId: number): Promise<number> {
 }
 
 export {
-  findRecipientByEmail,
   createConversation,
   getConversations,
   getArchivedConversations,

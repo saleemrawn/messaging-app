@@ -7,7 +7,6 @@ import {
 } from "react-router";
 import { isUnauthorizedError } from "../../shared/api/api-errors.ts";
 import {
-  findRecipientByEmail,
   getArchivedConversations,
   getConversation,
   getConversations,
@@ -19,13 +18,9 @@ import {
   MESSAGES_ROUTE_PATH,
   conversationPath,
 } from "./paths.ts";
-import type {
-  ConversationDetail,
-  ConversationSummary,
-  Recipient,
-} from "./types.ts";
+import type { ConversationDetail, ConversationSummary } from "./types.ts";
+import { lookUpUser, type UserLookupResult } from "../users/lookup.ts";
 
-const HTTP_BAD_REQUEST = 400;
 const HTTP_NOT_FOUND = 404;
 
 // Route ids whose loader data feeds the sidebar's unread total.
@@ -36,13 +31,6 @@ interface MessagesPageData {
   conversations: ConversationSummary[];
   conversation: ConversationDetail | null;
 }
-
-// Carries the email it answers for, so the dialog can ignore a result that
-// arrives after the input has changed.
-type RecipientLookupResult =
-  | { email: string; status: "found"; recipient: Recipient }
-  | { email: string; status: "not-found" }
-  | { email: string; status: "error" };
 
 function parseConversationId(value: string | undefined): number | null {
   if (value === undefined || !/^\d+$/.test(value)) return null;
@@ -93,28 +81,11 @@ async function messagesPageLoader({
   }
 }
 
-function isNoSuchRecipientError(error: unknown): boolean {
-  const status = isAxiosError(error) ? error.response?.status : undefined;
-  return status === HTTP_NOT_FOUND || status === HTTP_BAD_REQUEST;
-}
-
-// Loaded by the new conversation dialog's fetcher. Failures become a status
-// the dialog can show rather than reaching the error page.
-async function recipientLookupLoader({
+// Loaded by the new conversation dialog's fetcher.
+function recipientLookupLoader({
   request,
-}: LoaderFunctionArgs): Promise<RecipientLookupResult | Response> {
-  const email = new URL(request.url).searchParams.get("email")?.trim() ?? "";
-  // Only reachable by typing the URL; there is no page to show.
-  if (!email) return redirect(CONVERSATIONS_PATH);
-
-  try {
-    const recipient = await findRecipientByEmail(email);
-    return { email, status: "found", recipient };
-  } catch (error: unknown) {
-    if (isUnauthorizedError(error)) return redirect("/login");
-    if (isNoSuchRecipientError(error)) return { email, status: "not-found" };
-    return { email, status: "error" };
-  }
+}: LoaderFunctionArgs): Promise<UserLookupResult | Response> {
+  return lookUpUser(request, CONVERSATIONS_PATH);
 }
 
 // Runs in parallel with the layout's auth check, so a 401 redirects too.
@@ -159,4 +130,4 @@ export {
   unreadCountLoader,
   shouldRevalidateUnreadCount,
 };
-export type { MessagesPageData, RecipientLookupResult };
+export type { MessagesPageData };

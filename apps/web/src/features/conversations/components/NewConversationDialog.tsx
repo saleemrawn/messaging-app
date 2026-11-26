@@ -1,57 +1,23 @@
 import {
-  useEffect,
   useId,
   useLayoutEffect,
   useRef,
-  useState,
   type MouseEvent,
   type SubmitEvent,
 } from "react";
 import { useFetcher, useNavigate } from "react-router";
-import { useCurrentUser } from "../../auth/use-current-user.ts";
 import type { CreateConversationResult } from "../actions.ts";
-import type { RecipientLookupResult } from "../loaders.ts";
 import { NEW_CONVERSATION_PATH, conversationPath } from "../paths.ts";
 import type { ConversationSummary, Recipient } from "../types.ts";
+import { useEmailLookup } from "../../users/use-email-lookup.ts";
 import FormError from "../../../shared/components/FormError.tsx";
 import RecipientOption from "./RecipientOption.tsx";
-
-const LOOKUP_DEBOUNCE_MS = 300;
-// Deliberately loose: it only decides when the address looks finished enough
-// to look up. The API does the real validation.
-const COMPLETE_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const STATUS_MESSAGES = {
-  incomplete: "Enter their full email address",
-  self: "That's your own email address",
-  searching: "Searching…",
-  "not-found": "No user found with that email address",
-  error: "Couldn't search right now. Please try again.",
-} as const;
-
-type LookupStatus = keyof typeof STATUS_MESSAGES | "found";
 
 interface NewConversationDialogProps {
   conversations: ConversationSummary[];
   // Called once the dialog has closed itself (close button, Escape, backdrop).
   // Navigating to a conversation unmounts it without calling this.
   onClose: () => void;
-}
-
-function lookupHref(email: string): string {
-  return `${NEW_CONVERSATION_PATH}?${new URLSearchParams({ email }).toString()}`;
-}
-
-function getLookupStatus(
-  email: string,
-  ownEmail: string,
-  result: RecipientLookupResult | undefined,
-): LookupStatus {
-  if (!COMPLETE_EMAIL_PATTERN.test(email)) return "incomplete";
-  if (email.toLowerCase() === ownEmail.toLowerCase()) return "self";
-  // A result for an older input is as good as none.
-  if (result?.email !== email) return "searching";
-  return result.status;
 }
 
 function NewConversationDialog({
@@ -63,25 +29,21 @@ function NewConversationDialog({
   const titleId = useId();
   const inputId = useId();
   const statusId = useId();
-  const currentUser = useCurrentUser();
   const navigate = useNavigate();
-  const lookupFetcher = useFetcher<RecipientLookupResult>();
   const createFetcher = useFetcher<CreateConversationResult>();
-  const [inputValue, setInputValue] = useState("");
+  const {
+    inputValue,
+    setInputValue,
+    user: recipient,
+    statusMessage,
+    isStatusError,
+  } = useEmailLookup(NEW_CONVERSATION_PATH);
 
-  const email = inputValue.trim();
-  const status = getLookupStatus(email, currentUser.email, lookupFetcher.data);
-  const recipient =
-    status === "found" && lookupFetcher.data?.status === "found"
-      ? lookupFetcher.data.recipient
-      : null;
   const existingConversation = recipient
     ? conversations.find(({ recipient: { id } }) => id === recipient.id)
     : undefined;
   const isCreating = createFetcher.state !== "idle";
   const createError = isCreating ? undefined : createFetcher.data?.error;
-  const shouldLookUp = status !== "incomplete" && status !== "self";
-  const { load } = lookupFetcher;
 
   // showModal() gives focus containment, an inert page behind and Escape.
   // React's autoFocus doesn't set the attribute showModal() looks for, so the
@@ -91,18 +53,6 @@ function NewConversationDialog({
     if (dialog && !dialog.open) dialog.showModal();
     inputRef.current?.focus();
   }, []);
-
-  // Look the address up once typing pauses. The fetcher drops any response
-  // superseded by a newer load.
-  useEffect(() => {
-    if (!shouldLookUp) return;
-    const timer = setTimeout(() => {
-      void load(lookupHref(email));
-    }, LOOKUP_DEBOUNCE_MS);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [shouldLookUp, email, load]);
 
   function closeDialog() {
     dialogRef.current?.close();
@@ -131,9 +81,6 @@ function NewConversationDialog({
     event.preventDefault();
     if (recipient) selectRecipient(recipient);
   }
-
-  const statusMessage = status === "found" ? "" : STATUS_MESSAGES[status];
-  const isStatusError = status === "not-found" || status === "error";
 
   return (
     <dialog

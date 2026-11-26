@@ -1,3 +1,5 @@
+import type { UserSummary } from "../users/types.ts";
+
 interface ConversationRecipient {
   id: number;
   firstName: string;
@@ -36,9 +38,7 @@ interface ConversationDetail {
 }
 
 // Someone the caller can start a conversation with, found by email.
-interface Recipient extends ConversationRecipient {
-  email: string;
-}
+type Recipient = UserSummary;
 
 interface NewMessage {
   content: string;
