@@ -1,4 +1,6 @@
 import { prisma } from "../lib/prisma.ts";
+import { toAvatarUrl } from "../avatar/avatar-url.ts";
+import { profileSelect, type Profile } from "../user/user-profile.ts";
 import type { MessageInput } from "../types/message-types.ts";
 import type {
   ConversationDetail,
@@ -67,7 +69,13 @@ const getConversationsByUserAccountId = async (
               userAccount: {
                 select: {
                   id: true,
-                  user: { select: { firstName: true, lastName: true } },
+                  user: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                      avatarKey: true,
+                    },
+                  },
                 },
               },
             },
@@ -79,7 +87,7 @@ const getConversationsByUserAccountId = async (
     orderBy: { conversation: { updatedAt: "desc" } },
   });
 
-  return memberships.map(toConversationSummary);
+  return Promise.all(memberships.map(toConversationSummary));
 };
 
 interface ConversationMembership {
@@ -96,16 +104,16 @@ interface ConversationMembership {
     userConversations: {
       userAccount: {
         id: number;
-        user: { firstName: string; lastName: string };
+        user: Pick<Profile, "firstName" | "lastName" | "avatarKey">;
       };
     }[];
   };
 }
 
-const toConversationSummary = ({
+const toConversationSummary = async ({
   unreadCount,
   conversation,
-}: ConversationMembership): ConversationSummary => {
+}: ConversationMembership): Promise<ConversationSummary> => {
   const latestMessage = conversation.messages.at(0);
   const recipientMembership = conversation.userConversations.at(0);
 
@@ -125,6 +133,7 @@ const toConversationSummary = ({
       id: userAccount.id,
       firstName: userAccount.user.firstName,
       lastName: userAccount.user.lastName,
+      avatarUrl: await toAvatarUrl(userAccount.user.avatarKey),
     },
     latestMessage: latestMessage
       ? {
@@ -201,7 +210,7 @@ const getConversationById = async (
             select: {
               id: true,
               user: {
-                select: { firstName: true, lastName: true, email: true },
+                select: profileSelect,
               },
             },
           },
@@ -227,17 +236,17 @@ interface ConversationWithMessages {
   userConversations: {
     userAccount: {
       id: number;
-      user: { firstName: string; lastName: string; email: string };
+      user: Profile;
     };
   }[];
 }
 
-const toConversationDetail = ({
+const toConversationDetail = async ({
   id,
   updatedAt,
   messages,
   userConversations,
-}: ConversationWithMessages): ConversationDetail => {
+}: ConversationWithMessages): Promise<ConversationDetail> => {
   const recipientMembership = userConversations.at(0);
 
   if (!recipientMembership) {
@@ -254,6 +263,7 @@ const toConversationDetail = ({
       firstName: userAccount.user.firstName,
       lastName: userAccount.user.lastName,
       email: userAccount.user.email,
+      avatarUrl: await toAvatarUrl(userAccount.user.avatarKey),
     },
     messages: messages.map((message) => ({
       id: message.id,

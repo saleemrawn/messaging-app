@@ -33,6 +33,7 @@ const helloConversationFromJohn = (readAt: unknown) => ({
       firstName: "Aisha",
       lastName: "Doe",
       email: "aisha.doe01@email.com",
+      avatarUrl: null,
     },
     messages: [
       {
@@ -54,7 +55,7 @@ const aishaConversationList = {
       id: 1,
       updatedAt: "2026-01-01T20:10:00.000Z",
       unreadCount: 0,
-      recipient: { id: 1, firstName: "John", lastName: "Doe" },
+      recipient: { id: 1, firstName: "John", lastName: "Doe", avatarUrl: null },
       latestMessage: {
         id: 2,
         content: "Consectetur adipiscing elit",
@@ -73,7 +74,12 @@ const johnConversationList = {
       id: 2,
       updatedAt: "2026-01-01T21:10:00.000Z",
       unreadCount: 0,
-      recipient: { id: 3, firstName: "Phillipe", lastName: "Doe" },
+      recipient: {
+        id: 3,
+        firstName: "Phillipe",
+        lastName: "Doe",
+        avatarUrl: null,
+      },
       latestMessage: {
         id: 4,
         content: "Labore et dolore magna aliqua",
@@ -85,7 +91,12 @@ const johnConversationList = {
       id: 1,
       updatedAt: "2026-01-01T20:10:00.000Z",
       unreadCount: 0,
-      recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+      recipient: {
+        id: 2,
+        firstName: "Aisha",
+        lastName: "Doe",
+        avatarUrl: null,
+      },
       latestMessage: {
         id: 2,
         content: "Consectetur adipiscing elit",
@@ -354,6 +365,7 @@ describe("conversation route", () => {
             firstName: "Aisha",
             lastName: "Doe",
             email: "aisha.doe01@email.com",
+            avatarUrl: null,
           },
           messages: [
             {
@@ -390,6 +402,7 @@ describe("conversation route", () => {
             firstName: "John",
             lastName: "Doe",
             email: "john.doe01@email.com",
+            avatarUrl: null,
           },
         },
       });
@@ -504,7 +517,12 @@ describe("conversation route", () => {
             id: 1,
             updatedAt: isoDateString(),
             unreadCount: 1,
-            recipient: { id: 1, firstName: "John", lastName: "Doe" },
+            recipient: {
+              id: 1,
+              firstName: "John",
+              lastName: "Doe",
+              avatarUrl: null,
+            },
             latestMessage: {
               id: 1,
               content: "Hello, how is it going?",
@@ -534,7 +552,12 @@ describe("conversation route", () => {
             id: 1,
             updatedAt: isoDateString(),
             unreadCount: 0,
-            recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+            recipient: {
+              id: 2,
+              firstName: "Aisha",
+              lastName: "Doe",
+              avatarUrl: null,
+            },
             latestMessage: null,
           },
         ],
@@ -552,6 +575,7 @@ describe("conversation route", () => {
             firstName: "Aisha",
             lastName: "Doe",
             email: "aisha.doe01@email.com",
+            avatarUrl: null,
           },
           messages: [],
         },
@@ -594,7 +618,12 @@ describe("conversation route", () => {
             id: 1,
             updatedAt: isoDateString(),
             unreadCount: 1,
-            recipient: { id: 1, firstName: "John", lastName: "Doe" },
+            recipient: {
+              id: 1,
+              firstName: "John",
+              lastName: "Doe",
+              avatarUrl: null,
+            },
             latestMessage: {
               id: 1,
               content: "Hi Aisha",
@@ -734,6 +763,7 @@ describe("conversation route", () => {
             firstName: "Aisha",
             lastName: "Doe",
             email: "aisha.doe01@email.com",
+            avatarUrl: null,
           },
           messages: [
             {

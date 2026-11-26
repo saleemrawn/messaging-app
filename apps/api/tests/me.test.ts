@@ -31,6 +31,7 @@ describe("GET /api/auth/me", () => {
         firstName: "John",
         lastName: "Doe",
         email: "john.doe01@email.com",
+        avatarUrl: null,
       },
     });
   });

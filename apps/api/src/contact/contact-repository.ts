@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.ts";
 import type { UserAccount } from "../../generated/prisma/client.ts";
 import type { ContactResBody } from "../types/contact-types.ts";
+import { profileSelect, toLookupUserResBody } from "../user/user-profile.ts";
 
 interface AddContactResult {
   contact: ContactResBody;
@@ -9,13 +10,13 @@ interface AddContactResult {
 
 const contactAccountSelect = {
   id: true,
-  user: { select: { firstName: true, lastName: true, email: true } },
+  user: { select: profileSelect },
 } as const;
 
-const toContactResBody = (account: {
-  id: number;
-  user: { firstName: string; lastName: string; email: string };
-}): ContactResBody => ({ id: account.id, ...account.user });
+// A contact is shown the same way as a looked-up user.
+const toContactResBody: (
+  account: Parameters<typeof toLookupUserResBody>[0],
+) => Promise<ContactResBody> = toLookupUserResBody;
 
 // The caller's contacts sorted by name, skipping removed contacts and deleted
 // accounts.
@@ -35,7 +36,9 @@ const getContacts = async (
     ],
   });
 
-  return contacts.map(({ contactAccount }) => toContactResBody(contactAccount));
+  return Promise.all(
+    contacts.map(({ contactAccount }) => toContactResBody(contactAccount)),
+  );
 };
 
 // Adds the contact, or restores one the caller removed earlier. isCreated is
@@ -58,7 +61,7 @@ const addContact = async (
   });
 
   return {
-    contact: toContactResBody(contactAccount),
+    contact: await toContactResBody(contactAccount),
     isCreated: existing?.deletedAt !== null,
   };
 };

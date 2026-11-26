@@ -21,18 +21,21 @@ const aisha = {
   firstName: "Aisha",
   lastName: "Doe",
   email: "aisha.doe01@email.com",
+  avatarUrl: null,
 };
 const phillipe = {
   id: 3,
   firstName: "Phillipe",
   lastName: "Doe",
   email: "phillipe.doe01@email.com",
+  avatarUrl: null,
 };
 const jane = {
   id: 4,
   firstName: "Jane",
   lastName: "Doe",
   email: "jane.doe01@email.com",
+  avatarUrl: null,
 };
 
 // Adds contacts for an account straight through Prisma, skipping the API.
@@ -258,6 +261,7 @@ describe("contact route", () => {
             firstName: "John",
             lastName: "Doe",
             email: "john.doe01@email.com",
+            avatarUrl: null,
           },
         ],
       });

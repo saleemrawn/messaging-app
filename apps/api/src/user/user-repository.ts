@@ -1,4 +1,10 @@
 import { prisma } from "../lib/prisma.ts";
+import { toAvatarUrl } from "../avatar/avatar-url.ts";
+import {
+  profileSelect,
+  toLookupUserResBody,
+  type Profile,
+} from "./user-profile.ts";
 import type {
   UserAccount,
   User,
@@ -11,19 +17,20 @@ import type {
 const accountSelect = {
   id: true,
   username: true,
-  user: { select: { firstName: true, lastName: true, email: true } },
+  user: { select: profileSelect },
 } as const;
 
-const toUserResBody = (account: {
+const toUserResBody = async (account: {
   id: number;
   username: string;
-  user: { firstName: string; lastName: string; email: string };
-}): UserResBody => ({
+  user: Profile;
+}): Promise<UserResBody> => ({
   id: account.id,
   username: account.username,
   firstName: account.user.firstName,
   lastName: account.user.lastName,
   email: account.user.email,
+  avatarUrl: await toAvatarUrl(account.user.avatarKey),
 });
 
 const getUsers = async () => {
@@ -31,7 +38,7 @@ const getUsers = async () => {
     select: accountSelect,
     orderBy: { id: "asc" },
   });
-  return accounts.map(toUserResBody);
+  return Promise.all(accounts.map(toUserResBody));
 };
 
 const getUserByAccountId = async (userAccountId: UserAccount["id"]) => {
@@ -54,13 +61,10 @@ const findUserByEmail = async (
       deletedAt: null,
       user: { deletedAt: null, email: { equals: email, mode: "insensitive" } },
     },
-    select: {
-      id: true,
-      user: { select: { firstName: true, lastName: true, email: true } },
-    },
+    select: { id: true, user: { select: profileSelect } },
   });
 
-  return account ? { id: account.id, ...account.user } : null;
+  return account ? toLookupUserResBody(account) : null;
 };
 
 const getUserCredentialsByUsername = async (
@@ -124,6 +128,30 @@ const updateUser = async ({
   return toUserResBody(account);
 };
 
+// The active account's avatar key, or null when it has none (or is gone).
+const getAvatarKey = async (
+  userAccountId: UserAccount["id"],
+): Promise<string | null> => {
+  const account = await prisma.userAccount.findFirst({
+    where: { id: userAccountId, deletedAt: null },
+    select: { user: { select: { avatarKey: true } } },
+  });
+  return account?.user.avatarKey ?? null;
+};
+
+// Pass null to clear the avatar. Throws P2025 (404) for a missing account.
+const setAvatarKey = async (
+  userAccountId: UserAccount["id"],
+  avatarKey: string | null,
+) => {
+  const account = await prisma.userAccount.update({
+    where: { id: userAccountId, deletedAt: null },
+    data: { user: { update: { avatarKey } } },
+    select: accountSelect,
+  });
+  return toUserResBody(account);
+};
+
 const deleteUser = async (userAccountId: UserAccount["id"]) => {
   const deletedAt = new Date();
   const account = await prisma.userAccount.update({
@@ -142,5 +170,7 @@ export {
   getPasswordHashByAccountId,
   createUser,
   updateUser,
+  getAvatarKey,
+  setAvatarKey,
   deleteUser,
 };

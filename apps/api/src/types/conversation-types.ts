@@ -8,6 +8,7 @@ import type {
 } from "../../generated/prisma/client.ts";
 import type { ParamsDictionary } from "express-serve-static-core";
 import type { MessageInput } from "../types/message-types.ts";
+import type { AvatarUrl } from "./user-types.ts";
 
 interface AddMessageToConversationReqParams extends ParamsDictionary {
   id: string;
@@ -27,6 +28,7 @@ interface ConversationSummary {
     id: UserAccount["id"];
     firstName: User["firstName"];
     lastName: User["lastName"];
+    avatarUrl: AvatarUrl;
   };
   latestMessage: {
     id: Message["id"];

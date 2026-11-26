@@ -10,12 +10,16 @@ interface UserAccount extends User {
   password: string;
 }
 
+// Relative to the API base (e.g. "/avatars/seed-01.jpg"); null shows initials.
+type AvatarUrl = string | null;
+
 interface UserResBody {
   id: UserAccount["id"];
   username: UserAccount["username"];
   firstName: User["firstName"];
   lastName: User["lastName"];
   email: User["email"];
+  avatarUrl: AvatarUrl;
 }
 
 interface GetUserByIdReqParams {
@@ -35,7 +39,7 @@ interface LookupUserValidatedReq {
 }
 
 // Deliberately minimal: what's needed to pick a recipient, nothing more.
-type LookupUserResBody = User;
+type LookupUserResBody = User & { avatarUrl: AvatarUrl };
 
 interface CreateUserReqBody {
   firstName: UserAccount["firstName"];
@@ -86,6 +90,7 @@ interface DeleteUserValidatedReq {
 }
 
 export type {
+  AvatarUrl,
   User,
   UserAccount,
   UserResBody,

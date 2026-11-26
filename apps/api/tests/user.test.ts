@@ -64,6 +64,7 @@ const users = {
       firstName: "John",
       lastName: "Doe",
       email: "john.doe01@email.com",
+      avatarUrl: null,
     },
     {
       id: 2,
@@ -71,6 +72,7 @@ const users = {
       firstName: "Aisha",
       lastName: "Doe",
       email: "aisha.doe01@email.com",
+      avatarUrl: null,
     },
     {
       id: 3,
@@ -78,6 +80,7 @@ const users = {
       firstName: "Phillipe",
       lastName: "Doe",
       email: "phillipe.doe01@email.com",
+      avatarUrl: null,
     },
     {
       id: 4,
@@ -85,6 +88,7 @@ const users = {
       firstName: "Jane",
       lastName: "Doe",
       email: "jane.doe01@email.com",
+      avatarUrl: null,
     },
   ],
   success: true,
@@ -141,6 +145,7 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doe",
           email: "jane.doe01@email.com",
+          avatarUrl: null,
         },
       });
     });
@@ -181,6 +186,7 @@ describe("user route", () => {
       firstName: "Jane",
       lastName: "Doe",
       email: "jane.doe01@email.com",
+      avatarUrl: null,
     };
 
     const lookup = async (email: string) => {
@@ -304,6 +310,7 @@ describe("user route", () => {
           firstName: "Antoine",
           lastName: "Doe",
           email: "antoine.doe01@email.com",
+          avatarUrl: null,
         },
       });
     });
@@ -692,6 +699,7 @@ describe("user route", () => {
           firstName: "Janet",
           lastName: "Doe",
           email: "jane.doe01@email.com",
+          avatarUrl: null,
         },
       });
     });
@@ -718,6 +726,7 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doey",
           email: "jane.doe01@email.com",
+          avatarUrl: null,
         },
       });
     });
@@ -744,6 +753,7 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doe",
           email: "janedoe@email.com",
+          avatarUrl: null,
         },
       });
     });
@@ -1019,7 +1029,12 @@ describe("user route", () => {
         expect(res.status).toBe(200);
         expect(res.body).toEqual({
           success: true,
-          data: { id: 4, username: "janedoe01", ...janeDetails },
+          data: {
+            id: 4,
+            username: "janedoe01",
+            ...janeDetails,
+            avatarUrl: null,
+          },
         });
         expect(await loginStatus(NEW_PASSWORD)).toBe(200);
         expect(await loginStatus(OLD_PASSWORD)).toBe(401);
@@ -1188,6 +1203,7 @@ describe("user route", () => {
           firstName: "Jane",
           lastName: "Doe",
           email: "jane.doe01@email.com",
+          avatarUrl: null,
         },
       });
     });
