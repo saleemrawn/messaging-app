@@ -25,7 +25,7 @@ describe("contacts page", () => {
     expect(heading.parentElement).toContainElement(addButton);
   });
 
-  test("lists contacts with avatar, full name, email and a Remove button", async () => {
+  test("lists contacts with avatar, full name, email, Message and Remove buttons", async () => {
     mockContactsApi();
 
     renderRoute("/contacts");
@@ -38,6 +38,9 @@ describe("contacts page", () => {
     expect(aisha.getByText("AK")).toBeInTheDocument();
     expect(aisha.getByText("Aisha Khan")).toBeInTheDocument();
     expect(aisha.getByText("aisha.khan@email.com")).toBeInTheDocument();
+    expect(
+      aisha.getByRole("button", { name: "Message Aisha Khan" }),
+    ).toHaveTextContent("Message");
     expect(
       aisha.getByRole("button", { name: "Remove Aisha Khan from contacts" }),
     ).toHaveTextContent("Remove");
@@ -89,6 +92,62 @@ describe("contacts page", () => {
       await screen.findByText("Couldn't remove the contact. Please try again."),
     ).toBeInTheDocument();
     expect(screen.getByText("Aisha Khan")).toBeInTheDocument();
+  });
+
+  test("opens a conversation with the contact on the Messages page", async () => {
+    const api = mockContactsApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/contacts");
+
+    await user.click(
+      await screen.findByRole("button", { name: "Message Aisha Khan" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Aisha Khan" }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations/12");
+    expect(api.createConversationBodies).toEqual([{ recipientId: 2 }]);
+  });
+
+  test("reopens the existing conversation when messaging a contact again", async () => {
+    const api = mockContactsApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/contacts");
+
+    await user.click(
+      await screen.findByRole("button", { name: "Message Aisha Khan" }),
+    );
+    await screen.findByRole("heading", { level: 2, name: "Aisha Khan" });
+    await router.navigate("/contacts");
+    await user.click(
+      await screen.findByRole("button", { name: "Message Aisha Khan" }),
+    );
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/conversations/12");
+    });
+    expect(api.createConversationBodies).toEqual([
+      { recipientId: 2 },
+      { recipientId: 2 },
+    ]);
+  });
+
+  test("shows an error and stays on the page when opening a conversation fails", async () => {
+    mockContactsApi({ createConversationStatus: 500 });
+    const user = userEvent.setup();
+    const { router } = renderRoute("/contacts");
+
+    await user.click(
+      await screen.findByRole("button", { name: "Message Aisha Khan" }),
+    );
+
+    const list = await findContactList();
+    const aishaRow = list.getAllByRole("listitem")[0];
+    expect(
+      await within(aishaRow).findByText("Something broke"),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/contacts");
   });
 
   test("redirects to login when the session has expired", async () => {

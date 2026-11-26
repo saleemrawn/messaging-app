@@ -1,6 +1,10 @@
 import { http, HttpResponse } from "msw";
 import { API_URL, server, unreadCountHandler } from "../../test/server.ts";
 import type { Contact } from "./types.ts";
+import type {
+  ConversationDetail,
+  ConversationSummary,
+} from "../conversations/types.ts";
 
 const currentUser = {
   id: 1,
@@ -38,7 +42,11 @@ interface MockContactsApiOptions {
   contacts?: Contact[];
   addStatus?: number;
   removeStatus?: number;
+  createConversationStatus?: number;
 }
+
+// Conversation ids the mock hands out, offset so they never look like user ids.
+const CONVERSATION_ID_OFFSET = 10;
 
 function byName(a: Contact, b: Contact): number {
   return (
@@ -47,17 +55,38 @@ function byName(a: Contact, b: Contact): number {
   );
 }
 
+function toConversationDetail(recipient: Contact): ConversationDetail {
+  return {
+    id: CONVERSATION_ID_OFFSET + recipient.id,
+    updatedAt: new Date().toISOString(),
+    recipient,
+    messages: [],
+  };
+}
+
+function toConversationSummary({
+  id,
+  updatedAt,
+  recipient,
+}: ConversationDetail): ConversationSummary {
+  return { id, updatedAt, unreadCount: 0, recipient, latestMessage: null };
+}
+
 // An in-memory contacts list that behaves like the real API: adding inserts in
-// name order, removing drops the row.
+// name order, removing drops the row. Starting a conversation with a user
+// creates an empty one (id CONVERSATION_ID_OFFSET + user id), or reuses it.
 function mockContactsApi({
   contacts = [aisha, phillipe],
   addStatus = 201,
   removeStatus = 200,
+  createConversationStatus = 201,
 }: MockContactsApiOptions = {}) {
   let current = [...contacts].sort(byName);
+  let conversations: ConversationDetail[] = [];
   const lookupEmails: string[] = [];
   const addBodies: unknown[] = [];
   const removeRequests: number[] = [];
+  const createConversationBodies: unknown[] = [];
 
   server.use(
     http.get(`${API_URL}/auth/me`, () =>
@@ -110,9 +139,46 @@ function mockContactsApi({
       current = current.filter((contact) => contact.id !== id);
       return HttpResponse.json({ success: true, data: { id } });
     }),
+    http.get(`${API_URL}/conversations`, () =>
+      HttpResponse.json({
+        success: true,
+        data: conversations.map(toConversationSummary),
+      }),
+    ),
+    http.post(`${API_URL}/conversations`, async ({ request }) => {
+      const body = (await request.json()) as { recipientId: number };
+      createConversationBodies.push(body);
+      const recipient = KNOWN_USERS.find(({ id }) => id === body.recipientId);
+      if (createConversationStatus >= 400 || !recipient) {
+        return HttpResponse.json(
+          { success: false, message: "Something broke" },
+          { status: recipient ? createConversationStatus : 404 },
+        );
+      }
+      const conversation = toConversationDetail(recipient);
+      if (!conversations.some(({ id }) => id === conversation.id)) {
+        conversations = [conversation, ...conversations];
+      }
+      return HttpResponse.json(
+        { success: true, data: { id: conversation.id } },
+        { status: createConversationStatus },
+      );
+    }),
+    http.post(`${API_URL}/conversations/:id/messages/receipts`, () =>
+      HttpResponse.json({ success: true }),
+    ),
+    http.get(`${API_URL}/conversations/:id`, ({ params }) => {
+      const found = conversations.find(({ id }) => id === Number(params.id));
+      return found
+        ? HttpResponse.json({ success: true, data: found })
+        : HttpResponse.json(
+            { success: false, message: "Conversation not found" },
+            { status: 404 },
+          );
+    }),
   );
 
-  return { lookupEmails, addBodies, removeRequests };
+  return { lookupEmails, addBodies, removeRequests, createConversationBodies };
 }
 
 export { currentUser, aisha, jane, phillipe, mockContactsApi };
