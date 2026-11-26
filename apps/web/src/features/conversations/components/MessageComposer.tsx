@@ -76,7 +76,7 @@ function MessageComposer({
       ref={formRef}
       method="post"
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2 border-t border-gray-200 px-6 py-4"
+      className="flex flex-col gap-2 border-t border-gray-200 px-4 py-4 sm:px-6"
     >
       <FormError id={errorId} message={error} />
       <div className="flex items-stretch gap-2 rounded-2xl border border-gray-300 bg-white p-2 focus-within:border-blue-600">

@@ -43,7 +43,7 @@ function LogoutConfirmDialog({ onConfirm, onClose }: LogoutConfirmDialogProps) {
       aria-describedby={descriptionId}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className="m-auto w-full max-w-sm rounded-2xl bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
     >
       <div className="flex flex-col gap-4 p-6">
         <h2 id={titleId} className="text-lg font-semibold text-gray-900">

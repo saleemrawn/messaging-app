@@ -76,7 +76,7 @@ function AddContactDialog({ contacts, onClose }: AddContactDialogProps) {
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className="m-auto w-full max-w-md rounded-2xl bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
     >
       <div className="flex flex-col gap-4 p-6">
         <header className="flex items-center justify-between gap-4">

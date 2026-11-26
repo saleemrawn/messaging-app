@@ -19,6 +19,8 @@ const TABS: readonly {
 interface ConversationListProps {
   conversations: ConversationSummary[];
   currentUserId: number;
+  // A fixed-width column beside the viewer, or the whole screen on its own.
+  isSplitView: boolean;
 }
 
 function tabClassName(isSelected: boolean): string {
@@ -39,6 +41,7 @@ function getUnreadIds(conversations: ConversationSummary[]): Set<number> {
 function ConversationList({
   conversations,
   currentUserId,
+  isSplitView,
 }: ConversationListProps) {
   const [filter, setFilter] = useState<ConversationFilter>("all");
   // Conversations that were unread when the Unread tab was opened stay listed
@@ -76,8 +79,10 @@ function ConversationList({
   }
 
   return (
-    <section className="flex w-96 shrink-0 flex-col border-r border-gray-200 bg-white">
-      <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4">
+    <section
+      className={`flex flex-col bg-white ${isSplitView ? "w-96 shrink-0 border-r border-gray-200" : "w-full"}`}
+    >
+      <div className="flex items-center justify-between gap-4 px-4 pt-6 pb-4 sm:px-6">
         <h1 className="text-2xl font-semibold">Messages</h1>
         <button
           ref={newConversationButtonRef}

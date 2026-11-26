@@ -30,7 +30,7 @@ function MessageList({ conversation, currentUserId }: MessageListProps) {
       role="log"
       aria-label="Messages"
       tabIndex={0}
-      className="relative min-h-0 flex-1 overflow-y-auto px-6 py-4 focus-visible:outline-2 focus-visible:outline-blue-600"
+      className="relative min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 focus-visible:outline-2 focus-visible:outline-blue-600"
     >
       {messageCount === 0 ? (
         <p className="py-8 text-center text-gray-500">

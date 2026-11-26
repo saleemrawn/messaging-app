@@ -1,9 +1,15 @@
-import { useFetcher } from "react-router";
+import { Archive, ChevronLeft, UserCheck, UserPlus } from "lucide-react";
+import { Link, useFetcher } from "react-router";
 import type {
   AddRecipientContactResult,
   ArchiveConversationResult,
 } from "../actions.ts";
-import { addRecipientContactPath, archiveConversationPath } from "../paths.ts";
+import {
+  CONVERSATIONS_PATH,
+  addRecipientContactPath,
+  archiveConversationPath,
+} from "../paths.ts";
+import { useIsSplitView } from "../split-view.ts";
 import type { ConversationDetailRecipient } from "../types.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import FormError from "../../../shared/components/FormError.tsx";
@@ -14,12 +20,16 @@ interface ConversationHeaderProps {
   recipient: ConversationDetailRecipient;
   headingId: string;
   isRecipientContact: boolean;
-  // Opened once this conversation is archived; null falls back to the newest.
+  // Opened once this conversation is archived in split view; null, or
+  // single-column view, falls back to /conversations.
   nextConversationId: number | null;
 }
 
+// Below sm the buttons show only an icon; the label stays for screen readers.
 const HEADER_BUTTON_CLASS =
-  "rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50";
+  "flex items-center rounded border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 sm:px-3 sm:py-1";
+const HEADER_ICON_CLASS = "size-4 sm:hidden";
+const HEADER_LABEL_CLASS = "max-sm:sr-only";
 
 function getAddContactLabel(isContact: boolean, isAdding: boolean): string {
   if (isContact) return "Added to Contacts";
@@ -39,6 +49,9 @@ function ConversationHeader({
   isRecipientContact,
   nextConversationId,
 }: ConversationHeaderProps) {
+  const isSplit = useIsSplitView();
+  // Single-column view returns to the list after archiving, not the next one.
+  const archiveNextId = isSplit ? nextConversationId : null;
   const fetcher = useFetcher<ArchiveConversationResult>();
   const contactFetcher = useFetcher<AddRecipientContactResult>();
   const isArchiving = fetcher.state !== "idle";
@@ -47,10 +60,20 @@ function ConversationHeader({
   // contact error shows.
   const error =
     getErrorMessage(contactFetcher.data) ?? getErrorMessage(fetcher.data);
+  const ContactIcon = isRecipientContact ? UserCheck : UserPlus;
 
   return (
-    <header className="flex flex-col gap-3 border-b border-gray-200 px-6 py-4">
+    <header className="flex flex-col gap-3 border-b border-gray-200 px-4 py-4 sm:px-6">
       <div className="flex items-center gap-3">
+        {!isSplit && (
+          <Link
+            to={CONVERSATIONS_PATH}
+            aria-label="Back to conversations"
+            className="-ml-2 shrink-0 rounded p-1 text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600"
+          >
+            <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
+          </Link>
+        )}
         <UserAvatar
           firstName={recipient.firstName}
           lastName={recipient.lastName}
@@ -76,7 +99,10 @@ function ConversationHeader({
             disabled={isRecipientContact || isAddingContact}
             className={HEADER_BUTTON_CLASS}
           >
-            {getAddContactLabel(isRecipientContact, isAddingContact)}
+            <ContactIcon aria-hidden="true" className={HEADER_ICON_CLASS} />
+            <span className={HEADER_LABEL_CLASS}>
+              {getAddContactLabel(isRecipientContact, isAddingContact)}
+            </span>
           </button>
         </contactFetcher.Form>
         <fetcher.Form
@@ -84,11 +110,11 @@ function ConversationHeader({
           action={archiveConversationPath(conversationId)}
           className="shrink-0"
         >
-          {nextConversationId !== null && (
+          {archiveNextId !== null && (
             <input
               type="hidden"
               name="nextConversationId"
-              value={nextConversationId}
+              value={archiveNextId}
             />
           )}
           <button
@@ -96,7 +122,10 @@ function ConversationHeader({
             disabled={isArchiving}
             className={HEADER_BUTTON_CLASS}
           >
-            {isArchiving ? "Archiving…" : "Archive"}
+            <Archive aria-hidden="true" className={HEADER_ICON_CLASS} />
+            <span className={HEADER_LABEL_CLASS}>
+              {isArchiving ? "Archiving…" : "Archive"}
+            </span>
           </button>
         </fetcher.Form>
       </div>

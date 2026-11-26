@@ -18,6 +18,7 @@ import {
   MESSAGES_ROUTE_PATH,
   conversationPath,
 } from "./paths.ts";
+import { isSplitView } from "./split-view.ts";
 import type { ConversationDetail, ConversationSummary } from "./types.ts";
 import { lookUpUser, type UserLookupResult } from "../users/lookup.ts";
 import { getContacts } from "../contacts/contacts-service.ts";
@@ -45,11 +46,13 @@ function parseConversationId(value: string | undefined): number | null {
   return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
-// With no conversation in the URL, select the newest one.
+// With no conversation in the URL, split view selects the newest one. In
+// single-column view this URL is the list screen, so nothing is opened (or
+// marked read) until the user picks a conversation.
 async function loadNewestConversation(): Promise<MessagesPageData | Response> {
   const conversations = await getConversations();
   const newest = conversations.at(0);
-  return newest
+  return newest && isSplitView()
     ? redirect(conversationPath(newest.id))
     : { conversations, conversation: null, isRecipientContact: false };
 }

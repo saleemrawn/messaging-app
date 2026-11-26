@@ -8,6 +8,7 @@ import {
   unreadCountHandler,
 } from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
+import { setViewport } from "../../../test/media-query.ts";
 import type {
   ConversationDetail,
   ConversationMessage,
@@ -826,5 +827,137 @@ describe("add contact button", () => {
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/login");
     });
+  });
+});
+
+describe("single-column layout (mobile, portrait tablet)", () => {
+  function queryConversationList() {
+    return screen.queryByRole("tabpanel");
+  }
+
+  test("shows the conversation list without opening a conversation", async () => {
+    setViewport("mobile");
+    const { receiptRequests } = mockApi();
+
+    const { router } = renderRoute("/");
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Messages" }),
+    ).toBeInTheDocument();
+    expect(getConversationRow("Phillipe Doe")).toBeInTheDocument();
+    expect(getConversationRow("Aisha Khan")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations");
+    expect(
+      screen.queryByRole("heading", { level: 2 }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no conversation selected/i),
+    ).not.toBeInTheDocument();
+    expect(receiptRequests).toEqual([]);
+    expect(screen.getByRole("button", { name: "Open menu" })).toBeVisible();
+  });
+
+  test("opens a conversation on its own screen without the top bar", async () => {
+    setViewport("mobile");
+    mockApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+
+    await screen.findByRole("heading", { level: 1, name: "Messages" });
+    await user.click(
+      within(getConversationRow("Aisha Khan")).getByRole("link"),
+    );
+
+    expect(await findViewerHeading("Aisha Khan")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations/1");
+    expect(queryConversationList()).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Open menu" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("returns to the list from the back link", async () => {
+    setViewport("mobile");
+    mockApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(
+      screen.getByRole("link", { name: "Back to conversations" }),
+    );
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Messages" }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations");
+    expect(
+      screen.queryByRole("heading", { level: 2 }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("returns to the list after archiving the conversation", async () => {
+    setViewport("mobile");
+    const { archiveRequests } = mockApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(screen.getByRole("button", { name: /^archive$/i }));
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Messages" }),
+    ).toBeInTheDocument();
+    expect(archiveRequests).toEqual([2]);
+    expect(router.state.location.pathname).toBe("/conversations");
+    expect(getConversationRow("Aisha Khan")).toBeInTheDocument();
+    expect(
+      within(screen.getByRole("tabpanel")).queryByText("Phillipe Doe"),
+    ).not.toBeInTheDocument();
+  });
+
+  test("shows the list for an unknown conversation id", async () => {
+    setViewport("mobile");
+    mockApi();
+
+    const { router } = renderRoute("/conversations/999");
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Messages" }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations");
+  });
+
+  test("shows the list beside the open conversation after rotating to landscape", async () => {
+    setViewport("mobile");
+    mockApi();
+    renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+    expect(queryConversationList()).not.toBeInTheDocument();
+
+    setViewport("tablet-landscape");
+
+    expect(queryConversationList()).toBeInTheDocument();
+    expect(getViewerHeadings()).toEqual(["Phillipe Doe"]);
+    expect(
+      screen.queryByRole("link", { name: "Back to conversations" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("split layout on a landscape tablet", () => {
+  test("opens the newest conversation beside the list, with the menu button and no back link", async () => {
+    setViewport("tablet-landscape");
+    mockApi();
+
+    const { router } = renderRoute("/");
+
+    expect(await findViewerHeading("Phillipe Doe")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations/2");
+    expect(getConversationRow("Aisha Khan")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open menu" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Back to conversations" }),
+    ).not.toBeInTheDocument();
   });
 });
