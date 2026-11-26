@@ -14,6 +14,13 @@ import {
   getUserByIdValidators,
   lookupUserValidators,
 } from "./user-validators.ts";
+import {
+  requireOwnAccount,
+  uploadAvatar,
+  removeAvatar,
+} from "../avatar/avatar-controllers.ts";
+import { userAvatarValidators } from "../avatar/avatar-validators.ts";
+import { parseAvatarUpload } from "../avatar/avatar-upload-middleware.ts";
 import { handleValidationErrors } from "../middleware/validation-error-middleware.ts";
 import { requireAuth } from "../auth/require-auth.ts";
 
@@ -29,5 +36,21 @@ router.get("/lookup", lookupUserValidators, handleValidationErrors, lookupUser);
 router.get("/:id", getUserByIdValidators, handleValidationErrors, getUserById);
 router.put("/:id", updateUserValidators, handleValidationErrors, updateUser);
 router.delete("/:id", deleteUserValidators, handleValidationErrors, deleteUser);
+// Ownership is checked before the upload is parsed.
+router.put(
+  "/:id/avatar",
+  userAvatarValidators,
+  handleValidationErrors,
+  requireOwnAccount,
+  parseAvatarUpload,
+  uploadAvatar,
+);
+router.delete(
+  "/:id/avatar",
+  userAvatarValidators,
+  handleValidationErrors,
+  requireOwnAccount,
+  removeAvatar,
+);
 
 export default router;

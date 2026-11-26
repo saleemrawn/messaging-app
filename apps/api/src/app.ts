@@ -23,6 +23,7 @@ export function createApp(): Express {
   app.use("/api/conversations", routes.conversation);
   app.use("/api/messages", routes.message);
   app.use("/api/contacts", routes.contact);
+  app.use("/api/avatars", routes.avatar);
   app.use(errorHandler);
 
   return app;

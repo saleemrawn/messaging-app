@@ -29,5 +29,9 @@ dist-ssr
 # Prisma ORM
 apps/api/generated
 
+# Avatar uploads (seed photos seed-NN.* are committed)
+apps/api/assets/avatars/user-*
+apps/api/assets/avatars/*.tmp
+
 # Vitest reports and artifacts
 .vitest/
