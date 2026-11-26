@@ -12,7 +12,7 @@ function ArchivePage() {
   return (
     <section
       aria-labelledby={headingId}
-      className="flex h-full w-full max-w-2xl flex-col border-r border-gray-200 bg-white"
+      className="flex h-full w-full flex-col border-gray-200 bg-white xl:max-w-2xl xl:border-r"
     >
       <h1 id={headingId} className="px-6 pt-6 pb-4 text-2xl font-semibold">
         Archive
