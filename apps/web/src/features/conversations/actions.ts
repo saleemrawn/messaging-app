@@ -10,6 +10,7 @@ import {
   unarchiveConversation,
 } from "./conversation-service.ts";
 import { CONVERSATIONS_PATH, conversationPath } from "./paths.ts";
+import { addContact } from "../contacts/contacts-service.ts";
 
 const EMPTY_MESSAGE_ERROR = "Message can't be empty";
 const SEND_FAILED_ERROR = "Couldn't send your message. Please try again.";
@@ -19,11 +20,13 @@ const UNARCHIVE_FAILED_ERROR =
   "Couldn't unarchive the conversation. Please try again.";
 const ARCHIVE_FAILED_ERROR =
   "Couldn't archive the conversation. Please try again.";
+const ADD_CONTACT_FAILED_ERROR = "Couldn't add the contact. Please try again.";
 
 type SendMessageResult = { ok: true } | { ok: false; error: string };
 type UnarchiveConversationResult = SendMessageResult;
 // Success redirects to the next conversation, so data only carries a failure.
 type ArchiveConversationResult = SendMessageResult;
+type AddRecipientContactResult = SendMessageResult;
 // Success redirects to the conversation, so only failures carry data.
 interface CreateConversationResult {
   ok: false;
@@ -143,15 +146,37 @@ async function archiveConversationAction({
   );
 }
 
+// Saves the open conversation's recipient as a contact. The router revalidates
+// the page loader afterwards, which marks the recipient as added.
+async function addRecipientContactAction({
+  request,
+}: ActionFunctionArgs): Promise<AddRecipientContactResult | Response> {
+  const formData = await request.formData();
+  const recipientId = Number(formString(formData, "recipientId"));
+  if (!isPositiveInteger(recipientId)) {
+    return { ok: false, error: ADD_CONTACT_FAILED_ERROR };
+  }
+
+  try {
+    await addContact(recipientId);
+    return { ok: true };
+  } catch (error: unknown) {
+    if (isUnauthorizedError(error)) return redirect("/login");
+    return { ok: false, error: ADD_CONTACT_FAILED_ERROR };
+  }
+}
+
 export {
   sendMessageAction,
   createConversationAction,
   unarchiveConversationAction,
   archiveConversationAction,
+  addRecipientContactAction,
 };
 export type {
   SendMessageResult,
   CreateConversationResult,
   UnarchiveConversationResult,
   ArchiveConversationResult,
+  AddRecipientContactResult,
 };

@@ -7,6 +7,7 @@ import MessageList from "./MessageList.tsx";
 interface ConversationViewerProps {
   conversation: ConversationDetail;
   currentUserId: number;
+  isRecipientContact: boolean;
   // Shown after this conversation is archived; null when it's the only one.
   nextConversationId: number | null;
 }
@@ -16,6 +17,7 @@ interface ConversationViewerProps {
 function ConversationViewer({
   conversation,
   currentUserId,
+  isRecipientContact,
   nextConversationId,
 }: ConversationViewerProps) {
   const { recipient } = conversation;
@@ -30,6 +32,7 @@ function ConversationViewer({
         conversationId={conversation.id}
         recipient={recipient}
         headingId={headingId}
+        isRecipientContact={isRecipientContact}
         nextConversationId={nextConversationId}
       />
       <MessageList conversation={conversation} currentUserId={currentUserId} />

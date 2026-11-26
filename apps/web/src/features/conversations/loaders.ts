@@ -35,6 +35,8 @@ type ContactListResult = { ok: true; contacts: Contact[] } | { ok: false };
 interface MessagesPageData {
   conversations: ConversationSummary[];
   conversation: ConversationDetail | null;
+  // Whether the open conversation's recipient is in the caller's contacts.
+  isRecipientContact: boolean;
 }
 
 function parseConversationId(value: string | undefined): number | null {
@@ -49,18 +51,33 @@ async function loadNewestConversation(): Promise<MessagesPageData | Response> {
   const newest = conversations.at(0);
   return newest
     ? redirect(conversationPath(newest.id))
-    : { conversations, conversation: null };
+    : { conversations, conversation: null, isRecipientContact: false };
+}
+
+// Only feeds the header's Add contact button, so a failure mustn't block the
+// conversation. Treating it as "not a contact" is safe: adding is idempotent.
+async function loadContactsForHeader(): Promise<Contact[]> {
+  try {
+    return await getContacts();
+  } catch (error: unknown) {
+    if (isUnauthorizedError(error)) throw error;
+    return [];
+  }
 }
 
 // Opening a conversation reads it, so receipts are written first; the list is
 // fetched afterwards so its unread badge is already cleared.
 async function loadSelectedConversation(id: number): Promise<MessagesPageData> {
   await markConversationRead(id);
-  const [conversations, conversation] = await Promise.all([
+  const [conversations, conversation, contacts] = await Promise.all([
     getConversations(),
     getConversation(id),
+    loadContactsForHeader(),
   ]);
-  return { conversations, conversation };
+  const isRecipientContact = contacts.some(
+    (contact) => contact.id === conversation.recipient.id,
+  );
+  return { conversations, conversation, isRecipientContact };
 }
 
 // Runs in parallel with the layout's auth check, so a 401 here redirects too

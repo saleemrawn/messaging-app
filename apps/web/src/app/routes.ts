@@ -15,12 +15,14 @@ import {
   unreadCountLoader,
 } from "../features/conversations/loaders.ts";
 import {
+  addRecipientContactAction,
   archiveConversationAction,
   createConversationAction,
   sendMessageAction,
   unarchiveConversationAction,
 } from "../features/conversations/actions.ts";
 import {
+  ADD_RECIPIENT_CONTACT_PATH,
   ARCHIVE_CONVERSATION_PATH,
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
@@ -84,6 +86,11 @@ const routes: RouteObject[] = [
                 // Resource route for the viewer's Archive button.
                 path: ARCHIVE_CONVERSATION_PATH,
                 action: archiveConversationAction,
+              },
+              {
+                // Resource route for the viewer's Add contact button.
+                path: ADD_RECIPIENT_CONTACT_PATH,
+                action: addRecipientContactAction,
               },
               {
                 id: MESSAGES_ROUTE_ID,

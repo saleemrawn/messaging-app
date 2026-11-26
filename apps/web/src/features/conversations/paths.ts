@@ -15,6 +15,10 @@ const NEW_CONVERSATION_CONTACTS_PATH = `${NEW_CONVERSATION_PATH}/contacts`;
 // than MESSAGES_ROUTE_PATH, so the two never match the same URL.
 const ARCHIVE_CONVERSATION_PATH = `${CONVERSATIONS_PATH}/:conversationId/archive`;
 
+// Resource route whose action saves the conversation's recipient as a contact.
+// One segment deeper than MESSAGES_ROUTE_PATH, like the archive route.
+const ADD_RECIPIENT_CONTACT_PATH = `${CONVERSATIONS_PATH}/:conversationId/contact`;
+
 // Top-level rather than under CONVERSATIONS_PATH, where the Messages nav link
 // would match it and show as active too.
 const ARCHIVE_PATH = "/archive";
@@ -27,13 +31,19 @@ function archiveConversationPath(id: number): string {
   return `${conversationPath(id)}/archive`;
 }
 
+function addRecipientContactPath(id: number): string {
+  return `${conversationPath(id)}/contact`;
+}
+
 export {
+  ADD_RECIPIENT_CONTACT_PATH,
   ARCHIVE_CONVERSATION_PATH,
   ARCHIVE_PATH,
   CONVERSATIONS_PATH,
   MESSAGES_ROUTE_PATH,
   NEW_CONVERSATION_CONTACTS_PATH,
   NEW_CONVERSATION_PATH,
+  addRecipientContactPath,
   archiveConversationPath,
   conversationPath,
 };

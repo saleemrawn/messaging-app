@@ -6,7 +6,8 @@ import type { MessagesPageData } from "../loaders.ts";
 import { getNextConversationId } from "../utils/next-conversation.ts";
 
 function MessagesPage() {
-  const { conversations, conversation } = useLoaderData<MessagesPageData>();
+  const { conversations, conversation, isRecipientContact } =
+    useLoaderData<MessagesPageData>();
   const currentUser = useCurrentUser();
 
   return (
@@ -20,6 +21,7 @@ function MessagesPage() {
           key={conversation.id}
           conversation={conversation}
           currentUserId={currentUser.id}
+          isRecipientContact={isRecipientContact}
           nextConversationId={getNextConversationId(
             conversations,
             conversation.id,

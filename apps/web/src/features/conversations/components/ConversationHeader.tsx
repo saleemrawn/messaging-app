@@ -1,6 +1,9 @@
 import { useFetcher } from "react-router";
-import type { ArchiveConversationResult } from "../actions.ts";
-import { archiveConversationPath } from "../paths.ts";
+import type {
+  AddRecipientContactResult,
+  ArchiveConversationResult,
+} from "../actions.ts";
+import { addRecipientContactPath, archiveConversationPath } from "../paths.ts";
 import type { ConversationRecipient } from "../types.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import FormError from "../../../shared/components/FormError.tsx";
@@ -10,19 +13,40 @@ interface ConversationHeaderProps {
   conversationId: number;
   recipient: ConversationRecipient;
   headingId: string;
+  isRecipientContact: boolean;
   // Opened once this conversation is archived; null falls back to the newest.
   nextConversationId: number | null;
+}
+
+const HEADER_BUTTON_CLASS =
+  "rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50";
+
+function getAddContactLabel(isContact: boolean, isAdding: boolean): string {
+  if (isContact) return "Added to Contacts";
+  return isAdding ? "Adding…" : "Add contact";
+}
+
+function getErrorMessage(
+  result: AddRecipientContactResult | undefined,
+): string | undefined {
+  return result?.ok === false ? result.error : undefined;
 }
 
 function ConversationHeader({
   conversationId,
   recipient,
   headingId,
+  isRecipientContact,
   nextConversationId,
 }: ConversationHeaderProps) {
   const fetcher = useFetcher<ArchiveConversationResult>();
+  const contactFetcher = useFetcher<AddRecipientContactResult>();
   const isArchiving = fetcher.state !== "idle";
-  const error = fetcher.data?.ok === false ? fetcher.data.error : undefined;
+  const isAddingContact = contactFetcher.state !== "idle";
+  // Either button's failure; a retry clears its own. If both failed, the add
+  // contact error shows.
+  const error =
+    getErrorMessage(contactFetcher.data) ?? getErrorMessage(fetcher.data);
 
   return (
     <header className="flex flex-col gap-3 border-b border-gray-200 px-6 py-4">
@@ -37,6 +61,20 @@ function ConversationHeader({
         >
           {formatFullName(recipient)}
         </h2>
+        <contactFetcher.Form
+          method="post"
+          action={addRecipientContactPath(conversationId)}
+          className="shrink-0"
+        >
+          <input type="hidden" name="recipientId" value={recipient.id} />
+          <button
+            type="submit"
+            disabled={isRecipientContact || isAddingContact}
+            className={HEADER_BUTTON_CLASS}
+          >
+            {getAddContactLabel(isRecipientContact, isAddingContact)}
+          </button>
+        </contactFetcher.Form>
         <fetcher.Form
           method="post"
           action={archiveConversationPath(conversationId)}
@@ -52,7 +90,7 @@ function ConversationHeader({
           <button
             type="submit"
             disabled={isArchiving}
-            className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+            className={HEADER_BUTTON_CLASS}
           >
             {isArchiving ? "Archiving…" : "Archive"}
           </button>

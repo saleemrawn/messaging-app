@@ -13,6 +13,7 @@ import type {
   ConversationMessage,
   ConversationSummary,
 } from "../types.ts";
+import type { Contact } from "../../contacts/types.ts";
 
 const currentUser = {
   id: 1,
@@ -80,17 +81,26 @@ interface MockApiOptions {
   conversations?: ConversationDetail[];
   sendStatus?: number;
   archiveStatus?: number;
+  contacts?: Contact[];
+  contactsStatus?: number;
+  addContactStatus?: number;
 }
 
 // A small in-memory backend: receipts clear the unread count and sending
 // appends a message and moves its conversation to the top, and archiving moves
-// it from the list to the archive, like the real API.
+// it from the list to the archive, and adding a contact saves them, like the
+// real API.
 function mockApi({
   conversations = buildConversations(),
   sendStatus = 201,
   archiveStatus = 200,
+  contacts = [],
+  contactsStatus = 200,
+  addContactStatus = 201,
 }: MockApiOptions = {}) {
   let details = conversations;
+  let savedContacts = contacts;
+  const addContactBodies: unknown[] = [];
   let archived: ConversationDetail[] = [];
   const archiveRequests: number[] = [];
   const unreadCounts = new Map<number, number>([
@@ -138,6 +148,31 @@ function mockApi({
     http.get(`${API_URL}/conversations/archived`, () =>
       HttpResponse.json({ success: true, data: archived.map(toSummary) }),
     ),
+    http.get(`${API_URL}/contacts`, () =>
+      contactsStatus === 200
+        ? HttpResponse.json({ success: true, data: savedContacts })
+        : HttpResponse.json({ success: false }, { status: contactsStatus }),
+    ),
+    http.post(`${API_URL}/contacts`, async ({ request }) => {
+      const body = (await request.json()) as { contactId: number };
+      addContactBodies.push(body);
+      if (addContactStatus !== 201) {
+        return HttpResponse.json(
+          { success: false },
+          { status: addContactStatus },
+        );
+      }
+      const recipient = details
+        .map((detail) => detail.recipient)
+        .find(({ id }) => id === body.contactId);
+      if (!recipient) return notFound();
+      const contact = { ...recipient, email: "contact@email.com" };
+      savedContacts = [...savedContacts, contact];
+      return HttpResponse.json(
+        { success: true, data: contact },
+        { status: 201 },
+      );
+    }),
     http.delete(`${API_URL}/conversations/:id`, ({ params }) => {
       const id = Number(params.id);
       archiveRequests.push(id);
@@ -204,7 +239,7 @@ function mockApi({
     ),
   );
 
-  return { receiptRequests, sentBodies, archiveRequests };
+  return { receiptRequests, sentBodies, archiveRequests, addContactBodies };
 }
 
 async function findViewerHeading(name: string) {
@@ -654,6 +689,115 @@ describe("archiving a conversation", () => {
     await findViewerHeading("Phillipe Doe");
 
     await user.click(getArchiveButton());
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/login");
+    });
+  });
+});
+
+describe("add contact button", () => {
+  const phillipe: Contact = {
+    id: 3,
+    firstName: "Phillipe",
+    lastName: "Doe",
+    email: "phillipe.doe@email.com",
+  };
+
+  function getAddContactButton() {
+    return screen.getByRole("button", { name: /^add contact$/i });
+  }
+
+  test("is enabled for a recipient who isn't a contact", async () => {
+    mockApi();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    expect(getAddContactButton()).toBeEnabled();
+  });
+
+  test("adds the recipient and then shows them as added", async () => {
+    const { addContactBodies } = mockApi();
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(getAddContactButton());
+
+    expect(
+      await screen.findByRole("button", { name: /^added to contacts$/i }),
+    ).toBeDisabled();
+    expect(addContactBodies).toEqual([{ contactId: 3 }]);
+  });
+
+  test("shows a disabled Added to Contacts button when the recipient is a contact", async () => {
+    mockApi({ contacts: [phillipe] });
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    expect(
+      screen.getByRole("button", { name: /^added to contacts$/i }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: /^add contact$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("offers to add the recipient of the next conversation opened", async () => {
+    mockApi({ contacts: [phillipe] });
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(
+      within(getConversationRow("Aisha Khan")).getByRole("link"),
+    );
+    await findViewerHeading("Aisha Khan");
+
+    expect(getAddContactButton()).toBeEnabled();
+  });
+
+  test("shows an error and stays enabled when adding fails", async () => {
+    mockApi({ addContactStatus: 500 });
+    const user = userEvent.setup();
+    renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(getAddContactButton());
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Couldn't add the contact. Please try again.",
+    );
+    expect(getAddContactButton()).toBeEnabled();
+  });
+
+  test("still opens the conversation when contacts fail to load", async () => {
+    mockApi({ contactsStatus: 500 });
+    renderRoute("/");
+
+    expect(await findViewerHeading("Phillipe Doe")).toBeInTheDocument();
+    expect(getAddContactButton()).toBeEnabled();
+  });
+
+  test("redirects to login when the session has expired", async () => {
+    mockApi();
+    let isLoggedIn = true;
+    server.use(
+      http.get(`${API_URL}/auth/me`, () =>
+        isLoggedIn
+          ? HttpResponse.json({ success: true, data: currentUser })
+          : HttpResponse.json({ success: false }, { status: 401 }),
+      ),
+      http.post(`${API_URL}/contacts`, () => {
+        isLoggedIn = false;
+        return HttpResponse.json({ success: false }, { status: 401 });
+      }),
+    );
+    const user = userEvent.setup();
+    const { router } = renderRoute("/");
+    await findViewerHeading("Phillipe Doe");
+
+    await user.click(getAddContactButton());
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/login");
