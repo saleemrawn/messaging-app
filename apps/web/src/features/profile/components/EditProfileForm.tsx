@@ -79,7 +79,7 @@ function EditProfileForm({ user, onCancel, onSaved }: Props) {
   return (
     <form
       aria-label="Edit profile"
-      className="flex w-full flex-col gap-4 text-left"
+      className="flex w-full max-w-2xl flex-col gap-4 text-left"
       onSubmit={(event) => void handleSubmit(event)}
     >
       <FormError message={error.message} />
