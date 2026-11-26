@@ -19,6 +19,7 @@ const aisha: Contact = {
   firstName: "Aisha",
   lastName: "Khan",
   email: "aisha.khan@email.com",
+  avatarUrl: null,
 };
 
 const jane: Contact = {
@@ -26,6 +27,7 @@ const jane: Contact = {
   firstName: "Jane",
   lastName: "Smith",
   email: "jane.smith@email.com",
+  avatarUrl: null,
 };
 
 const phillipe: Contact = {
@@ -33,6 +35,7 @@ const phillipe: Contact = {
   firstName: "Phillipe",
   lastName: "Martin",
   email: "phillipe.martin@email.com",
+  avatarUrl: null,
 };
 
 // Everyone the lookup endpoint knows besides the current user.

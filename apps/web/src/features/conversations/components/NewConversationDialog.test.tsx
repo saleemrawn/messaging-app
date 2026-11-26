@@ -23,6 +23,7 @@ const aisha: Recipient = {
   firstName: "Aisha",
   lastName: "Khan",
   email: "aisha.khan@email.com",
+  avatarUrl: null,
 };
 
 const jane: Recipient = {
@@ -30,6 +31,7 @@ const jane: Recipient = {
   firstName: "Jane",
   lastName: "Smith",
   email: "jane.smith@email.com",
+  avatarUrl: null,
 };
 
 // Lets the dialog's debounce elapse before asserting that nothing was sent.
@@ -47,6 +49,7 @@ function makeContacts(count: number): Recipient[] {
     firstName: "Contact",
     lastName: String(index + 1),
     email: `contact${String(index + 1)}@email.com`,
+    avatarUrl: null,
   }));
 }
 

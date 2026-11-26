@@ -29,7 +29,12 @@ function buildArchived(): ConversationSummary[] {
       id: 2,
       updatedAt: todayAt(10, 5),
       unreadCount: 0,
-      recipient: { id: 3, firstName: "Phillipe", lastName: "Doe" },
+      recipient: {
+        id: 3,
+        firstName: "Phillipe",
+        lastName: "Doe",
+        avatarUrl: null,
+      },
       latestMessage: {
         id: 4,
         content: LONG_MESSAGE,
@@ -41,7 +46,12 @@ function buildArchived(): ConversationSummary[] {
       id: 1,
       updatedAt: todayAt(9, 0),
       unreadCount: 0,
-      recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+      recipient: {
+        id: 2,
+        firstName: "Aisha",
+        lastName: "Doe",
+        avatarUrl: null,
+      },
       latestMessage: {
         id: 2,
         content: "See you soon",

@@ -16,7 +16,11 @@ interface ReceivedMessageProps {
 function ReceivedMessage({ message, sender }: ReceivedMessageProps) {
   return (
     <li className="flex max-w-[70%] items-start gap-3 self-start">
-      <UserAvatar firstName={sender.firstName} lastName={sender.lastName} />
+      <UserAvatar
+        firstName={sender.firstName}
+        lastName={sender.lastName}
+        avatarUrl={sender.avatarUrl}
+      />
       <div className="flex min-w-0 flex-col items-start gap-1">
         <p className="text-sm font-semibold text-gray-900">
           {formatFullName(sender)}

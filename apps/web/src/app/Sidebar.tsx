@@ -41,7 +41,7 @@ function Sidebar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string>();
   const unreadTotal = useUnreadTotal();
-  const { firstName, lastName } = useCurrentUser();
+  const { firstName, lastName, avatarUrl } = useCurrentUser();
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -76,7 +76,11 @@ function Sidebar() {
       </nav>
       <div className="mt-auto flex flex-col gap-2">
         <NavLink to="/profile" className={accountLinkClassName}>
-          <UserAvatar firstName={firstName} lastName={lastName} />
+          <UserAvatar
+            firstName={firstName}
+            lastName={lastName}
+            avatarUrl={avatarUrl}
+          />
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-medium text-gray-900">
               {firstName} {lastName}

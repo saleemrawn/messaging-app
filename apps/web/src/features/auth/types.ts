@@ -4,6 +4,8 @@ interface User {
   firstName: string;
   lastName: string;
   email: string;
+  // Relative to the API base; null shows initials.
+  avatarUrl: string | null;
 }
 
 interface LoginCredentials {

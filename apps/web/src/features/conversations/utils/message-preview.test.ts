@@ -11,7 +11,12 @@ function buildConversation(
     id: 1,
     updatedAt: "2026-01-01T20:10:00.000Z",
     unreadCount: 0,
-    recipient: { id: 2, firstName: "Aisha", lastName: "Doe" },
+    recipient: {
+      id: 2,
+      firstName: "Aisha",
+      lastName: "Doe",
+      avatarUrl: null,
+    },
     latestMessage,
   };
 }

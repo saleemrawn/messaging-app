@@ -33,6 +33,7 @@ function ConversationListItem({
         <UserAvatar
           firstName={recipient.firstName}
           lastName={recipient.lastName}
+          avatarUrl={recipient.avatarUrl}
         />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900">{fullName}</p>

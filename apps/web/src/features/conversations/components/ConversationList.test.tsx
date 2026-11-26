@@ -37,7 +37,12 @@ const conversations: ConversationSummary[] = [
     id: 2,
     updatedAt: todayAt(10, 0),
     unreadCount: 3,
-    recipient: { id: 3, firstName: "Phillipe", lastName: "Doe" },
+    recipient: {
+      id: 3,
+      firstName: "Phillipe",
+      lastName: "Doe",
+      avatarUrl: null,
+    },
     latestMessage: {
       id: 4,
       content: "Are we still on for tomorrow?",
@@ -49,7 +54,12 @@ const conversations: ConversationSummary[] = [
     id: 1,
     updatedAt: yesterdayAtNoon(),
     unreadCount: 0,
-    recipient: { id: 2, firstName: "Aisha", lastName: "Khan" },
+    recipient: {
+      id: 2,
+      firstName: "Aisha",
+      lastName: "Khan",
+      avatarUrl: null,
+    },
     latestMessage: {
       id: 2,
       content: "See you then",
@@ -61,7 +71,12 @@ const conversations: ConversationSummary[] = [
     id: 3,
     updatedAt: new Date(2023, 5, 12, 9, 0).toISOString(),
     unreadCount: 1,
-    recipient: { id: 4, firstName: "Jane", lastName: "Smith" },
+    recipient: {
+      id: 4,
+      firstName: "Jane",
+      lastName: "Smith",
+      avatarUrl: null,
+    },
     latestMessage: null,
   },
 ];

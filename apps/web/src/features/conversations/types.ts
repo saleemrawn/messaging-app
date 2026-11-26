@@ -4,6 +4,7 @@ interface ConversationRecipient {
   id: number;
   firstName: string;
   lastName: string;
+  avatarUrl: string | null;
 }
 
 // The detail view also shows how to reach them.

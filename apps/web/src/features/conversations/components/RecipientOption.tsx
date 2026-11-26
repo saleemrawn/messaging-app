@@ -38,6 +38,7 @@ function RecipientOption({
         <UserAvatar
           firstName={recipient.firstName}
           lastName={recipient.lastName}
+          avatarUrl={recipient.avatarUrl}
         />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-semibold text-gray-900">

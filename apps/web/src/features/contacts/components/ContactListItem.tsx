@@ -31,7 +31,11 @@ function ContactListItem({ contact }: ContactListItemProps) {
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
       <div className="flex items-center gap-3">
-        <UserAvatar firstName={contact.firstName} lastName={contact.lastName} />
+        <UserAvatar
+          firstName={contact.firstName}
+          lastName={contact.lastName}
+          avatarUrl={contact.avatarUrl}
+        />
         <div className="min-w-0 flex-1">
           <p className="truncate font-semibold text-gray-900">{fullName}</p>
           <p className="truncate text-sm text-gray-600">{contact.email}</p>

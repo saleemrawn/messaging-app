@@ -40,6 +40,7 @@ function buildConversations(): ConversationDetail[] {
         firstName: "Phillipe",
         lastName: "Doe",
         email: "phillipe.doe@email.com",
+        avatarUrl: null,
       },
       messages: [
         {
@@ -73,6 +74,7 @@ function buildConversations(): ConversationDetail[] {
         firstName: "Aisha",
         lastName: "Khan",
         email: "aisha.khan@email.com",
+        avatarUrl: null,
       },
       messages: [
         {
@@ -723,6 +725,7 @@ describe("add contact button", () => {
     firstName: "Phillipe",
     lastName: "Doe",
     email: "phillipe.doe@email.com",
+    avatarUrl: null,
   };
 
   function getAddContactButton() {

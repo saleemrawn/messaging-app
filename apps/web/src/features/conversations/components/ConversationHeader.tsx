@@ -54,6 +54,7 @@ function ConversationHeader({
         <UserAvatar
           firstName={recipient.firstName}
           lastName={recipient.lastName}
+          avatarUrl={recipient.avatarUrl}
         />
         <div className="min-w-0 flex-1">
           <h2
