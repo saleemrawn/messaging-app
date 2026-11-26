@@ -11,7 +11,7 @@ interface RecipientOptionProps {
 
 function getActionLabel(hasConversation: boolean, isPending: boolean): string {
   if (isPending) return "Starting…";
-  return hasConversation ? "Open conversation" : "Start conversation";
+  return hasConversation ? "Message" : "Start conversation";
 }
 
 // A found recipient as one button whose text (name, email, action) is its

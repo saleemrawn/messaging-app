@@ -329,7 +329,7 @@ describe("new conversation dialog", () => {
     await user.type(getEmailInput(dialog), "Aisha.Khan@email.com");
     await user.click(
       await within(dialog).findByRole("button", {
-        name: /aisha khan.*open conversation/i,
+        name: /aisha khan.*message/i,
       }),
     );
 
@@ -368,7 +368,7 @@ describe("new conversation dialog contacts", () => {
 
     expect(options).toHaveLength(2);
     expect(options[0]).toHaveAccessibleName(
-      /aisha khan.*aisha\.khan@email\.com.*open conversation/i,
+      /aisha khan.*aisha\.khan@email\.com.*message/i,
     );
     expect(options[1]).toHaveAccessibleName(
       /jane smith.*jane\.smith@email\.com.*start conversation/i,
