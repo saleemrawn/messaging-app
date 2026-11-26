@@ -35,7 +35,12 @@ function buildConversations(): ConversationDetail[] {
     {
       id: 2,
       updatedAt: todayAt(10, 10),
-      recipient: { id: 3, firstName: "Phillipe", lastName: "Doe" },
+      recipient: {
+        id: 3,
+        firstName: "Phillipe",
+        lastName: "Doe",
+        email: "phillipe.doe@email.com",
+      },
       messages: [
         {
           id: 3,
@@ -63,7 +68,12 @@ function buildConversations(): ConversationDetail[] {
     {
       id: 1,
       updatedAt: todayAt(9, 0),
-      recipient: { id: 2, firstName: "Aisha", lastName: "Khan" },
+      recipient: {
+        id: 2,
+        firstName: "Aisha",
+        lastName: "Khan",
+        email: "aisha.khan@email.com",
+      },
       messages: [
         {
           id: 1,
@@ -166,10 +176,9 @@ function mockApi({
         .map((detail) => detail.recipient)
         .find(({ id }) => id === body.contactId);
       if (!recipient) return notFound();
-      const contact = { ...recipient, email: "contact@email.com" };
-      savedContacts = [...savedContacts, contact];
+      savedContacts = [...savedContacts, recipient];
       return HttpResponse.json(
-        { success: true, data: contact },
+        { success: true, data: recipient },
         { status: 201 },
       );
     }),
@@ -372,6 +381,18 @@ describe("conversation viewer", () => {
     ).toBeInTheDocument();
     const nav = screen.getByRole("navigation", { name: /main/i });
     expect(within(nav).queryByText(/unread/i)).not.toBeInTheDocument();
+  });
+
+  test("shows the recipient's email under their name in the header", async () => {
+    mockApi();
+
+    renderRoute("/");
+    const heading = await findViewerHeading("Phillipe Doe");
+
+    // Under the heading rather than in it, so its name stays the full name.
+    expect(heading.closest("header")).toHaveTextContent(
+      "phillipe.doe@email.com",
+    );
   });
 
   test("shows the recipient's avatar, name, message and time on received messages", async () => {

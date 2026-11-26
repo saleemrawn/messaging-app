@@ -62,11 +62,7 @@ function mockApi({
     {
       id: 1,
       updatedAt: "2026-01-01T09:00:00.000Z",
-      recipient: {
-        id: aisha.id,
-        firstName: aisha.firstName,
-        lastName: aisha.lastName,
-      },
+      recipient: aisha,
       messages: [
         {
           id: 1,
@@ -149,11 +145,7 @@ function mockApi({
       const created: ConversationDetail = {
         id: 3,
         updatedAt: new Date().toISOString(),
-        recipient: {
-          id: jane.id,
-          firstName: jane.firstName,
-          lastName: jane.lastName,
-        },
+        recipient: jane,
         messages: [],
       };
       details = [created, ...details];

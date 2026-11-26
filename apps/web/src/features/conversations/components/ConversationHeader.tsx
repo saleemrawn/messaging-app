@@ -4,14 +4,14 @@ import type {
   ArchiveConversationResult,
 } from "../actions.ts";
 import { addRecipientContactPath, archiveConversationPath } from "../paths.ts";
-import type { ConversationRecipient } from "../types.ts";
+import type { ConversationDetailRecipient } from "../types.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import FormError from "../../../shared/components/FormError.tsx";
 import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 
 interface ConversationHeaderProps {
   conversationId: number;
-  recipient: ConversationRecipient;
+  recipient: ConversationDetailRecipient;
   headingId: string;
   isRecipientContact: boolean;
   // Opened once this conversation is archived; null falls back to the newest.
@@ -55,12 +55,15 @@ function ConversationHeader({
           firstName={recipient.firstName}
           lastName={recipient.lastName}
         />
-        <h2
-          id={headingId}
-          className="min-w-0 flex-1 truncate text-lg font-semibold text-gray-900"
-        >
-          {formatFullName(recipient)}
-        </h2>
+        <div className="min-w-0 flex-1">
+          <h2
+            id={headingId}
+            className="truncate text-lg font-semibold text-gray-900"
+          >
+            {formatFullName(recipient)}
+          </h2>
+          <p className="truncate text-sm text-gray-600">{recipient.email}</p>
+        </div>
         <contactFetcher.Form
           method="post"
           action={addRecipientContactPath(conversationId)}

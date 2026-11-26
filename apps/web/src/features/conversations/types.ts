@@ -6,6 +6,11 @@ interface ConversationRecipient {
   lastName: string;
 }
 
+// The detail view also shows how to reach them.
+interface ConversationDetailRecipient extends ConversationRecipient {
+  email: string;
+}
+
 interface LatestMessage {
   id: number;
   content: string;
@@ -33,7 +38,7 @@ interface ConversationMessage {
 interface ConversationDetail {
   id: number;
   updatedAt: string;
-  recipient: ConversationRecipient;
+  recipient: ConversationDetailRecipient;
   messages: ConversationMessage[];
 }
 
@@ -47,6 +52,7 @@ interface NewMessage {
 
 export type {
   ConversationRecipient,
+  ConversationDetailRecipient,
   ConversationSummary,
   ConversationDetail,
   ConversationMessage,
