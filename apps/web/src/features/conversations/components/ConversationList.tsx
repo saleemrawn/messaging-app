@@ -1,5 +1,6 @@
 import { useId, useRef, useState } from "react";
 import { useLocation } from "react-router";
+import { Plus } from "lucide-react";
 import type { ConversationSummary } from "../types.ts";
 import ConversationListItem from "./ConversationListItem.tsx";
 import NewConversationDialog from "./NewConversationDialog.tsx";
@@ -88,17 +89,7 @@ function ConversationList({
           }}
           className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            className="size-5"
-          >
-            <path d="M10 4v12M4 10h12" />
-          </svg>
+          <Plus aria-hidden="true" className="size-5" />
         </button>
       </div>
       {isDialogOpen && (

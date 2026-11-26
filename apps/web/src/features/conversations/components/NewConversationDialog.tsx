@@ -7,6 +7,7 @@ import {
   type SubmitEvent,
 } from "react";
 import { useFetcher, useNavigate } from "react-router";
+import { X } from "lucide-react";
 import type { CreateConversationResult } from "../actions.ts";
 import type { ContactListResult } from "../loaders.ts";
 import {
@@ -139,17 +140,7 @@ function NewConversationDialog({
             onClick={closeDialog}
             className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-blue-600"
           >
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              className="size-5"
-            >
-              <path d="M5 5l10 10M15 5L5 15" />
-            </svg>
+            <X aria-hidden="true" className="size-5" />
           </button>
         </header>
 

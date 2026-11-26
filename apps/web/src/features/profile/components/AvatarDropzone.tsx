@@ -1,4 +1,5 @@
 import { useId, useState, type ChangeEvent, type DragEvent } from "react";
+import { Upload } from "lucide-react";
 import { AVATAR_ACCEPT } from "../utils/validate-avatar-file.ts";
 
 interface AvatarDropzoneProps {
@@ -55,20 +56,11 @@ function AvatarDropzone({ onFile, isDisabled }: AvatarDropzoneProps) {
       onDrop={handleDrop}
       className={`flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${zoneColors}`}
     >
-      <svg
+      <Upload
         aria-hidden="true"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth={1.5}
         className="size-8 text-gray-400"
-      >
-        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-        <path d="m17 8-5-5-5 5" />
-        <path d="M12 3v12" />
-      </svg>
+      />
       <p className="text-sm text-gray-700">Drag a photo here, or</p>
       <input
         id={inputId}
