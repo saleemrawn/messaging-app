@@ -12,10 +12,10 @@ function SentMessage({ message }: SentMessageProps) {
   const isRead = message.readAt !== null;
 
   return (
-    <li className="flex max-w-[70%] flex-col items-end gap-1 self-end">
+    <li className="flex max-w-[70%] flex-col items-end gap-1.5 self-end">
       <span className="sr-only">You: </span>
-      <MessageBubble className="bg-gray-200">{message.content}</MessageBubble>
-      <p className="flex gap-1 text-xs text-gray-500">
+      <MessageBubble className="rounded-tr-[4px] bg-brand text-white">{message.content}</MessageBubble>
+      <p className="flex gap-1 px-2 text-[11px] text-muted">
         <time dateTime={message.createdAt}>
           {formatMessageTimestamp(message.createdAt)}
         </time>

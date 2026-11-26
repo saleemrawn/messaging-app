@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from "react";
 import { useLocation } from "react-router";
-import { Plus } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import type { ConversationSummary } from "../types.ts";
 import ConversationListItem from "./ConversationListItem.tsx";
 import NewConversationDialog from "./NewConversationDialog.tsx";
@@ -24,10 +24,11 @@ interface ConversationListProps {
 }
 
 function tabClassName(isSelected: boolean): string {
-  const base = "border-b-2 px-3 py-2 text-sm font-medium";
+  const base =
+    "h-8 rounded-[7px] px-3.5 text-xs focus-visible:outline-2 focus-visible:outline-brand";
   return isSelected
-    ? `${base} border-blue-600 text-blue-700`
-    : `${base} border-transparent text-gray-600 hover:text-gray-900`;
+    ? `${base} bg-tint font-medium text-brand`
+    : `${base} text-muted hover:text-ink`;
 }
 
 function getUnreadIds(conversations: ConversationSummary[]): Set<number> {
@@ -80,10 +81,10 @@ function ConversationList({
 
   return (
     <section
-      className={`flex flex-col bg-white ${isSplitView ? "w-96 shrink-0 border-r border-gray-200" : "w-full"}`}
+      className={`flex flex-col bg-panel ${isSplitView ? "w-90 shrink-0 border-r border-line" : "w-full"}`}
     >
-      <div className="flex items-center justify-between gap-4 px-4 pt-6 pb-4 sm:px-6">
-        <h1 className="text-2xl font-semibold">Messages</h1>
+      <div className="flex items-center justify-between gap-4 px-4 pt-8 pb-6 sm:px-6">
+        <h1 className="font-serif text-[30px] text-ink">Messages</h1>
         <button
           ref={newConversationButtonRef}
           type="button"
@@ -92,9 +93,9 @@ function ConversationList({
           onClick={() => {
             setDialogLocationKey(locationKey);
           }}
-          className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          className="flex size-10 items-center justify-center rounded-[10px] bg-brand text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          <Plus aria-hidden="true" className="size-5" />
+          <SquarePen aria-hidden="true" className="size-5" strokeWidth={1.75} />
         </button>
       </div>
       {isDialogOpen && (
@@ -103,7 +104,7 @@ function ConversationList({
           onClose={closeDialog}
         />
       )}
-      <div role="tablist" className="flex gap-2 border-b border-gray-200 px-4">
+      <div role="tablist" className="flex gap-2 px-4 pb-4 sm:px-6">
         {TABS.map(({ value, label }) => (
           <button
             key={value}
@@ -129,9 +130,9 @@ function ConversationList({
         className="relative min-h-0 flex-1 overflow-y-auto"
       >
         {visible.length === 0 ? (
-          <p className="px-4 py-8 text-center text-gray-500">{emptyMessage}</p>
+          <p className="px-4 py-8 text-center text-sm text-muted">{emptyMessage}</p>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="flex flex-col px-3 pb-3">
             {visible.map((conversation) => (
               <ConversationListItem
                 key={conversation.id}

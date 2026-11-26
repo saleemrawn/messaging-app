@@ -43,13 +43,13 @@ function LogoutConfirmDialog({ onConfirm, onClose }: LogoutConfirmDialogProps) {
       aria-describedby={descriptionId}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-canvas p-0 shadow-xl backdrop:bg-ink/40"
     >
       <div className="flex flex-col gap-4 p-6">
-        <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+        <h2 id={titleId} className="text-lg font-semibold text-ink">
           Logout Confirmation
         </h2>
-        <p id={descriptionId} className="text-gray-700">
+        <p id={descriptionId} className="text-ink">
           Are you sure you want to logout?
         </p>
         <div className="flex justify-end gap-2">
@@ -57,14 +57,14 @@ function LogoutConfirmDialog({ onConfirm, onClose }: LogoutConfirmDialogProps) {
             ref={cancelRef}
             type="button"
             onClick={closeDialog}
-            className="rounded border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600"
+            className="rounded-lg border border-line-strong px-4 py-2 font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            className="rounded bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Logout
           </button>

@@ -28,10 +28,10 @@ function ContactsPage() {
   return (
     <section
       aria-labelledby={headingId}
-      className="flex h-full w-full flex-col border-gray-200 bg-white xl:max-w-2xl xl:border-r"
+      className="flex h-full w-full flex-col border-line bg-panel xl:max-w-2xl xl:border-r"
     >
       <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4">
-        <h1 id={headingId} className="text-2xl font-semibold">
+        <h1 id={headingId} className="font-serif text-[30px] text-ink">
           Contacts
         </h1>
         <button
@@ -42,7 +42,7 @@ function ContactsPage() {
           onClick={() => {
             setDialogLocationKey(locationKey);
           }}
-          className="rounded-full bg-blue-600 p-2 text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          className="rounded-full bg-brand p-2 text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <Plus aria-hidden="true" className="size-5" />
         </button>
@@ -50,11 +50,11 @@ function ContactsPage() {
       {isDialogOpen && (
         <AddContactDialog contacts={contacts} onClose={closeDialog} />
       )}
-      <div className="min-h-0 flex-1 overflow-y-auto border-t border-gray-200">
+      <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
         {contacts.length === 0 ? (
-          <p className="px-4 py-8 text-center text-gray-500">No contacts yet</p>
+          <p className="px-4 py-8 text-center text-muted">No contacts yet</p>
         ) : (
-          <ul aria-label="Contacts" className="divide-y divide-gray-100">
+          <ul aria-label="Contacts" className="divide-y divide-line-subtle">
             {contacts.map((contact) => (
               <ContactListItem key={contact.id} contact={contact} />
             ))}

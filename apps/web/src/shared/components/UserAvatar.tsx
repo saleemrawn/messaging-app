@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toApiUrl } from "../api/api-url.ts";
 
-type AvatarSize = "md" | "lg" | "xl";
+type AvatarSize = "sm" | "md" | "lg" | "xl";
 
 interface UserAvatarProps {
   firstName: string;
@@ -13,7 +13,8 @@ interface UserAvatarProps {
 }
 
 const SIZE_CLASSES: Record<AvatarSize, string> = {
-  md: "size-12",
+  sm: "size-9 text-xs",
+  md: "size-11 text-sm",
   lg: "size-24 text-3xl",
   xl: "size-32 text-4xl",
 };
@@ -36,7 +37,7 @@ function UserAvatar({
   return (
     <span
       aria-hidden="true"
-      className={`flex ${SIZE_CLASSES[size]} shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 font-semibold text-gray-700`}
+      className={`flex ${SIZE_CLASSES[size]} shrink-0 items-center justify-center overflow-hidden rounded-full bg-tint font-semibold text-brand`}
     >
       {isShowingPhoto ? (
         <img

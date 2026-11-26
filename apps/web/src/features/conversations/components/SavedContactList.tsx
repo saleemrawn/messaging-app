@@ -54,7 +54,7 @@ function SavedContactList({
         Contacts
       </h3>
       {statusMessage ? (
-        <p className="text-sm text-gray-500">{statusMessage}</p>
+        <p className="text-sm text-muted">{statusMessage}</p>
       ) : (
         <div className="relative">
           <ul

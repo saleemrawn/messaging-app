@@ -76,18 +76,18 @@ function AddContactDialog({ contacts, onClose }: AddContactDialogProps) {
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={handleBackdropClick}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl bg-canvas p-0 shadow-xl backdrop:bg-ink/40"
     >
       <div className="flex flex-col gap-4 p-6">
         <header className="flex items-center justify-between gap-4">
-          <h2 id={titleId} className="text-lg font-semibold text-gray-900">
+          <h2 id={titleId} className="text-lg font-semibold text-ink">
             Add contact
           </h2>
           <button
             type="button"
             aria-label="Close"
             onClick={closeDialog}
-            className="rounded-full p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-blue-600"
+            className="rounded-full p-1 text-muted hover:bg-tint/60 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
           >
             <X aria-hidden="true" className="size-5" />
           </button>
@@ -109,12 +109,12 @@ function AddContactDialog({ contacts, onClose }: AddContactDialogProps) {
               setInputValue(event.target.value);
             }}
             aria-describedby={statusId}
-            className="rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none"
+            className="rounded-lg border border-line-strong px-3 py-2 focus:border-brand focus:outline-none"
           />
           <p
             id={statusId}
             aria-live="polite"
-            className={`min-h-5 text-sm ${isStatusError ? "text-red-600" : "text-gray-500"}`}
+            className={`min-h-5 text-sm ${isStatusError ? "text-red-600" : "text-muted"}`}
           >
             {statusMessage}
           </p>

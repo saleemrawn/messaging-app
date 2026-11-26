@@ -44,8 +44,8 @@ function AvatarDropzone({ onFile, isDisabled }: AvatarDropzoneProps) {
   }
 
   const zoneColors = isDragging
-    ? "border-blue-500 bg-blue-50"
-    : "border-gray-300 bg-gray-50";
+    ? "border-brand bg-tint"
+    : "border-line-strong bg-panel";
 
   return (
     <div
@@ -59,9 +59,9 @@ function AvatarDropzone({ onFile, isDisabled }: AvatarDropzoneProps) {
       <Upload
         aria-hidden="true"
         strokeWidth={1.5}
-        className="size-8 text-gray-400"
+        className="size-8 text-muted"
       />
-      <p className="text-sm text-gray-700">Drag a photo here, or</p>
+      <p className="text-sm text-ink">Drag a photo here, or</p>
       <input
         id={inputId}
         type="file"
@@ -73,11 +73,11 @@ function AvatarDropzone({ onFile, isDisabled }: AvatarDropzoneProps) {
       />
       <label
         htmlFor={inputId}
-        className="cursor-pointer rounded bg-blue-600 px-4 py-2 font-medium text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-600 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 hover:bg-blue-700"
+        className="cursor-pointer rounded-lg bg-brand px-4 py-2 font-medium text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brand peer-disabled:cursor-not-allowed peer-disabled:opacity-50 hover:bg-brand-strong"
       >
         Choose a file
       </label>
-      <p id={hintId} className="text-xs text-gray-500">
+      <p id={hintId} className="text-xs text-muted">
         JPG or PNG, up to 4 MB. 320 × 320 px recommended.
       </p>
     </div>

@@ -117,12 +117,12 @@ function EditProfileForm({ user, onCancel, onSaved }: Props) {
 
       <fieldset
         aria-describedby={passwordHintId}
-        className="mt-2 flex flex-col gap-4 border-t border-gray-200 pt-4"
+        className="mt-2 flex flex-col gap-4 border-t border-line pt-4"
       >
-        <legend className="pt-4 text-base font-semibold text-gray-900">
+        <legend className="pt-4 text-base font-semibold text-ink">
           Change password
         </legend>
-        <p id={passwordHintId} className="-mt-2 text-sm text-gray-500">
+        <p id={passwordHintId} className="-mt-2 text-sm text-muted">
           Leave blank to keep your current password.
         </p>
         <FormField
@@ -156,14 +156,14 @@ function EditProfileForm({ user, onCancel, onSaved }: Props) {
           type="button"
           onClick={onCancel}
           disabled={isSubmitting}
-          className="rounded border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-50"
+          className="rounded-lg border border-line-strong px-4 py-2 font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+          className="rounded-lg bg-brand px-4 py-2 font-medium text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
         >
           {isSubmitting ? "Saving…" : "Save"}
         </button>

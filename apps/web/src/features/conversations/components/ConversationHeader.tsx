@@ -27,7 +27,7 @@ interface ConversationHeaderProps {
 
 // Below sm the buttons show only an icon; the label stays for screen readers.
 const HEADER_BUTTON_CLASS =
-  "flex items-center rounded border border-gray-300 p-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50 sm:px-3 sm:py-1";
+  "flex items-center rounded-lg border border-line p-2 text-sm font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50 sm:px-3 sm:py-1.5";
 const HEADER_ICON_CLASS = "size-4 sm:hidden";
 const HEADER_LABEL_CLASS = "max-sm:sr-only";
 
@@ -63,13 +63,13 @@ function ConversationHeader({
   const ContactIcon = isRecipientContact ? UserCheck : UserPlus;
 
   return (
-    <header className="flex flex-col gap-3 border-b border-gray-200 px-4 py-4 sm:px-6">
+    <header className="flex flex-col gap-3 border-b border-line px-4 py-5 sm:px-8 sm:py-7">
       <div className="flex items-center gap-3">
         {!isSplit && (
           <Link
             to={CONVERSATIONS_PATH}
             aria-label="Back to conversations"
-            className="-ml-2 shrink-0 rounded p-1 text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600"
+            className="-ml-2 shrink-0 rounded-lg p-1 text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand"
           >
             <ChevronLeft aria-hidden="true" strokeWidth={1.5} />
           </Link>
@@ -82,11 +82,11 @@ function ConversationHeader({
         <div className="min-w-0 flex-1">
           <h2
             id={headingId}
-            className="truncate text-lg font-semibold text-gray-900"
+            className="truncate font-serif text-[22px] text-ink"
           >
             {formatFullName(recipient)}
           </h2>
-          <p className="truncate text-sm text-gray-600">{recipient.email}</p>
+          <p className="truncate text-xs text-muted">{recipient.email}</p>
         </div>
         <contactFetcher.Form
           method="post"

@@ -14,7 +14,7 @@ function MobileTopBar({
   onOpenMenu,
 }: MobileTopBarProps) {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-2">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-sidebar px-2">
       <button
         ref={menuButtonRef}
         type="button"
@@ -22,11 +22,11 @@ function MobileTopBar({
         aria-haspopup="dialog"
         aria-expanded={isMenuOpen}
         onClick={onOpenMenu}
-        className="rounded p-2 text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600"
+        className="rounded-lg p-2 text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand"
       >
         <Menu aria-hidden="true" strokeWidth={1.5} />
       </button>
-      <p className="text-xl font-semibold">Messenger</p>
+      <p className="font-serif text-xl text-ink">Messenger</p>
     </header>
   );
 }

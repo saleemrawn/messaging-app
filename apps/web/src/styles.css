@@ -1,7 +1,32 @@
 @import "tailwindcss";
 
-/* Tailwind v4 dropped the pointer cursor default for buttons; restore it. */
+/* Design tokens from the Figma "Messaging · Desktop inbox" frame. */
+@theme {
+  --color-ink: #242923;
+  --color-muted: #74786e;
+  --color-brand: #344c3d;
+  --color-brand-strong: #2a3f32;
+  --color-tint: #e8ede4;
+  --color-bubble: #ecefe7;
+  --color-canvas: #fdfcfa;
+  --color-panel: #faf9f6;
+  --color-sidebar: #f3f2ec;
+  --color-field: #f0f0ea;
+  --color-chip: #ecede6;
+  --color-line: #e6e7df;
+  --color-line-subtle: #eeefe8;
+  --color-line-strong: #dce0d5;
+
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Libre Baskerville", ui-serif, Georgia, serif;
+}
+
 @layer base {
+  body {
+    @apply bg-canvas text-ink;
+  }
+
+  /* Tailwind v4 dropped the pointer cursor default for buttons; restore it. */
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;

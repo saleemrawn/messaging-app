@@ -9,7 +9,7 @@ interface MessageBubbleProps {
 function MessageBubble({ className, children }: MessageBubbleProps) {
   return (
     <p
-      className={`rounded-2xl px-4 py-2 text-gray-900 whitespace-pre-wrap wrap-break-word ${className}`}
+      className={`rounded-[14px] px-4.5 py-3 text-sm leading-[1.55] whitespace-pre-wrap wrap-break-word ${className}`}
     >
       {children}
     </p>

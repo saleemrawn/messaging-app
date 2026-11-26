@@ -12,20 +12,20 @@ function ArchivePage() {
   return (
     <section
       aria-labelledby={headingId}
-      className="flex h-full w-full flex-col border-gray-200 bg-white xl:max-w-2xl xl:border-r"
+      className="flex h-full w-full flex-col border-line bg-panel xl:max-w-2xl xl:border-r"
     >
-      <h1 id={headingId} className="px-6 pt-6 pb-4 text-2xl font-semibold">
+      <h1 id={headingId} className="px-6 pt-8 pb-6 font-serif text-[30px] text-ink">
         Archive
       </h1>
-      <div className="min-h-0 flex-1 overflow-y-auto border-t border-gray-200">
+      <div className="min-h-0 flex-1 overflow-y-auto border-t border-line">
         {conversations.length === 0 ? (
-          <p className="px-4 py-8 text-center text-gray-500">
+          <p className="px-4 py-8 text-center text-muted">
             No archived conversations
           </p>
         ) : (
           <ul
             aria-label="Archived conversations"
-            className="divide-y divide-gray-100"
+            className="divide-y divide-line-subtle"
           >
             {conversations.map((conversation) => (
               <ArchivedConversationListItem

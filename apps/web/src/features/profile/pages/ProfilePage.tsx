@@ -16,7 +16,7 @@ function ProfilePage() {
   return (
     <section
       aria-label="Profile"
-      className="relative flex h-full w-full flex-col items-center gap-2 overflow-y-auto border-gray-200 bg-white px-6 py-12 text-center xl:max-w-2xl xl:border-r"
+      className="relative flex h-full w-full flex-col items-center gap-2 overflow-y-auto border-line bg-panel px-6 py-12 text-center xl:max-w-2xl xl:border-r"
     >
       {!isEditing && (
         <button
@@ -25,7 +25,7 @@ function ProfilePage() {
           onClick={() => {
             setIsEditing(true);
           }}
-          className="absolute top-4 right-4 rounded border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="absolute top-4 right-4 rounded-lg border border-line-strong px-3 py-1.5 text-sm font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand"
         >
           Edit
         </button>
@@ -48,10 +48,10 @@ function ProfilePage() {
         />
       ) : (
         <>
-          <h1 className="mt-2 text-xl font-semibold text-gray-900">
+          <h1 className="mt-2 font-serif text-[22px] text-ink">
             {formatFullName(user)}
           </h1>
-          <p className="text-base break-all text-gray-500">{user.email}</p>
+          <p className="text-base break-all text-muted">{user.email}</p>
         </>
       )}
     </section>

@@ -37,7 +37,7 @@ function LoginForm() {
       className="flex flex-col gap-4"
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <h1 className="text-2xl font-semibold">Log in</h1>
+      <h1 className="font-serif text-[30px] text-ink">Log in</h1>
       <FormError message={error.message} />
       <FormField
         label="Username"
@@ -55,7 +55,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-lg bg-brand px-4 py-2 font-medium text-white hover:bg-brand-strong disabled:opacity-50"
       >
         {isSubmitting ? "Logging in…" : "Log in"}
       </button>

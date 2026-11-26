@@ -38,7 +38,7 @@ function AvatarPickerStep({
             type="button"
             onClick={onRemove}
             disabled={isBusy}
-            className="rounded px-4 py-2 font-medium text-red-600 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-50"
+            className="rounded-lg px-4 py-2 font-medium text-red-600 hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50"
           >
             {isRemoving ? "Removing…" : "Remove photo"}
           </button>
@@ -49,7 +49,7 @@ function AvatarPickerStep({
           type="button"
           onClick={onCancel}
           disabled={isBusy}
-          className="rounded border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-50"
+          className="rounded-lg border border-line-strong px-4 py-2 font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50"
         >
           Cancel
         </button>

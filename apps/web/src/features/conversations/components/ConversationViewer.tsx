@@ -26,7 +26,7 @@ function ConversationViewer({
   return (
     <section
       aria-labelledby={headingId}
-      className="flex min-w-0 flex-1 flex-col bg-white"
+      className="flex min-w-0 flex-1 flex-col bg-canvas"
     >
       <ConversationHeader
         conversationId={conversation.id}

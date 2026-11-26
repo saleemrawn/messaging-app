@@ -33,7 +33,7 @@ function RecipientOption({
         onClick={() => {
           if (!isPending) onSelect(recipient);
         }}
-        className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-600 aria-disabled:opacity-60"
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-tint/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand aria-disabled:opacity-60"
       >
         <UserAvatar
           firstName={recipient.firstName}
@@ -41,14 +41,14 @@ function RecipientOption({
           avatarUrl={recipient.avatarUrl}
         />
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold text-gray-900">
+          <span className="block truncate font-semibold text-ink">
             {fullName}
           </span>
-          <span className="block truncate text-sm text-gray-600">
+          <span className="block truncate text-sm text-muted">
             {recipient.email}
           </span>
         </span>
-        <span className="shrink-0 text-sm font-medium text-blue-700">
+        <span className="shrink-0 text-sm font-medium text-brand">
           {getActionLabel(hasConversation, isPending)}
         </span>
       </button>

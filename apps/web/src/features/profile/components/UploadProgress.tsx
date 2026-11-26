@@ -11,14 +11,14 @@ function UploadProgress({ percent }: UploadProgressProps) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={percent}
-        className="h-2 w-full overflow-hidden rounded-full bg-gray-200"
+        className="h-2 w-full overflow-hidden rounded-full bg-chip"
       >
         <div
-          className="h-full rounded-full bg-blue-600 transition-[width]"
+          className="h-full rounded-full bg-brand transition-[width]"
           style={{ width: `${String(percent)}%` }}
         />
       </div>
-      <p className="text-xs text-gray-500">Uploading… {percent}%</p>
+      <p className="text-xs text-muted">Uploading… {percent}%</p>
     </div>
   );
 }

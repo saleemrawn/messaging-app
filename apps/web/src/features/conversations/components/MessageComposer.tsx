@@ -6,6 +6,7 @@ import {
   type SubmitEvent,
 } from "react";
 import { useFetcher } from "react-router";
+import { SendHorizontal } from "lucide-react";
 import type { SendMessageResult } from "../actions.ts";
 import FormError from "../../../shared/components/FormError.tsx";
 
@@ -76,10 +77,10 @@ function MessageComposer({
       ref={formRef}
       method="post"
       onSubmit={handleSubmit}
-      className="flex flex-col gap-2 border-t border-gray-200 px-4 py-4 sm:px-6"
+      className="flex flex-col gap-2 px-4 pt-2 pb-4 sm:px-8 sm:pb-6"
     >
       <FormError id={errorId} message={error} />
-      <div className="flex items-stretch gap-2 rounded-2xl border border-gray-300 bg-white p-2 focus-within:border-blue-600">
+      <div className="flex items-end gap-2 rounded-xl border border-line-strong bg-white p-3 focus-within:border-brand">
         <input type="hidden" name="recipientId" value={recipientId} />
         <textarea
           ref={textareaRef}
@@ -92,17 +93,18 @@ function MessageComposer({
           placeholder="Write a message…"
           rows={2}
           maxLength={MAX_MESSAGE_LENGTH}
-          className="min-w-0 flex-1 resize-none px-2 py-1 outline-none"
+          className="min-w-0 flex-1 resize-none px-1 py-1 text-sm leading-[1.55] text-ink outline-none placeholder:text-muted"
         />
         <button
           type="submit"
+          aria-label="Send"
           aria-disabled={isSending}
-          className="rounded-xl bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 aria-disabled:opacity-50"
+          className="flex size-11 shrink-0 items-center justify-center rounded-[9px] bg-brand text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand aria-disabled:opacity-50"
         >
-          Send
+          <SendHorizontal aria-hidden="true" className="size-5.5" strokeWidth={1.75} />
         </button>
       </div>
-      <p id={hintId} className="px-2 text-xs text-gray-500">
+      <p id={hintId} className="px-1 text-[10px] text-muted">
         Enter to send · Shift + Enter for a new line
       </p>
     </fetcher.Form>

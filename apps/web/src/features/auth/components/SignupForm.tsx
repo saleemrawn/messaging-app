@@ -44,7 +44,7 @@ function SignupForm({ onSuccess }: Props) {
       className="flex flex-col gap-4"
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <h1 className="text-2xl font-semibold">Create an account</h1>
+      <h1 className="font-serif text-[30px] text-ink">Create an account</h1>
       <FormError message={error.message} />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormField
@@ -83,7 +83,7 @@ function SignupForm({ onSuccess }: Props) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-lg bg-brand px-4 py-2 font-medium text-white hover:bg-brand-strong disabled:opacity-50"
       >
         {isSubmitting ? "Signing up…" : "Sign up"}
       </button>

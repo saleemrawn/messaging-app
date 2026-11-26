@@ -30,14 +30,14 @@ function MessageList({ conversation, currentUserId }: MessageListProps) {
       role="log"
       aria-label="Messages"
       tabIndex={0}
-      className="relative min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 focus-visible:outline-2 focus-visible:outline-blue-600"
+      className="relative min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 sm:py-8 focus-visible:outline-2 focus-visible:outline-brand"
     >
       {messageCount === 0 ? (
-        <p className="py-8 text-center text-gray-500">
+        <p className="py-8 text-center text-sm text-muted">
           No messages yet. Say hello to {recipient.firstName}!
         </p>
       ) : (
-        <ol className="flex flex-col gap-4">
+        <ol className="flex flex-col gap-7">
           {messages.map((message) =>
             message.senderId === currentUserId ? (
               <SentMessage key={message.id} message={message} />

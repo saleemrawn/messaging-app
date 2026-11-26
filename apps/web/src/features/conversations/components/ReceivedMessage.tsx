@@ -21,12 +21,12 @@ function ReceivedMessage({ message, sender }: ReceivedMessageProps) {
         lastName={sender.lastName}
         avatarUrl={sender.avatarUrl}
       />
-      <div className="flex min-w-0 flex-col items-start gap-1">
-        <p className="text-sm font-semibold text-gray-900">
+      <div className="flex min-w-0 flex-col items-start gap-1.5">
+        <p className="px-2 text-[11px] text-muted">
           {formatFullName(sender)}
         </p>
-        <MessageBubble className="bg-gray-100">{message.content}</MessageBubble>
-        <time dateTime={message.createdAt} className="text-xs text-gray-500">
+        <MessageBubble className="rounded-tl-[4px] bg-bubble text-ink">{message.content}</MessageBubble>
+        <time dateTime={message.createdAt} className="px-2 text-[11px] text-muted">
           {formatMessageTimestamp(message.createdAt)}
         </time>
       </div>

@@ -35,7 +35,7 @@ function SidebarDrawer({ onClose }: SidebarDrawerProps) {
       aria-label="Menu"
       onClose={onClose}
       onClick={handleBackdropClick}
-      className="m-0 h-dvh max-h-none w-72 max-w-[85vw] bg-white p-0 shadow-xl backdrop:bg-gray-900/40"
+      className="m-0 h-dvh max-h-none w-72 max-w-[85vw] bg-sidebar p-0 shadow-xl backdrop:bg-ink/40"
     >
       <Sidebar
         headerAction={
@@ -44,7 +44,7 @@ function SidebarDrawer({ onClose }: SidebarDrawerProps) {
             type="button"
             aria-label="Close menu"
             onClick={closeDrawer}
-            className="rounded p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-2 focus-visible:outline-blue-600"
+            className="rounded-lg p-2 text-muted hover:bg-tint/60 hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
           >
             <X aria-hidden="true" strokeWidth={1.5} />
           </button>

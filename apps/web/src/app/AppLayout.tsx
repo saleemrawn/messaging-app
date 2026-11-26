@@ -31,8 +31,8 @@ function AppLayout() {
 
   if (isDesktop) {
     return (
-      <div className="flex h-dvh bg-gray-50">
-        <div className="w-60 shrink-0 border-r border-gray-200">
+      <div className="flex h-dvh bg-canvas">
+        <div className="w-54 shrink-0">
           <Sidebar />
         </div>
         <main className="flex min-w-0 flex-1">
@@ -45,7 +45,7 @@ function AppLayout() {
   // An open conversation takes the whole screen in single-column view; its
   // header's back link returns to the list, which has the top bar.
   return (
-    <div className="flex h-dvh flex-col bg-gray-50">
+    <div className="flex h-dvh flex-col bg-canvas">
       {!isConversationFullScreen && (
         <MobileTopBar
           menuButtonRef={menuButtonRef}

@@ -39,8 +39,8 @@ function MessagesPage() {
     <div className="flex h-full w-full">
       {list}
       {viewer ?? (
-        <div className="flex flex-1 items-center justify-center bg-white">
-          <p className="text-gray-500">No conversation selected</p>
+        <div className="flex flex-1 items-center justify-center bg-canvas">
+          <p className="text-sm text-muted">No conversation selected</p>
         </div>
       )}
     </div>

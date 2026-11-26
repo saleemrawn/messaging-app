@@ -39,7 +39,7 @@ function FormField({
         disabled={isDisabled}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : undefined}
-        className="rounded border border-gray-300 px-3 py-2 focus:border-blue-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-500"
+        className="rounded-lg border border-line-strong px-3 py-2 focus:border-brand focus:outline-none disabled:bg-field disabled:text-muted"
       />
       {error && (
         <p id={errorId} className="text-sm text-red-600">

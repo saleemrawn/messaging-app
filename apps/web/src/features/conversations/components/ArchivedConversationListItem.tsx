@@ -26,8 +26,8 @@ function ArchivedConversationListItem({
   const isUnarchiving = fetcher.state !== "idle";
   const error = fetcher.data?.ok === false ? fetcher.data.error : undefined;
   const previewClassName = latestMessage
-    ? "truncate text-sm text-gray-600"
-    : "truncate text-sm text-gray-400 italic";
+    ? "truncate text-sm text-muted"
+    : "truncate text-sm text-muted italic";
 
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
@@ -38,13 +38,13 @@ function ArchivedConversationListItem({
           avatarUrl={recipient.avatarUrl}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900">{fullName}</p>
+          <p className="truncate font-semibold text-ink">{fullName}</p>
           <p className={previewClassName}>
             {getMessagePreview(conversation, currentUserId)}
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">
-          <time dateTime={timestamp} className="text-xs text-gray-500">
+          <time dateTime={timestamp} className="text-xs text-muted">
             {formatConversationTimestamp(timestamp)}
           </time>
           <fetcher.Form method="post" action={ARCHIVE_PATH}>
@@ -53,7 +53,7 @@ function ArchivedConversationListItem({
               type="submit"
               disabled={isUnarchiving}
               aria-label={`Unarchive conversation with ${fullName}`}
-              className="rounded border border-gray-300 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+              className="rounded-lg border border-line-strong px-3 py-1 text-sm font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
             >
               {isUnarchiving ? "Unarchiving…" : "Unarchive"}
             </button>

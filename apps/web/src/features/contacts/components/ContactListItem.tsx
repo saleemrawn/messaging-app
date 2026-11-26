@@ -13,7 +13,7 @@ interface ContactListItemProps {
 }
 
 const BUTTON_BASE_CLASSES =
-  "rounded px-3 py-1 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50";
+  "rounded-lg px-3 py-1 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50";
 
 function ContactListItem({ contact }: ContactListItemProps) {
   // Message posts to the create conversation action, which reuses an existing
@@ -37,8 +37,8 @@ function ContactListItem({ contact }: ContactListItemProps) {
           avatarUrl={contact.avatarUrl}
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900">{fullName}</p>
-          <p className="truncate text-sm text-gray-600">{contact.email}</p>
+          <p className="truncate font-semibold text-ink">{fullName}</p>
+          <p className="truncate text-sm text-muted">{contact.email}</p>
         </div>
         <div className="flex shrink-0 gap-2">
           <messageFetcher.Form method="post" action={NEW_CONVERSATION_PATH}>
@@ -47,7 +47,7 @@ function ContactListItem({ contact }: ContactListItemProps) {
               type="submit"
               disabled={isBusy}
               aria-label={`Message ${fullName}`}
-              className={`${BUTTON_BASE_CLASSES} bg-blue-600 text-white hover:bg-blue-700`}
+              className={`${BUTTON_BASE_CLASSES} bg-brand text-white hover:bg-brand-strong`}
             >
               {isOpening ? "Opening…" : "Message"}
             </button>
@@ -58,7 +58,7 @@ function ContactListItem({ contact }: ContactListItemProps) {
               type="submit"
               disabled={isBusy}
               aria-label={`Remove ${fullName} from contacts`}
-              className={`${BUTTON_BASE_CLASSES} border border-gray-300 text-gray-700 hover:bg-gray-100`}
+              className={`${BUTTON_BASE_CLASSES} border border-line-strong text-ink hover:bg-tint/60`}
             >
               {isRemoving ? "Removing…" : "Remove"}
             </button>

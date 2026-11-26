@@ -12,9 +12,20 @@ interface ConversationListItemProps {
   currentUserId: number;
 }
 
+// A hairline from the text column to the row's right edge, between rows.
+// Hidden next to the selected row, whose tint already separates it.
+const ROW_DIVIDER_CLASS =
+  "not-first:before:absolute not-first:before:top-0 not-first:before:right-3 not-first:before:left-17 not-first:before:h-px not-first:before:bg-line-subtle has-[[aria-current=page]]:before:hidden [li:has([aria-current=page])+&]:before:hidden";
+
 function rowClassName({ isActive }: { isActive: boolean }): string {
-  const base = "flex items-start gap-3 px-4 py-3";
-  return isActive ? `${base} bg-blue-50` : `${base} hover:bg-gray-50`;
+  const base =
+    "flex items-start gap-3 rounded-[10px] px-3 py-5 focus-visible:outline-2 focus-visible:outline-brand";
+  return isActive ? `${base} bg-tint` : `${base} hover:bg-tint/50`;
+}
+
+// Secondary text turns brand green on the selected row.
+function metaColor(isActive: boolean): string {
+  return isActive ? "text-brand" : "text-muted";
 }
 
 function ConversationListItem({
@@ -23,30 +34,40 @@ function ConversationListItem({
 }: ConversationListItemProps) {
   const { id, recipient, updatedAt, unreadCount } = conversation;
   const fullName = formatFullName(recipient);
-  const previewClassName = conversation.latestMessage
-    ? "truncate text-sm text-gray-600"
-    : "truncate text-sm text-gray-400 italic";
+  const nameWeight = unreadCount > 0 ? "font-semibold" : "font-medium";
+  const previewStyle = conversation.latestMessage ? "" : "italic";
 
   return (
-    <li>
+    <li className={`relative ${ROW_DIVIDER_CLASS}`}>
       <NavLink to={conversationPath(id)} className={rowClassName}>
-        <UserAvatar
-          firstName={recipient.firstName}
-          lastName={recipient.lastName}
-          avatarUrl={recipient.avatarUrl}
-        />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-gray-900">{fullName}</p>
-          <p className={previewClassName}>
-            {getMessagePreview(conversation, currentUserId)}
-          </p>
-        </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <time dateTime={updatedAt} className="text-xs text-gray-500">
-            {formatConversationTimestamp(updatedAt)}
-          </time>
-          <UnreadBadge count={unreadCount} />
-        </div>
+        {({ isActive }) => (
+          <>
+            <UserAvatar
+              firstName={recipient.firstName}
+              lastName={recipient.lastName}
+              avatarUrl={recipient.avatarUrl}
+            />
+            <div className="min-w-0 flex-1">
+              <p className={`truncate text-[13px] text-ink ${nameWeight}`}>
+                {fullName}
+              </p>
+              <p
+                className={`truncate text-xs ${metaColor(isActive)} ${previewStyle}`}
+              >
+                {getMessagePreview(conversation, currentUserId)}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1.5">
+              <time
+                dateTime={updatedAt}
+                className={`text-[10px] ${metaColor(isActive)}`}
+              >
+                {formatConversationTimestamp(updatedAt)}
+              </time>
+              <UnreadBadge count={unreadCount} />
+            </div>
+          </>
+        )}
       </NavLink>
     </li>
   );

@@ -38,7 +38,7 @@ function AvatarCropper({
 
   return (
     <>
-      <div className="relative h-72 w-full overflow-hidden rounded-xl bg-gray-900">
+      <div className="relative h-72 w-full overflow-hidden rounded-xl bg-ink">
         <Cropper
           image={imageUrl}
           crop={crop}
@@ -54,7 +54,7 @@ function AvatarCropper({
         />
       </div>
       <div className="flex items-center gap-3">
-        <label htmlFor={zoomId} className="text-sm font-medium text-gray-700">
+        <label htmlFor={zoomId} className="text-sm font-medium text-ink">
           Zoom
         </label>
         <input
@@ -68,10 +68,10 @@ function AvatarCropper({
           onChange={(event) => {
             setZoom(Number(event.target.value));
           }}
-          className="flex-1 accent-blue-600"
+          className="flex-1 accent-brand"
         />
       </div>
-      <p className="text-sm text-gray-500">Drag the photo to reposition it.</p>
+      <p className="text-sm text-muted">Drag the photo to reposition it.</p>
       {isLowResolution && (
         <p className="text-sm text-amber-700">
           This crop is smaller than 320 × 320 px, so it may look blurry.
@@ -83,7 +83,7 @@ function AvatarCropper({
           type="button"
           onClick={onChooseAnother}
           disabled={isUploading}
-          className="rounded border border-gray-300 px-4 py-2 font-medium text-gray-700 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-blue-600 disabled:opacity-50"
+          className="rounded-lg border border-line-strong px-4 py-2 font-medium text-ink hover:bg-tint/60 focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-50"
         >
           Choose another
         </button>
@@ -93,7 +93,7 @@ function AvatarCropper({
             if (area) onSave(area);
           }}
           disabled={isUploading || area === null}
-          className="rounded bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
+          className="rounded-lg bg-brand px-4 py-2 font-medium text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-50"
         >
           {isUploading ? "Saving…" : "Save"}
         </button>

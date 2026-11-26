@@ -29,12 +29,12 @@ function LoginPage() {
   const isSignup = mode === "signup";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
+    <main className="flex min-h-screen items-center justify-center bg-sidebar px-4">
+      <div className="w-full max-w-md rounded-xl border border-line bg-canvas p-8 shadow-sm">
         {isAccountCreated && (
           <p
             role="status"
-            className="mb-4 rounded bg-green-50 px-3 py-2 text-sm text-green-700"
+            className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"
           >
             Account created, please log in.
           </p>
@@ -44,10 +44,10 @@ function LoginPage() {
         ) : (
           <LoginForm />
         )}
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-muted">
           <button
             type="button"
-            className="text-blue-600 hover:underline"
+            className="text-brand hover:underline"
             onClick={() => {
               switchTo(isSignup ? "login" : "signup");
             }}

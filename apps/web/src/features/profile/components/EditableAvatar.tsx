@@ -28,7 +28,7 @@ function EditableAvatar({ user }: EditableAvatarProps) {
         onClick={() => {
           setIsDialogOpen(true);
         }}
-        className="absolute right-0.5 bottom-0.5 flex size-9 items-center justify-center rounded-full border-2 border-white bg-blue-600 text-white shadow-md hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="absolute right-0.5 bottom-0.5 flex size-9 items-center justify-center rounded-full border-2 border-white bg-brand text-white shadow-md hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         <Pencil aria-hidden="true" strokeWidth={1.5} className="size-4" />
       </button>
