@@ -7,6 +7,11 @@ import {
   getUserCredentialsByUsername,
 } from "../user/user-repository.ts";
 import { getAuthenticatedUserAccountId } from "./auth-helpers.ts";
+import {
+  assertLoginAllowed,
+  recordLoginFailure,
+  recordLoginSuccess,
+} from "../rate-limit/login-rate-limit.ts";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -32,21 +37,33 @@ const login = async (
 
   const { username, password } = req.body;
 
-  if (!username || !password) {
+  // The body is untrusted, so check the types as well as presence.
+  if (
+    typeof username !== "string" ||
+    typeof password !== "string" ||
+    !username ||
+    !password
+  ) {
     return res
       .status(400)
       .json({ success: false, message: "Username and password are required" });
   }
 
+  // Outside the try below, whose catch would turn the 429 into a 500.
+  await assertLoginAllowed(res, username, req.ip);
+
   try {
     const user = await getUserCredentialsByUsername(username);
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
+      await recordLoginFailure(username, req.ip);
       return res.status(401).json({
         success: false,
         message: "Invalid username or password, please try again!",
       });
     }
+
+    await recordLoginSuccess(username, req.ip);
 
     const token = jwt.sign({ userAccountId: user.id }, JWT_SECRET, {
       expiresIn: "1h",

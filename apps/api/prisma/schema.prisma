@@ -114,3 +114,13 @@ model Contact {
   @@unique([userAccountId, contactAccountId])
   @@map("contacts")
 }
+
+// Counters for the Postgres-backed rate limiters (rate-limiter-flexible's
+// RateLimiterPrisma). `expire` null means the key never expires.
+model RateLimit {
+  key    String    @id
+  points Int
+  expire DateTime?
+
+  @@map("rate_limits")
+}

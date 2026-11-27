@@ -20,10 +20,14 @@ import {
   unarchiveConversation,
 } from "./conversation-controllers.ts";
 import { requireAuth } from "../auth/require-auth.ts";
+import {
+  accountRateLimit,
+  sendMessageRateLimit,
+} from "../rate-limit/rate-limit-middleware.ts";
 
 const router = Router();
 
-router.use(requireAuth);
+router.use(requireAuth, accountRateLimit);
 router.get("/", getConversationsByUserAccountId);
 // Before "/:id", whose integer validator would reject these static segments.
 router.get("/unread-count", getUnreadCount);
@@ -58,6 +62,7 @@ router.post(
 
 router.post(
   "/:id/messages",
+  sendMessageRateLimit,
   addMessageToConversationValidators,
   handleValidationErrors,
   addMessageToConversation,

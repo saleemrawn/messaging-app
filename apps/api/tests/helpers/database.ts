@@ -1,5 +1,6 @@
 import { prisma } from "../../src/lib/prisma.ts";
 import bcrypt from "bcrypt";
+import { resetRateLimiters } from "../../src/rate-limit/limiters.ts";
 
 async function resetDbTables() {
   if (process.env.NODE_ENV === "production") {
@@ -7,9 +8,10 @@ async function resetDbTables() {
   }
 
   await prisma.$executeRaw`
-        TRUNCATE TABLE "users", "user_accounts", "conversations", "user_conversations", "messages", "message_receipts", "contacts"
+        TRUNCATE TABLE "users", "user_accounts", "conversations", "user_conversations", "messages", "message_receipts", "contacts", "rate_limits"
         RESTART IDENTITY CASCADE
       `;
+  resetRateLimiters();
 }
 
 async function populateUser() {
