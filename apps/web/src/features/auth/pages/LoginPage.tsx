@@ -3,7 +3,7 @@ import { useLocation } from "react-router";
 import SignupForm from "../components/SignupForm.tsx";
 import LoginForm from "../components/LoginForm.tsx";
 import type { AuthMode, LoginPageState } from "../types.ts";
-import PageTitle from "../../../shared/components/PageTitle.tsx";
+import PageTitle, { APP_NAME } from "../../../shared/components/PageTitle.tsx";
 
 // Navigation state is untrusted (it survives reloads via history), so only
 // an explicit "login" request overrides the sign-up default.
@@ -32,33 +32,36 @@ function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-sidebar px-4">
       <PageTitle name={isSignup ? "Sign up" : "Login"} />
-      <div className="w-full max-w-md rounded-xl border border-line bg-canvas p-8 shadow-sm">
-        {isAccountCreated && (
-          <p
-            role="status"
-            className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"
-          >
-            Account created, please log in.
+      <div className="flex w-full max-w-md flex-col items-center gap-6">
+        <p className="font-serif text-[30px] text-ink">{APP_NAME}</p>
+        <div className="w-full rounded-xl border border-line bg-canvas p-8 shadow-sm">
+          {isAccountCreated && (
+            <p
+              role="status"
+              className="mb-4 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700"
+            >
+              Account created, please log in.
+            </p>
+          )}
+          {isSignup ? (
+            <SignupForm onSuccess={handleSignupSuccess} />
+          ) : (
+            <LoginForm />
+          )}
+          <p className="mt-6 text-center text-sm text-muted">
+            <button
+              type="button"
+              className="text-brand hover:underline"
+              onClick={() => {
+                switchTo(isSignup ? "login" : "signup");
+              }}
+            >
+              {isSignup
+                ? "Already have an account? Log in"
+                : "Need an account? Sign up"}
+            </button>
           </p>
-        )}
-        {isSignup ? (
-          <SignupForm onSuccess={handleSignupSuccess} />
-        ) : (
-          <LoginForm />
-        )}
-        <p className="mt-6 text-center text-sm text-muted">
-          <button
-            type="button"
-            className="text-brand hover:underline"
-            onClick={() => {
-              switchTo(isSignup ? "login" : "signup");
-            }}
-          >
-            {isSignup
-              ? "Already have an account? Log in"
-              : "Need an account? Sign up"}
-          </button>
-        </p>
+        </div>
       </div>
     </main>
   );

@@ -80,6 +80,20 @@ describe("routing by auth state", () => {
 });
 
 describe("login page", () => {
+  test("shows the app name above both forms", async () => {
+    mockLoggedOut();
+    const user = userEvent.setup();
+    renderRoute("/login");
+
+    const toLogin = await screen.findByRole("button", {
+      name: /already have an account/i,
+    });
+    expect(screen.getByText("messgr.")).toBeInTheDocument();
+
+    await user.click(toLogin);
+    expect(screen.getByText("messgr.")).toBeInTheDocument();
+  });
+
   test("toggles between the sign-up and login forms", async () => {
     mockLoggedOut();
     const user = userEvent.setup();
