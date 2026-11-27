@@ -75,6 +75,7 @@ describe("routing by auth state", () => {
     expect(
       await screen.findByRole("heading", { name: /something went wrong/i }),
     ).toBeInTheDocument();
+    expect(document.title).toBe("Something went wrong | messgr.");
   });
 });
 
@@ -95,6 +96,23 @@ describe("login page", () => {
     expect(
       screen.getByRole("heading", { name: /create an account/i }),
     ).toBeInTheDocument();
+  });
+
+  test("titles the page after the form it shows", async () => {
+    mockLoggedOut();
+    const user = userEvent.setup();
+    renderRoute("/login");
+
+    const toLogin = await screen.findByRole("button", {
+      name: /already have an account/i,
+    });
+    expect(document.title).toBe("Sign up | messgr.");
+
+    await user.click(toLogin);
+    expect(document.title).toBe("Login | messgr.");
+
+    await user.click(screen.getByRole("button", { name: /need an account/i }));
+    expect(document.title).toBe("Sign up | messgr.");
   });
 
   test("switches to the login form with a notice after signing up", async () => {

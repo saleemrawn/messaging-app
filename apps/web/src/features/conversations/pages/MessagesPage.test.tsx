@@ -300,6 +300,27 @@ describe("conversation viewer", () => {
     ).toHaveAttribute("aria-current", "page");
   });
 
+  test("titles the page Messages with a conversation open", async () => {
+    mockApi();
+
+    renderRoute("/conversations/1");
+
+    await findViewerHeading("Aisha Khan");
+    expect(document.title).toBe("Messages | messgr.");
+  });
+
+  test("titles the list screen Messages on mobile", async () => {
+    setViewport("mobile");
+    mockApi();
+
+    renderRoute("/conversations");
+
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Messages" }),
+    ).toBeInTheDocument();
+    expect(document.title).toBe("Messages | messgr.");
+  });
+
   test("lists messages oldest to newest", async () => {
     mockApi();
 

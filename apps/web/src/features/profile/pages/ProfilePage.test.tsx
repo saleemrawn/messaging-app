@@ -74,6 +74,15 @@ async function openEditForm() {
 }
 
 describe("profile page", () => {
+  test("titles the page Profile", async () => {
+    mockCurrentUser();
+
+    renderRoute("/profile");
+
+    await screen.findByRole("region", { name: /^profile$/i });
+    expect(document.title).toBe("Profile | messgr.");
+  });
+
   test("shows the logged-in user's avatar, full name and email", async () => {
     mockCurrentUser();
 

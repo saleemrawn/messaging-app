@@ -4,6 +4,7 @@ import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import EditProfileForm from "../components/EditProfileForm.tsx";
 import EditableAvatar from "../components/EditableAvatar.tsx";
+import PageTitle from "../../../shared/components/PageTitle.tsx";
 
 function ProfilePage() {
   const user = useCurrentUser();
@@ -18,6 +19,7 @@ function ProfilePage() {
       aria-label="Profile"
       className="relative flex h-full w-full flex-col items-center gap-2 overflow-y-auto border-line bg-panel px-6 py-12 text-center xl:max-w-2xl xl:border-r"
     >
+      <PageTitle name="Profile" />
       {!isEditing && (
         <button
           type="button"

@@ -9,6 +9,7 @@ import type { MessagesPageData } from "../loaders.ts";
 import { CONVERSATION_PATH, CONVERSATIONS_PATH } from "../paths.ts";
 import { getNextConversationId } from "../utils/next-conversation.ts";
 import { useIsSplitView } from "../split-view.ts";
+import PageTitle from "../../../shared/components/PageTitle.tsx";
 
 type PendingScreen = "conversation" | "list" | null;
 
@@ -53,15 +54,23 @@ function MessagesPage() {
       loadedViewer
     );
 
+  const title = <PageTitle name="Messages" />;
+
   // Single-column view shows one screen at a time: the open conversation, or
   // else the list.
   if (!isSplit) {
     const screen = pendingScreen === "list" ? list : (viewer ?? list);
-    return <div className="flex h-full w-full">{screen}</div>;
+    return (
+      <div className="flex h-full w-full">
+        {title}
+        {screen}
+      </div>
+    );
   }
 
   return (
     <div className="flex h-full w-full">
+      {title}
       {list}
       {viewer ?? (
         <div className="flex flex-1 items-center justify-center bg-canvas">

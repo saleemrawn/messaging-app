@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router";
 import { useCurrentUser } from "../../auth/use-current-user.ts";
 import ArchivedConversationListItem from "../components/ArchivedConversationListItem.tsx";
 import type { ConversationSummary } from "../types.ts";
+import PageTitle from "../../../shared/components/PageTitle.tsx";
 
 function ArchivePage() {
   const conversations = useLoaderData<ConversationSummary[]>();
@@ -14,6 +15,7 @@ function ArchivePage() {
       aria-labelledby={headingId}
       className="flex h-full w-full flex-col border-line bg-panel xl:max-w-2xl xl:border-r"
     >
+      <PageTitle name="Archive" />
       <h1 id={headingId} className="px-6 pt-8 pb-6 font-serif text-[30px] text-ink">
         Archive
       </h1>

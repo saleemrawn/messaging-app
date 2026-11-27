@@ -3,6 +3,7 @@ import { useLocation } from "react-router";
 import SignupForm from "../components/SignupForm.tsx";
 import LoginForm from "../components/LoginForm.tsx";
 import type { AuthMode, LoginPageState } from "../types.ts";
+import PageTitle from "../../../shared/components/PageTitle.tsx";
 
 // Navigation state is untrusted (it survives reloads via history), so only
 // an explicit "login" request overrides the sign-up default.
@@ -30,6 +31,7 @@ function LoginPage() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-sidebar px-4">
+      <PageTitle name={isSignup ? "Sign up" : "Login"} />
       <div className="w-full max-w-md rounded-xl border border-line bg-canvas p-8 shadow-sm">
         {isAccountCreated && (
           <p

@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import AddContactDialog from "../components/AddContactDialog.tsx";
 import ContactListItem from "../components/ContactListItem.tsx";
 import type { Contact } from "../types.ts";
+import PageTitle from "../../../shared/components/PageTitle.tsx";
 
 function ContactsPage() {
   const contacts = useLoaderData<Contact[]>();
@@ -30,6 +31,7 @@ function ContactsPage() {
       aria-labelledby={headingId}
       className="flex h-full w-full flex-col border-line bg-panel xl:max-w-2xl xl:border-r"
     >
+      <PageTitle name="Contacts" />
       <div className="flex items-center justify-between gap-4 px-6 pt-6 pb-4">
         <h1 id={headingId} className="font-serif text-[30px] text-ink">
           Contacts

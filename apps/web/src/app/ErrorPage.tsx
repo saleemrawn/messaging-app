@@ -1,6 +1,9 @@
+import PageTitle from "../shared/components/PageTitle.tsx";
+
 function ErrorPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-canvas">
+      <PageTitle name="Something went wrong" />
       <h1 className="font-serif text-[30px] text-ink">Something went wrong</h1>
       <p className="text-muted">
         We couldn&apos;t reach the server. Please try again.

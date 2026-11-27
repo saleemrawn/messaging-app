@@ -115,6 +115,15 @@ async function findArchiveList() {
 }
 
 describe("archive page", () => {
+  test("titles the page Archive", async () => {
+    mockApi();
+
+    renderRoute("/archive");
+
+    await findArchiveList();
+    expect(document.title).toBe("Archive | messgr.");
+  });
+
   test("lists archived conversations with avatar, name, preview and time", async () => {
     mockApi();
 

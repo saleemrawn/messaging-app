@@ -11,6 +11,15 @@ async function findContactList() {
 }
 
 describe("contacts page", () => {
+  test("titles the page Contacts", async () => {
+    mockContactsApi();
+
+    renderRoute("/contacts");
+
+    await findContactList();
+    expect(document.title).toBe("Contacts | messgr.");
+  });
+
   test("shows the heading with an add button beside it", async () => {
     mockContactsApi();
 
