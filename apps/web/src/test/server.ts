@@ -13,6 +13,29 @@ function unreadCountHandler(getCount: () => number = () => 0) {
   );
 }
 
+// Holds every matching request until the returned release() is called, then
+// lets them through to the handlers registered before it. Use it to keep a
+// loader pending and assert on the loading UI.
+function holdRequest(
+  method: "get" | "post" | "delete",
+  path: string,
+): () => void {
+  let release: () => void = () => undefined;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  server.use(
+    http[method](`${API_URL}${path}`, async () => {
+      await gate;
+      // Returning nothing passes the request on to the next matching handler.
+      return undefined;
+    }),
+  );
+  return () => {
+    release();
+  };
+}
+
 // Default handlers survive resetHandlers(); tests override them with server.use().
 const server = setupServer(
   http.get(`${API_URL}/conversations`, () =>
@@ -21,4 +44,4 @@ const server = setupServer(
   unreadCountHandler(),
 );
 
-export { server, API_URL, unreadCountHandler };
+export { server, API_URL, holdRequest, unreadCountHandler };

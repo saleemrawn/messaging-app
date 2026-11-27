@@ -23,11 +23,19 @@ const NAV_ITEMS = [
   { to: ARCHIVE_PATH, label: "Archive", Icon: Archive },
 ] as const;
 
-function navLinkClassName({ isActive }: { isActive: boolean }): string {
+// The page being loaded gets the hover tint until it becomes active.
+function navLinkClassName({
+  isActive,
+  isPending,
+}: {
+  isActive: boolean;
+  isPending: boolean;
+}): string {
   const base =
     "flex h-11.5 items-center justify-between rounded-lg px-3.5 text-sm focus-visible:outline-2 focus-visible:outline-brand";
-  return isActive
-    ? `${base} bg-tint font-semibold text-brand`
+  if (isActive) return `${base} bg-tint font-semibold text-brand`;
+  return isPending
+    ? `${base} bg-tint/60 text-ink`
     : `${base} text-ink hover:bg-tint/60`;
 }
 

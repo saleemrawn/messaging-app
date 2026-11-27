@@ -4,9 +4,11 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import {
   API_URL,
+  holdRequest,
   server,
   unreadCountHandler,
 } from "../../../test/server.ts";
+import { PENDING_INDICATOR_DELAY_MS } from "../../../shared/hooks/use-pending-pathname.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
 import { setViewport } from "../../../test/media-query.ts";
 import type {
@@ -959,5 +961,121 @@ describe("split layout on a landscape tablet", () => {
     expect(
       screen.queryByRole("link", { name: "Back to conversations" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("loading skeletons", () => {
+  function findLoadingStatus(name: string) {
+    return screen.findByRole("status", { name });
+  }
+
+  test("shows a skeleton in place of the viewer while another conversation loads", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+    const release = holdRequest("get", "/conversations/1");
+
+    await user.click(
+      within(getConversationRow("Aisha Khan")).getByRole("link"),
+    );
+
+    expect(await findLoadingStatus("Loading conversation")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 2 }),
+    ).not.toBeInTheDocument();
+    expect(getConversationRow("Aisha Khan")).toBeInTheDocument();
+    expect(getConversationRow("Phillipe Doe")).toBeInTheDocument();
+
+    release();
+
+    expect(await findViewerHeading("Aisha Khan")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  test("shows the next conversation's skeleton while archiving redirects to it", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    const { router } = renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+    const release = holdRequest("get", "/conversations/1");
+
+    await user.click(screen.getByRole("button", { name: "Archive" }));
+
+    expect(await findLoadingStatus("Loading conversation")).toBeInTheDocument();
+
+    release();
+
+    expect(await findViewerHeading("Aisha Khan")).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe("/conversations/1");
+  });
+
+  test("keeps the conversation on screen while a sent message reloads it", async () => {
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+    const release = holdRequest("get", "/conversations/2");
+
+    await user.type(
+      screen.getByRole("textbox", { name: /^message$/i }),
+      "On my way",
+    );
+    await user.click(screen.getByRole("button", { name: /^send$/i }));
+    await new Promise((resolve) => setTimeout(resolve, PENDING_INDICATOR_DELAY_MS * 2));
+
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(getViewerHeadings()).toEqual(["Phillipe Doe"]);
+
+    release();
+
+    await waitFor(() => {
+      expect(getMessageItems()).toHaveLength(4);
+    });
+  });
+
+  test("shows the viewer skeleton on its own screen in single-column view", async () => {
+    setViewport("mobile");
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/conversations");
+    await screen.findByRole("heading", { level: 1, name: "Messages" });
+    const release = holdRequest("get", "/conversations/1");
+
+    await user.click(
+      within(getConversationRow("Aisha Khan")).getByRole("link"),
+    );
+
+    expect(await findLoadingStatus("Loading conversation")).toBeInTheDocument();
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
+
+    release();
+
+    expect(await findViewerHeading("Aisha Khan")).toBeInTheDocument();
+  });
+
+  test("shows the list skeleton after the back link in single-column view", async () => {
+    setViewport("mobile");
+    mockApi();
+    const user = userEvent.setup();
+    renderRoute("/conversations/2");
+    await findViewerHeading("Phillipe Doe");
+    const release = holdRequest("get", "/conversations");
+
+    await user.click(
+      screen.getByRole("link", { name: "Back to conversations" }),
+    );
+
+    expect(
+      await findLoadingStatus("Loading conversations"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { level: 2 }),
+    ).not.toBeInTheDocument();
+
+    release();
+
+    expect(await screen.findByRole("tabpanel")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

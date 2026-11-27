@@ -1,25 +1,43 @@
-import { useLoaderData } from "react-router";
+import { matchPath, useLoaderData } from "react-router";
 import { useCurrentUser } from "../../auth/use-current-user.ts";
+import { usePendingPathname } from "../../../shared/hooks/use-pending-pathname.ts";
 import ConversationList from "../components/ConversationList.tsx";
+import ConversationListSkeleton from "../components/ConversationListSkeleton.tsx";
 import ConversationViewer from "../components/ConversationViewer.tsx";
+import ConversationViewerSkeleton from "../components/ConversationViewerSkeleton.tsx";
 import type { MessagesPageData } from "../loaders.ts";
+import { CONVERSATION_PATH, CONVERSATIONS_PATH } from "../paths.ts";
 import { getNextConversationId } from "../utils/next-conversation.ts";
 import { useIsSplitView } from "../split-view.ts";
+
+type PendingScreen = "conversation" | "list" | null;
+
+// Which screen of this page a pending navigation is loading, if any.
+function getPendingScreen(pendingPathname: string | null): PendingScreen {
+  if (pendingPathname === null) return null;
+  if (matchPath(CONVERSATION_PATH, pendingPathname)) return "conversation";
+  return pendingPathname === CONVERSATIONS_PATH ? "list" : null;
+}
 
 function MessagesPage() {
   const { conversations, conversation, isRecipientContact } =
     useLoaderData<MessagesPageData>();
   const currentUser = useCurrentUser();
   const isSplit = useIsSplitView();
+  const pendingScreen = getPendingScreen(usePendingPathname());
 
-  const list = (
-    <ConversationList
-      conversations={conversations}
-      currentUserId={currentUser.id}
-      isSplitView={isSplit}
-    />
-  );
-  const viewer = conversation && (
+  // In split view the list stays put (and usable) while a conversation loads.
+  const list =
+    pendingScreen === "list" && !isSplit ? (
+      <ConversationListSkeleton isSplitView={false} />
+    ) : (
+      <ConversationList
+        conversations={conversations}
+        currentUserId={currentUser.id}
+        isSplitView={isSplit}
+      />
+    );
+  const loadedViewer = conversation && (
     <ConversationViewer
       key={conversation.id}
       conversation={conversation}
@@ -28,11 +46,18 @@ function MessagesPage() {
       nextConversationId={getNextConversationId(conversations, conversation.id)}
     />
   );
+  const viewer =
+    pendingScreen === "conversation" ? (
+      <ConversationViewerSkeleton />
+    ) : (
+      loadedViewer
+    );
 
   // Single-column view shows one screen at a time: the open conversation, or
   // else the list.
   if (!isSplit) {
-    return <div className="flex h-full w-full">{viewer ?? list}</div>;
+    const screen = pendingScreen === "list" ? list : (viewer ?? list);
+    return <div className="flex h-full w-full">{screen}</div>;
   }
 
   return (

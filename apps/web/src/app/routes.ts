@@ -49,10 +49,13 @@ import ContactsPage from "../features/contacts/pages/ContactsPage.tsx";
 import LoginPage from "../features/auth/pages/LoginPage.tsx";
 import ProfilePage from "../features/profile/pages/ProfilePage.tsx";
 import ErrorPage from "./ErrorPage.tsx";
+import AppLoading from "./AppLoading.tsx";
 
 const routes: RouteObject[] = [
   {
     ErrorBoundary: ErrorPage,
+    // First load: covers every route below until its loaders have run.
+    HydrateFallback: AppLoading,
     children: [
       {
         // Pathless layout: every child requires a logged-in user and gets the sidebar.

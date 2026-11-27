@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Outlet, useLocation } from "react-router";
+import { useLocation } from "react-router";
 import { useMediaQuery } from "../shared/hooks/use-media-query.ts";
 import { useIsConversationFullScreen } from "../features/conversations/split-view.ts";
 import { DESKTOP_QUERY } from "./layout-queries.ts";
 import MobileTopBar from "./MobileTopBar.tsx";
+import PageOutlet from "./PageOutlet.tsx";
 import Sidebar from "./Sidebar.tsx";
 import SidebarDrawer from "./SidebarDrawer.tsx";
 
@@ -36,7 +37,7 @@ function AppLayout() {
           <Sidebar />
         </div>
         <main className="flex min-w-0 flex-1">
-          <Outlet />
+          <PageOutlet />
         </main>
       </div>
     );
@@ -57,7 +58,7 @@ function AppLayout() {
       )}
       {isMenuOpen && <SidebarDrawer onClose={closeMenu} />}
       <main className="flex min-h-0 flex-1">
-        <Outlet />
+        <PageOutlet />
       </main>
     </div>
   );

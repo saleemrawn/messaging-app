@@ -17,10 +17,19 @@ interface ConversationListItemProps {
 const ROW_DIVIDER_CLASS =
   "not-first:before:absolute not-first:before:top-0 not-first:before:right-3 not-first:before:left-17 not-first:before:h-px not-first:before:bg-line-subtle has-[[aria-current=page]]:before:hidden [li:has([aria-current=page])+&]:before:hidden";
 
-function rowClassName({ isActive }: { isActive: boolean }): string {
+// The row being opened gets the hover tint, so the click shows before its
+// conversation has loaded and the row becomes active.
+function rowClassName({
+  isActive,
+  isPending,
+}: {
+  isActive: boolean;
+  isPending: boolean;
+}): string {
   const base =
     "flex items-start gap-3 rounded-[10px] px-3 py-5 focus-visible:outline-2 focus-visible:outline-brand";
-  return isActive ? `${base} bg-tint` : `${base} hover:bg-tint/50`;
+  if (isActive) return `${base} bg-tint`;
+  return isPending ? `${base} bg-tint/50` : `${base} hover:bg-tint/50`;
 }
 
 // Secondary text turns brand green on the selected row.
