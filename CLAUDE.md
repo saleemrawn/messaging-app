@@ -62,6 +62,12 @@ Avatars (`src/avatar/`):
 - `PUT /api/users/:id/avatar` (multipart field `avatar`, own account only): multer caps it at 4 MB and JPEG/PNG MIME types. Then sharp checks the real format and that it's square, and re-encodes it at 320×320 (stripping metadata). The new file is stored, then `avatarKey` is updated, then the previous *upload* is deleted (seed files never are). `DELETE` on the same path clears it.
 - `GET /api/avatars/:fileName` is deliberately **public**, like Discord and Slack avatars: upload URLs carry a content hash, so they can't be guessed. That way images load cross-site or from a CDN without the login cookie. It validates the name against `AVATAR_FILE_NAME_PATTERN` and sends `public, max-age=31536000, immutable`. Seed names (`seed-NN`) are guessable, which is fine for dev data. Private media (e.g. future message attachments) should use signed, expiring URLs from `getUrl()` instead.
 - Uploads (`assets/avatars/user-*`) are gitignored; seed photos are supplied by hand and committed.
+Rate limiting (`src/rate-limit/`, library `rate-limiter-flexible`):
+- Limits live in `rate-limit-config.ts`. They are fixed windows that start at a key's first request. A 429 goes through `HttpError` in the usual envelope, with `Retry-After` set.
+- In memory (per process, reset on restart): global per IP (mounted after `cors` so 429s carry CORS headers, before body parsing), login attempts per IP, per account (`router.use(requireAuth, accountRateLimit)` on every protected router and `/auth/me`), send message, and avatar upload.
+- In Postgres (table `rate_limits`, model `RateLimit`, via `RateLimiterPrisma`): signup per IP, and failed logins counted three ways (`login-rate-limit.ts`): username+IP, username, and IP. A failure that spends a counter's last point blocks it for `blockSeconds`. While any counter is blocked, login returns 429 *before* the password is checked. A success resets only username+IP.
+- Keys: `toIpKey()` unwraps IPv4-mapped addresses and groups IPv6 by /64; usernames are lowercased.
+- `TRUST_PROXY` env var: unset/`false`, or the number of proxy hops in front of the API. It sets `trust proxy`, so `req.ip` (and every per-IP limit) depends on it. `true` is rejected, since clients could then spoof `X-Forwarded-For`. `createApp({ trustProxy })` overrides it (tests use this to vary IPs).
 - ESM with explicit `.ts` import extensions (`verbatimModuleSyntax`, `erasableSyntaxOnly`: no enums or parameter properties). ESLint uses typescript-eslint `strictTypeChecked` + `stylisticTypeChecked`. Prefix unused vars/args with `_`.
 
 ## API tests
@@ -73,7 +79,7 @@ Fixtures: four users (`johndoe01`, `aishadoe01`, `phillipedoe01`, `janedoe01`, a
 - `createAuthenticatedAgentAs(userAccountId)`: signs a Bearer token directly.
 - `createUnauthenticatedAgent()`: for 401 checks.
 
-Use `isoDateString()` / `anyString()` from `tests/helpers/types.ts` for timestamp and string matchers. Exact-match user assertions include `avatarUrl: null`. `tests/avatar.test.ts` points `AVATAR_STORAGE_DIR` at a temp dir and generates its images with sharp.
+`resetDbTables()` also TRUNCATEs `rate_limits` and calls `resetRateLimiters()` (recreates the in-memory limiters), so every test starts with empty counters. Use `isoDateString()` / `anyString()` from `tests/helpers/types.ts` for timestamp and string matchers. Exact-match user assertions include `avatarUrl: null`. `tests/avatar.test.ts` points `AVATAR_STORAGE_DIR` at a temp dir and generates its images with sharp.
 
 `prisma/populate.ts` (`npm run seed -w apps/api`) is a separate faker-based dev seed. It TRUNCATEs every table, then writes 21 users (password `Testpassword01!`) with a conversation between every pair, each with 1–5 messages at staggered times. User *n* (1-based) gets the photo `apps/api/assets/avatars/seed-NN.{jpg,jpeg,png}` when that file exists, and initials otherwise (it warns about missing files). It also deletes leftover `user-*` uploads, since account ids restart. Generation lives in the pure `prisma/seed-data.ts` (unit-tested in `tests/seed-data.test.ts`); `populate.ts` only persists it. Running the API tests wipes seeded data, so re-seed afterwards.
 
