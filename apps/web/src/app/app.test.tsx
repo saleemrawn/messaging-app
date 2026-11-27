@@ -243,4 +243,32 @@ describe("login page", () => {
       /invalid username or password/i,
     );
   });
+
+  test("shows the retry message when login is rate limited", async () => {
+    mockLoggedOut();
+    server.use(
+      http.post(`${API_URL}/auth/login`, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            message: "Too many requests, please try again in 15 minutes",
+          },
+          { status: 429, headers: { "Retry-After": "900" } },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderRoute("/login");
+
+    await user.click(
+      await screen.findByRole("button", { name: /already have an account/i }),
+    );
+    await user.type(screen.getByLabelText(/username/i), "johndoe01");
+    await user.type(screen.getByLabelText(/password/i), "Testpassword01!");
+    await user.click(screen.getByRole("button", { name: /^log in$/i }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /try again in 15 minutes/i,
+    );
+  });
 });
