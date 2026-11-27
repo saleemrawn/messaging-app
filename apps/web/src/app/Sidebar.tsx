@@ -14,8 +14,10 @@ import { useUnreadTotal } from "../features/conversations/use-unread-total.ts";
 import UnreadBadge from "../features/conversations/components/UnreadBadge.tsx";
 import FormError from "../shared/components/FormError.tsx";
 import UserAvatar from "../shared/components/UserAvatar.tsx";
+import { showSuccessToast } from "../shared/utils/toast.ts";
 
 const LOGOUT_ERROR = "Couldn't log out. Please try again.";
+const LOGGED_OUT_MESSAGE = "You've been logged out";
 
 const NAV_ITEMS = [
   { to: CONVERSATIONS_PATH, label: "Messages", Icon: MessageCircle },
@@ -65,9 +67,13 @@ function Sidebar({ headerAction }: SidebarProps) {
 
     try {
       await logout();
+      // RootLayout's toaster outlives this sidebar, so it shows on /login.
+      showSuccessToast(LOGGED_OUT_MESSAGE);
       const state: LoginPageState = { mode: "login" };
       await navigate("/login", { replace: true, state });
     } catch {
+      // Inline, not a toast: below desktop this sidebar is inside a modal
+      // drawer, which would cover a toast.
       setError(LOGOUT_ERROR);
       setIsLoggingOut(false);
     }

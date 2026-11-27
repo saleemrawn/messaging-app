@@ -1,11 +1,11 @@
+import { useEffect } from "react";
 import { useFetcher } from "react-router";
-import type { RemoveContactResult } from "../actions.ts";
 import { CONTACTS_PATH } from "../paths.ts";
 import type { Contact } from "../types.ts";
 import type { CreateConversationResult } from "../../conversations/actions.ts";
 import { NEW_CONVERSATION_PATH } from "../../conversations/paths.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
-import FormError from "../../../shared/components/FormError.tsx";
+import { showErrorToast } from "../../../shared/utils/toast.ts";
 import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 
 interface ContactListItemProps {
@@ -19,14 +19,22 @@ function ContactListItem({ contact }: ContactListItemProps) {
   // Message posts to the create conversation action, which reuses an existing
   // conversation with the contact and redirects to it on the Messages page.
   const messageFetcher = useFetcher<CreateConversationResult>();
-  const removeFetcher = useFetcher<RemoveContactResult>();
+  // The remove action reports its outcome with a toast itself, because the
+  // row unmounts as soon as the removal succeeds.
+  const removeFetcher = useFetcher();
   const fullName = formatFullName(contact);
   const isOpening = messageFetcher.state !== "idle";
   const isRemoving = removeFetcher.state !== "idle";
   const isBusy = isOpening || isRemoving;
-  const messageError = isOpening ? undefined : messageFetcher.data?.error;
-  const removeError =
-    removeFetcher.data?.ok === false ? removeFetcher.data.error : undefined;
+  const messageResult = messageFetcher.data;
+
+  // The create conversation action returns its error rather than showing a
+  // toast, because the new conversation dialog shows it inline. Success
+  // redirects, so data only ever holds a failure; each attempt delivers a new
+  // object, so a repeated failure toasts again.
+  useEffect(() => {
+    if (messageResult) showErrorToast(messageResult.error);
+  }, [messageResult]);
 
   return (
     <li className="flex flex-col gap-2 px-4 py-3">
@@ -65,7 +73,6 @@ function ContactListItem({ contact }: ContactListItemProps) {
           </removeFetcher.Form>
         </div>
       </div>
-      <FormError message={messageError ?? removeError} />
     </li>
   );
 }

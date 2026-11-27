@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderRoute } from "../../../test/render-route.tsx";
+import { findToast } from "../../../test/toasts.ts";
 import { mockContactsApi } from "../test-api.ts";
 
 // Lets the dialog's debounce elapse before asserting that nothing was sent.
@@ -96,6 +97,7 @@ describe("add contact dialog", () => {
       expect(list.getAllByRole("listitem")).toHaveLength(3);
     });
     expect(list.getAllByRole("listitem")[1]).toHaveTextContent("Jane Smith");
+    expect(await findToast("Contact added")).toBeInTheDocument();
   });
 
   test("adds the found user when Enter is pressed", async () => {

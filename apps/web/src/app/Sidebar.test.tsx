@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { API_URL, server, unreadCountHandler } from "../test/server.ts";
 import { renderRoute } from "../test/render-route.tsx";
+import { findToast } from "../test/toasts.ts";
 
 const currentUser = {
   id: 1,
@@ -217,6 +218,7 @@ describe("sidebar navigation", () => {
     expect(router.state.location.pathname).toBe("/login");
     expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
     expect(calls.logout).toBe(1);
+    expect(await findToast("You've been logged out")).toBeInTheDocument();
   });
 
   test("shows an error and stays put when logout fails", async () => {

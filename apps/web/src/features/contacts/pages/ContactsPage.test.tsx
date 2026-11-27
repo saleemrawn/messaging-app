@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { API_URL, server } from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
+import { findToast } from "../../../test/toasts.ts";
 import { currentUser, mockContactsApi } from "../test-api.ts";
 
 async function findContactList() {
@@ -84,6 +85,7 @@ describe("contacts page", () => {
     });
     expect(api.removeRequests).toEqual([3]);
     expect(screen.getByText("Aisha Khan")).toBeInTheDocument();
+    expect(await findToast("Contact removed")).toBeInTheDocument();
   });
 
   test("shows an error and keeps the row when removing fails", async () => {
@@ -98,9 +100,10 @@ describe("contacts page", () => {
     );
 
     expect(
-      await screen.findByText("Couldn't remove the contact. Please try again."),
+      await findToast("Couldn't remove the contact. Please try again."),
     ).toBeInTheDocument();
     expect(screen.getByText("Aisha Khan")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   test("opens a conversation with the contact on the Messages page", async () => {
@@ -151,11 +154,8 @@ describe("contacts page", () => {
       await screen.findByRole("button", { name: "Message Aisha Khan" }),
     );
 
-    const list = await findContactList();
-    const aishaRow = list.getAllByRole("listitem")[0];
-    expect(
-      await within(aishaRow).findByText("Something broke"),
-    ).toBeInTheDocument();
+    expect(await findToast("Something broke")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/contacts");
   });
 

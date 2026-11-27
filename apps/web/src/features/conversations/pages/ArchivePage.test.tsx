@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { API_URL, server, unreadCountHandler } from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
+import { findToast } from "../../../test/toasts.ts";
 import type { ConversationSummary } from "../types.ts";
 
 const currentUser = {
@@ -194,6 +195,9 @@ describe("archive page", () => {
     // The sidebar's unread total is refreshed, since the conversation's
     // messages count again once it's back in the Messages list.
     expect(api.getUnreadCountRequests()).toBeGreaterThan(1);
+    expect(
+      await findToast("Conversation moved to Messages"),
+    ).toBeInTheDocument();
   });
 
   test("shows an error and keeps the row when unarchiving fails", async () => {
@@ -208,11 +212,10 @@ describe("archive page", () => {
     );
 
     expect(
-      await screen.findByText(
-        "Couldn't unarchive the conversation. Please try again.",
-      ),
+      await findToast("Couldn't unarchive the conversation. Please try again."),
     ).toBeInTheDocument();
     expect(screen.getByText("Aisha Doe")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
   test("redirects to login when the session has expired", async () => {

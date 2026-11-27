@@ -10,6 +10,7 @@ import {
 } from "../../../test/server.ts";
 import { PENDING_INDICATOR_DELAY_MS } from "../../../shared/hooks/use-pending-pathname.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
+import { findToast } from "../../../test/toasts.ts";
 import { setViewport } from "../../../test/media-query.ts";
 import type {
   ConversationDetail,
@@ -650,6 +651,7 @@ describe("archiving a conversation", () => {
     const panel = screen.getByRole("tabpanel");
     expect(within(panel).queryByText("Phillipe Doe")).not.toBeInTheDocument();
     expect(within(panel).getAllByRole("listitem")).toHaveLength(1);
+    expect(await findToast("Conversation archived")).toBeInTheDocument();
   });
 
   test("opens the conversation above when archiving the last one", async () => {
@@ -709,9 +711,10 @@ describe("archiving a conversation", () => {
 
     await user.click(getArchiveButton());
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't archive the conversation. Please try again.",
-    );
+    expect(
+      await findToast("Couldn't archive the conversation. Please try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(router.state.location.pathname).toBe("/conversations/2");
     expect(getArchiveButton()).toBeEnabled();
     expect(getConversationRow("Phillipe Doe")).toBeInTheDocument();
@@ -813,9 +816,10 @@ describe("add contact button", () => {
 
     await user.click(getAddContactButton());
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Couldn't add the contact. Please try again.",
-    );
+    expect(
+      await findToast("Couldn't add the contact. Please try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(getAddContactButton()).toBeEnabled();
   });
 

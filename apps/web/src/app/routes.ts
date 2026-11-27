@@ -49,10 +49,12 @@ import ContactsPage from "../features/contacts/pages/ContactsPage.tsx";
 import LoginPage from "../features/auth/pages/LoginPage.tsx";
 import ProfilePage from "../features/profile/pages/ProfilePage.tsx";
 import ErrorPage from "./ErrorPage.tsx";
+import RootLayout from "./RootLayout.tsx";
 import AppLoading from "./AppLoading.tsx";
 
 const routes: RouteObject[] = [
   {
+    Component: RootLayout,
     ErrorBoundary: ErrorPage,
     // First load: covers every route below until its loaders have run.
     HydrateFallback: AppLoading,

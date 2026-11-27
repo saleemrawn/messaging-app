@@ -1,9 +1,5 @@
 import { Archive, ChevronLeft, UserCheck, UserPlus } from "lucide-react";
 import { Link, useFetcher } from "react-router";
-import type {
-  AddRecipientContactResult,
-  ArchiveConversationResult,
-} from "../actions.ts";
 import {
   CONVERSATIONS_PATH,
   addRecipientContactPath,
@@ -12,7 +8,6 @@ import {
 import { useIsSplitView } from "../split-view.ts";
 import type { ConversationDetailRecipient } from "../types.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
-import FormError from "../../../shared/components/FormError.tsx";
 import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 
 interface ConversationHeaderProps {
@@ -36,12 +31,6 @@ function getAddContactLabel(isContact: boolean, isAdding: boolean): string {
   return isAdding ? "Adding…" : "Add contact";
 }
 
-function getErrorMessage(
-  result: AddRecipientContactResult | undefined,
-): string | undefined {
-  return result?.ok === false ? result.error : undefined;
-}
-
 function ConversationHeader({
   conversationId,
   recipient,
@@ -52,14 +41,11 @@ function ConversationHeader({
   const isSplit = useIsSplitView();
   // Single-column view returns to the list after archiving, not the next one.
   const archiveNextId = isSplit ? nextConversationId : null;
-  const fetcher = useFetcher<ArchiveConversationResult>();
-  const contactFetcher = useFetcher<AddRecipientContactResult>();
+  // Both actions report their outcome with a toast.
+  const fetcher = useFetcher();
+  const contactFetcher = useFetcher();
   const isArchiving = fetcher.state !== "idle";
   const isAddingContact = contactFetcher.state !== "idle";
-  // Either button's failure; a retry clears its own. If both failed, the add
-  // contact error shows.
-  const error =
-    getErrorMessage(contactFetcher.data) ?? getErrorMessage(fetcher.data);
   const ContactIcon = isRecipientContact ? UserCheck : UserPlus;
 
   return (
@@ -129,7 +115,6 @@ function ConversationHeader({
           </button>
         </fetcher.Form>
       </div>
-      <FormError message={error} />
     </header>
   );
 }

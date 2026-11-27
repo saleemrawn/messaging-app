@@ -6,9 +6,12 @@ import {
   type ParsedApiError,
 } from "../../../shared/api/api-errors.ts";
 import { getString } from "../../../shared/utils/form-data.ts";
+import { showSuccessToast } from "../../../shared/utils/toast.ts";
 import FormField from "../../../shared/components/FormField.tsx";
 import FormError from "../../../shared/components/FormError.tsx";
 import type { User } from "../../auth/types.ts";
+
+const PROFILE_SAVED_MESSAGE = "Profile updated";
 
 interface Props {
   user: User;
@@ -71,6 +74,7 @@ function EditProfileForm({ user, onCancel, onSaved }: Props) {
 
     // Reloads the current user so the page and sidebar show the new details.
     await revalidate();
+    showSuccessToast(PROFILE_SAVED_MESSAGE);
     onSaved();
   }
 

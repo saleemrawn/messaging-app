@@ -1,11 +1,9 @@
 import { useFetcher } from "react-router";
-import type { UnarchiveConversationResult } from "../actions.ts";
 import { ARCHIVE_PATH } from "../paths.ts";
 import type { ConversationSummary } from "../types.ts";
 import { formatFullName } from "../../../shared/utils/full-name.ts";
 import { formatConversationTimestamp } from "../utils/format-conversation-timestamp.ts";
 import { getMessagePreview } from "../utils/message-preview.ts";
-import FormError from "../../../shared/components/FormError.tsx";
 import UserAvatar from "../../../shared/components/UserAvatar.tsx";
 
 interface ArchivedConversationListItemProps {
@@ -19,12 +17,12 @@ function ArchivedConversationListItem({
   conversation,
   currentUserId,
 }: ArchivedConversationListItemProps) {
-  const fetcher = useFetcher<UnarchiveConversationResult>();
+  // The action reports its outcome with a toast.
+  const fetcher = useFetcher();
   const { id, recipient, latestMessage, updatedAt } = conversation;
   const fullName = formatFullName(recipient);
   const timestamp = latestMessage?.createdAt ?? updatedAt;
   const isUnarchiving = fetcher.state !== "idle";
-  const error = fetcher.data?.ok === false ? fetcher.data.error : undefined;
   const previewClassName = latestMessage
     ? "truncate text-sm text-muted"
     : "truncate text-sm text-muted italic";
@@ -60,7 +58,6 @@ function ArchivedConversationListItem({
           </fetcher.Form>
         </div>
       </div>
-      <FormError message={error} />
     </li>
   );
 }

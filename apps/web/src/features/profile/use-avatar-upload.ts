@@ -3,12 +3,15 @@ import { useRevalidator } from "react-router";
 import { isAxiosError } from "axios";
 import type { Area } from "react-easy-crop";
 import { parseApiError } from "../../shared/api/api-errors.ts";
+import { showSuccessToast } from "../../shared/utils/toast.ts";
 import type { User } from "../auth/types.ts";
 import { removeAvatar, uploadAvatar } from "./avatar-service.ts";
 import { avatarImageType, cropImage } from "./utils/crop-image.ts";
 import { validateAvatarFile } from "./utils/validate-avatar-file.ts";
 
 const GENERIC_ERROR_MESSAGE = "Something went wrong, please try again";
+const PHOTO_UPDATED_MESSAGE = "Profile photo updated";
+const PHOTO_REMOVED_MESSAGE = "Profile photo removed";
 
 // The picked file and an object URL the cropper can display it from.
 interface AvatarSource {
@@ -27,7 +30,9 @@ function toErrorMessage(err: unknown): string {
 
 // Drives the photo uploader: pick a file → crop → upload, or remove the
 // current photo. onDone runs once the change is saved and the current user
-// has been reloaded, so every avatar on screen already shows it.
+// has been reloaded, so every avatar on screen already shows it. Success is
+// confirmed with a toast after onDone has closed the dialog, since a toast
+// can't show above a modal dialog; errors stay in the dialog.
 function useAvatarUpload(userId: User["id"], onDone: () => void) {
   const { revalidate } = useRevalidator();
   const [source, setSource] = useState<AvatarSource | null>(null);
@@ -58,6 +63,7 @@ function useAvatarUpload(userId: User["id"], onDone: () => void) {
   async function runChange(
     nextStatus: AvatarUploadStatus,
     change: () => Promise<void>,
+    successMessage: string,
   ) {
     setStatus(nextStatus);
     setError(undefined);
@@ -70,6 +76,7 @@ function useAvatarUpload(userId: User["id"], onDone: () => void) {
     }
     await revalidate();
     onDone();
+    showSuccessToast(successMessage);
   }
 
   async function save(area: Area) {
@@ -77,14 +84,22 @@ function useAvatarUpload(userId: User["id"], onDone: () => void) {
     const type = avatarImageType(source.file.type);
     const fileName = type === "image/png" ? "avatar.png" : "avatar.jpg";
     setProgress(0);
-    await runChange("uploading", async () => {
-      const image = await cropImage(source.url, area, type);
-      await uploadAvatar(userId, image, fileName, setProgress);
-    });
+    await runChange(
+      "uploading",
+      async () => {
+        const image = await cropImage(source.url, area, type);
+        await uploadAvatar(userId, image, fileName, setProgress);
+      },
+      PHOTO_UPDATED_MESSAGE,
+    );
   }
 
   async function remove() {
-    await runChange("removing", () => removeAvatar(userId));
+    await runChange(
+      "removing",
+      () => removeAvatar(userId),
+      PHOTO_REMOVED_MESSAGE,
+    );
   }
 
   return {

@@ -11,6 +11,10 @@ import {
 } from "./conversation-service.ts";
 import { CONVERSATIONS_PATH, conversationPath } from "./paths.ts";
 import { addContact } from "../contacts/contacts-service.ts";
+import {
+  showErrorToast,
+  showSuccessToast,
+} from "../../shared/utils/toast.ts";
 
 const EMPTY_MESSAGE_ERROR = "Message can't be empty";
 const SEND_FAILED_ERROR = "Couldn't send your message. Please try again.";
@@ -21,12 +25,21 @@ const UNARCHIVE_FAILED_ERROR =
 const ARCHIVE_FAILED_ERROR =
   "Couldn't archive the conversation. Please try again.";
 const ADD_CONTACT_FAILED_ERROR = "Couldn't add the contact. Please try again.";
+const UNARCHIVED_MESSAGE = "Conversation moved to Messages";
+const ARCHIVED_MESSAGE = "Conversation archived";
 
 type SendMessageResult = { ok: true } | { ok: false; error: string };
-type UnarchiveConversationResult = SendMessageResult;
+// These actions report failures with a toast, so the result only says whether
+// it worked.
+interface ActionOutcome {
+  ok: boolean;
+}
+type UnarchiveConversationResult = ActionOutcome;
 // Success redirects to the next conversation, so data only carries a failure.
-type ArchiveConversationResult = SendMessageResult;
-type AddRecipientContactResult = SendMessageResult;
+interface ArchiveConversationResult {
+  ok: false;
+}
+type AddRecipientContactResult = ActionOutcome;
 // Success redirects to the conversation, so only failures carry data.
 interface CreateConversationResult {
   ok: false;
@@ -104,16 +117,20 @@ async function unarchiveConversationAction({
   const formData = await request.formData();
   const conversationId = Number(formString(formData, "conversationId"));
   if (!isPositiveInteger(conversationId)) {
-    return { ok: false, error: UNARCHIVE_FAILED_ERROR };
+    showErrorToast(UNARCHIVE_FAILED_ERROR);
+    return { ok: false };
   }
 
   try {
     await unarchiveConversation(conversationId);
-    return { ok: true };
   } catch (error: unknown) {
     if (isUnauthorizedError(error)) return redirect("/login");
-    return { ok: false, error: UNARCHIVE_FAILED_ERROR };
+    showErrorToast(UNARCHIVE_FAILED_ERROR);
+    return { ok: false };
   }
+
+  showSuccessToast(UNARCHIVED_MESSAGE);
+  return { ok: true };
 }
 
 // Moves the open conversation to the archive, then opens the one the viewer
@@ -128,16 +145,19 @@ async function archiveConversationAction({
   const conversationId = Number(params.conversationId);
   const nextConversationId = Number(formString(formData, "nextConversationId"));
   if (!isPositiveInteger(conversationId)) {
-    return { ok: false, error: ARCHIVE_FAILED_ERROR };
+    showErrorToast(ARCHIVE_FAILED_ERROR);
+    return { ok: false };
   }
 
   try {
     await archiveConversation(conversationId);
   } catch (error: unknown) {
     if (isUnauthorizedError(error)) return redirect("/login");
-    return { ok: false, error: ARCHIVE_FAILED_ERROR };
+    showErrorToast(ARCHIVE_FAILED_ERROR);
+    return { ok: false };
   }
 
+  showSuccessToast(ARCHIVED_MESSAGE);
   // Without a next conversation the messages page picks the newest, if any.
   return replace(
     isPositiveInteger(nextConversationId)
@@ -154,15 +174,18 @@ async function addRecipientContactAction({
   const formData = await request.formData();
   const recipientId = Number(formString(formData, "recipientId"));
   if (!isPositiveInteger(recipientId)) {
-    return { ok: false, error: ADD_CONTACT_FAILED_ERROR };
+    showErrorToast(ADD_CONTACT_FAILED_ERROR);
+    return { ok: false };
   }
 
   try {
     await addContact(recipientId);
+    // No success toast: the button turning into "Added to Contacts" says it.
     return { ok: true };
   } catch (error: unknown) {
     if (isUnauthorizedError(error)) return redirect("/login");
-    return { ok: false, error: ADD_CONTACT_FAILED_ERROR };
+    showErrorToast(ADD_CONTACT_FAILED_ERROR);
+    return { ok: false };
   }
 }
 

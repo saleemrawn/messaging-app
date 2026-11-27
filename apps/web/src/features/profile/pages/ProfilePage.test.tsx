@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { API_URL, server } from "../../../test/server.ts";
 import { renderRoute } from "../../../test/render-route.tsx";
+import { findToast } from "../../../test/toasts.ts";
 
 // jsdom can't decode images or draw on a canvas, so the cropper reports a
 // fixed crop area as soon as it mounts and cropping returns a stub image.
@@ -159,6 +160,7 @@ describe("profile page", () => {
         confirmNewPassword: "",
       },
     ]);
+    expect(await findToast("Profile updated")).toBeInTheDocument();
   });
 
   test("Save sends the password fields when changing the password", async () => {
@@ -482,6 +484,7 @@ describe("profile photo", () => {
       "src",
       `${API_URL}${UPLOADED_URL}`,
     );
+    expect(await findToast("Profile photo updated")).toBeInTheDocument();
   });
 
   test("a dropped photo opens the cropper", async () => {
@@ -588,6 +591,7 @@ describe("profile photo", () => {
     });
     expect(avatarImage(page)).toBeNull();
     expect(within(page).getByText("JD")).toBeInTheDocument();
+    expect(await findToast("Profile photo removed")).toBeInTheDocument();
   });
 
   test("Cancel closes the uploader without changes", async () => {
